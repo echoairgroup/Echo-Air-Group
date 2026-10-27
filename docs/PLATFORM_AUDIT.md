@@ -22,7 +22,7 @@
 4. **Unescaped dashboard output:** pilot and flight data was inserted into `Server.html` with `innerHTML` without escaping.
 5. **Localhost fallback:** `Server.html` used `http://localhost:3000/api` in production and hard-coded the ranking endpoint to localhost.
 6. **Inconsistent rank thresholds:** the standalone account dashboard used thresholds of 100/250/500/750/1000 stars while the API and other ranking pages use 1000/2500/5000/7500/10000.
-7. **Application helper cancelled submissions:** `submitApplication` called `preventDefault()`, showed a local success message, and reset the form. The join page's native FormSubmit action therefore did not receive the application.
+7. **Form submissions were not managed in one place:** contact and manager forms used a third-party mail handler, while the website lacked an access-controlled review inbox and audit history.
 8. **Self-mutating workflows:** `fleet-fix.yml` and `fleet-run.yml` modify website files and push changes back to the default branch; `fix-server-routes.yml` also rewrites and pushes backend source. The latest observed fleet workflow runs failed.
 9. **No small, read-only quality gate:** the repository did not have a pull-request validation workflow.
 10. **Backup readiness:** Neon returned no configured snapshot schedule for production. A backup/restore policy should be established before destructive schema or data work.
@@ -34,8 +34,9 @@
 - Protected global flight synchronization and database diagnostics with administrator authorization. If no admin list is configured, the routes remain disabled rather than granting access to every registered pilot.
 - Fixed the account dashboard's hosted API fallback and shared ranking endpoint; escaped dynamic HTML values; aligned displayed rank thresholds with the backend.
 - Replaced the pilot application form's third-party mail submission with a first-party API, a privacy acknowledgement and transactional Neon persistence.
-- Added a recruitment administration screen with paginated search/filter, status changes, review notes and a transactional audit history.
-- Documented remaining FormSubmit use for contact and manager forms; these are still external submissions and are the next form workflow to migrate.
+- Added first-party APIs and Neon persistence for pilot applications, contact messages and management applications; public submissions are rate-limited and validated.
+- Added separate pilot recruitment and combined contact/management inbox screens with admin-only access, search/filter, pagination, status updates, private review notes and transactional event history.
+- Added explicit privacy acknowledgements to the forms and updated the privacy policy. A fixed retention schedule and optional notification-channel configuration still need to be finalized before production.
 - Added accessible focus states, reduced-motion support, tests, project validation, environment examples, documentation, and a read-only CI workflow.
 - Planned removal of workflows that push generated changes directly back to the repository on this feature branch.
 
@@ -46,7 +47,7 @@
 - Verify the canonical frontend hostname and set `CORS_ORIGINS` to the exact required origins. Until confirmed, legacy permissive CORS remains enabled for compatibility.
 - Set Render's health-check path to `/api/health` after verifying the staging deployment.
 - Configure Neon snapshots/backup retention and test restore to a separate branch.
-- Review the external FormSubmit workflow. A future first-party validated application endpoint with database persistence and access control would give the team a more auditable review process.
+- Establish a concrete retention schedule for stored contact and recruitment submissions, then configure and test deletion/anonymization procedures. The current policy deliberately discloses that a fixed period is not yet published.
 - The booking page references a future `/api/google-wallet` endpoint in a code comment; no corresponding backend route was found in the API route inventory. Google Wallet passes need credentials and a real implementation.
 - Continue splitting the large API module into route/service modules once regression coverage is stronger.
 
@@ -54,7 +55,7 @@
 
 1. Establish a tested staging deployment using only the isolated Neon development database.
 2. Standardize authentication, explicit pilot/admin roles, and dashboard behavior.
-3. Migrate the contact form and management application to the same first-party intake/review infrastructure.
+3. Establish notification routing and a documented retention/deletion process for the first-party submissions inbox.
 4. Centralize frontend API configuration and shared page components without changing the Echo green/charcoal brand.
 5. Improve booking, route/flight data integration, responsive UX, accessibility, SEO, and performance.
 6. Add database migration tooling, backup/restore drills, integration tests, health monitoring, and controlled releases.
