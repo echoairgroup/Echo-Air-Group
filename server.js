@@ -102,6 +102,12 @@ const bookingRateLimit = createRateLimiter({
     message: "Too many virtual booking attempts. Please try again later."
 });
 
+const bookingAvailabilityRateLimit = createRateLimiter({
+    windowMs: 5 * 60 * 1000,
+    max: 60,
+    message: "Too many seat availability requests. Please wait and try again."
+});
+
 function requireAuthConfigured(req, res, next) {
     if (!JWT_SECRET) {
         return res.status(503).json({
@@ -5035,6 +5041,102 @@ app.get(
 );
 
 // ============================================================
+// Public, PII-free seat availability. The booking write still performs the
+// final validation and the database's unique index resolves concurrent requests.
+app.get(
+    "/api/bookings/seat-availability",
+    bookingAvailabilityRateLimit,
+    async (req, res) => {
+        const flightNumber = String(req.query.flightNumber || "").trim().toUpperCase();
+        const departureDate = String(req.query.departureDate || "").trim();
+        const tripType = String(req.query.tripType || "").trim().toLowerCase();
+        const returnDate = String(req.query.returnDate || "").trim();
+        const flight = DEMO_FLIGHT_SCHEDULE.get(flightNumber);
+
+        if (!flight) {
+            return res.status(400).json({ error: "Choose a published Echo Air Group demo flight." });
+        }
+        if (!isValidIsoDate(departureDate) || departureDate < new Date().toISOString().slice(0, 10)) {
+            return res.status(400).json({ error: "Choose a valid departure date." });
+        }
+        if (tripType !== "oneway" && tripType !== "roundtrip") {
+            return res.status(400).json({ error: "Choose one-way or round-trip mode." });
+        }
+
+        let returnFlight = null;
+        if (tripType === "roundtrip") {
+            if (!isValidIsoDate(returnDate) || returnDate <= departureDate) {
+                return res.status(400).json({ error: "Choose a return date after the departure date." });
+            }
+            returnFlight = findDemoReturnFlight(flight);
+            if (!returnFlight) {
+                return res.status(400).json({ error: "No published return service exists for this route." });
+            }
+        }
+
+        const getUnavailableSeats = async (segmentFlight, date) => {
+            const numericCode = Number(segmentFlight.number.replace("ECV", ""));
+            const deterministicUnavailable = [];
+            for (let row = 1; row <= 24; row++) {
+                for (const letter of ["A", "B", "C", "D", "E", "F"]) {
+                    if ((row * 7 + letter.charCodeAt(0) + numericCode) % 11 === 0) {
+                        deterministicUnavailable.push(String(row) + letter);
+                    }
+                }
+            }
+
+            const reserved = await query(
+                "SELECT DISTINCT seat_number FROM booking_seats " +
+                "WHERE flight_number = $1 AND departure_date = $2 AND status = 'reserved'",
+                [segmentFlight.number, date]
+            );
+
+            return [...new Set([
+                ...deterministicUnavailable,
+                ...reserved.rows.map((row) => String(row.seat_number).toUpperCase())
+            ])].sort((a, b) => {
+                const aMatch = a.match(/^(\d+)([A-F])$/);
+                const bMatch = b.match(/^(\d+)([A-F])$/);
+                if (!aMatch || !bMatch) return a.localeCompare(b);
+                return Number(aMatch[1]) - Number(bMatch[1]) ||
+                    aMatch[2].localeCompare(bMatch[2]);
+            });
+        };
+
+        try {
+            const outboundUnavailable = await getUnavailableSeats(flight, departureDate);
+            let returnSegment = null;
+            let union = outboundUnavailable;
+
+            if (returnFlight) {
+                const returnUnavailable = await getUnavailableSeats(returnFlight, returnDate);
+                returnSegment = {
+                    flightNumber: returnFlight.number,
+                    date: returnDate,
+                    unavailableSeats: returnUnavailable
+                };
+                union = [...new Set([...outboundUnavailable, ...returnUnavailable])];
+            }
+
+            return res.json({
+                flightNumber: flight.number,
+                departureDate,
+                tripType,
+                outbound: {
+                    flightNumber: flight.number,
+                    date: departureDate,
+                    unavailableSeats: outboundUnavailable
+                },
+                return: returnSegment,
+                unavailableSeats: union
+            });
+        } catch (error) {
+            console.error("Unable to load seat availability:", error);
+            return res.status(500).json({ error: "Unable to load seat availability." });
+        }
+    }
+);
+
 // ============================================================
 // VIRTUAL BOOKING ENGINE
 // ============================================================
