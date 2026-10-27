@@ -2187,7 +2187,7 @@ Departure
 >
 
 <label>
-Return
+Return date (automatic return flight)
 </label>
 
 <input
@@ -3063,6 +3063,8 @@ No payment was collected or processed.
 </p>
 
 
+<div id="returnLegInfo" class="virtual-booking-notice" hidden aria-live="polite"></div>
+
 <div class="boarding-pass" id="boardingPass">
 
 
@@ -3714,6 +3716,8 @@ let selectedSeat = null;
 
 let selectedSeats = [];
 
+let selectedReturnFlight = null;
+
 let selectedCabin = "Economy";
 
 let bookingReference = null;
@@ -3790,6 +3794,11 @@ function formatDateReadable(dateString) {
 function setTripType(type) {
 
     tripType = type;
+    selectedSeats = [];
+    selectedSeat = null;
+    selectedReturnFlight = null;
+    if (selectedFlight) generateSeats();
+    updateSeatSelectionStatus();
 
     const roundButton =
         document.getElementById("roundTripButton");
@@ -4381,6 +4390,29 @@ function generateSeats() {
    CREATE SEAT
 ========================================================= */
 
+function getSelectedReturnFlight() {
+    if (!selectedFlight) return null;
+    const route = flightDatabase.find(
+        (item) => item.from === selectedFlight.to && item.to === selectedFlight.from
+    );
+    if (!route || !route.flights.length) return null;
+
+    const best = route.flights.slice().sort(
+        (a, b) => a[5] - b[5] || a[0].localeCompare(b[0])
+    )[0];
+
+    return {
+        number: best[0],
+        departure: best[1],
+        arrival: best[2],
+        duration: best[3],
+        aircraft: best[4],
+        price: best[5],
+        from: route.from,
+        to: route.to
+    };
+}
+
 function createSeat(
     row,
     letter,
@@ -4472,6 +4504,18 @@ function createSeat(
                 numeric
             ) % 11 === 0;
 
+        if (!occupied && tripType === "roundtrip") {
+            const returnFlight = getSelectedReturnFlight();
+            if (returnFlight) {
+                const returnNumeric = parseInt(returnFlight.number.replace("ECV", ""), 10);
+                occupied =
+                    (
+                        row * 7 +
+                        letter.charCodeAt(0) +
+                        returnNumeric
+                    ) % 11 === 0;
+            }
+        }
     }
 
 
@@ -4943,7 +4987,22 @@ async function completeBooking() {
         selectedFlight.date = savedBooking.departureDate;
         selectedSeats = Array.isArray(savedBooking.seatNumbers) ? savedBooking.seatNumbers : selectedSeats;
         selectedSeat = selectedSeats[0] || null;
+        selectedReturnFlight = savedBooking.returnFlight || null;
         generateBoardingPass();
+
+        const returnInfo = document.getElementById("returnLegInfo");
+        if (returnInfo && selectedReturnFlight) {
+            returnInfo.hidden = false;
+            returnInfo.textContent =
+                "Return flight " + selectedReturnFlight.number + " on " +
+                formatDateReadable(selectedReturnFlight.date) + " · " +
+                selectedReturnFlight.departure + "–" + selectedReturnFlight.arrival +
+                " · seats " + (selectedReturnFlight.seatNumbers || []).join(", ") +
+                ". This return service was automatically selected from the published demo schedule.";
+        } else if (returnInfo) {
+            returnInfo.hidden = true;
+            returnInfo.textContent = "";
+        }
 
         const confirmationMessage = document.querySelector("#confirmation > p");
         if (confirmationMessage) {
@@ -4960,6 +5019,7 @@ async function completeBooking() {
         localStorage.setItem("echoAirLastBooking", JSON.stringify({
             reference: bookingReference,
             flight: selectedFlight,
+            returnFlight: selectedReturnFlight,
             seatNumbers: selectedSeats,
             cabin: selectedCabin
         }));
@@ -5140,7 +5200,17 @@ function generateBoardingPass() {
                 selectedSeats,
 
             cabin:
-                selectedCabin
+                selectedCabin,
+
+            returnFlight:
+                selectedReturnFlight
+                    ? {
+                        number: selectedReturnFlight.number,
+                        date: document.getElementById("returnDate").value,
+                        departure: selectedReturnFlight.departure,
+                        arrival: selectedReturnFlight.arrival
+                    }
+                    : null
 
         });
 
@@ -5563,22 +5633,17 @@ document
 ========================================================= */
 
 document
-    .getElementById(
-        "departureDate"
-    )
-    .addEventListener(
-        "change",
-        function() {
-
-            document
-                .getElementById(
-                    "returnDate"
-                )
-                .min =
-                this.value;
-
+    .getElementById("departureDate")
+    .addEventListener("change", function() {
+        const returnInput = document.getElementById("returnDate");
+        const nextDay = new Date(this.value + "T00:00:00");
+        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDate = formatDateInput(nextDay);
+        returnInput.min = nextDate;
+        if (!returnInput.value || returnInput.value <= this.value) {
+            returnInput.value = nextDate;
         }
-    );
+    });
 
 
 /* =========================================================
