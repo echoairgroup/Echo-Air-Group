@@ -13,20 +13,122 @@ const {
 dotenv.config();
 
 const app = express();
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
 
 // ============================================================
 // BASIC CONFIGURATION
 // ============================================================
 
-app.use(cors());
-app.use(express.json());
+const PORT = Number(process.env.PORT) || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || "";
+const DATABASE_URL = process.env.DATABASE_URL;
 
-const PORT =
-    process.env.PORT || 3000;
+// Admin access is opt-in and fails closed unless explicitly configured.
+const ADMIN_USER_IDS = new Set(
+    (process.env.ADMIN_USER_IDS || "")
+        .split(",")
+        .map((value) => Number(value.trim()))
+        .filter((value) => Number.isSafeInteger(value) && value > 0)
+);
 
-const JWT_SECRET =
-    process.env.JWT_SECRET ||
-    "CHANGE_THIS_SECRET";
+function createRateLimiter({ windowMs, max, message }) {
+    const requests = new Map();
+
+    return function rateLimit(req, res, next) {
+        const now = Date.now();
+        const key = String(req.ip || req.socket?.remoteAddress || "unknown");
+        let entry = requests.get(key);
+
+        if (!entry || entry.resetAt <= now) {
+            entry = { count: 0, resetAt: now + windowMs };
+            requests.set(key, entry);
+        }
+
+        if (requests.size > 5000) {
+            for (const [storedKey, storedEntry] of requests) {
+                if (storedEntry.resetAt <= now) requests.delete(storedKey);
+            }
+        }
+
+        res.setHeader("RateLimit-Limit", String(max));
+        res.setHeader("RateLimit-Remaining", String(Math.max(0, max - entry.count)));
+        res.setHeader("RateLimit-Reset", String(Math.ceil(entry.resetAt / 1000)));
+
+        if (entry.count >= max) {
+            res.setHeader("Retry-After", String(Math.max(1, Math.ceil((entry.resetAt - now) / 1000))));
+            return res.status(429).json({ error: message });
+        }
+
+        entry.count += 1;
+        return next();
+    };
+}
+
+const registerRateLimit = createRateLimiter({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    message: "Too many registration attempts. Please try again later."
+});
+
+const loginRateLimit = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: "Too many login attempts. Please wait and try again."
+});
+
+function requireAdmin(req, res, next) {
+    if (ADMIN_USER_IDS.size === 0) {
+        return res.status(503).json({
+            error: "Administrator access is not configured."
+        });
+    }
+
+    if (!ADMIN_USER_IDS.has(Number(req.user?.id))) {
+        return res.status(403).json({
+            error: "Administrator access required."
+        });
+    }
+
+    return next();
+}
+
+// Baseline security headers. A restrictive CSP requires a separate
+// migration because existing pages rely on inline scripts and styles.
+app.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+
+    if (req.secure || req.get("x-forwarded-proto") === "https") {
+        res.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+    }
+
+    return next();
+});
+
+const configuredOrigins = (process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+if (configuredOrigins.length > 0) {
+    app.use(cors({
+        origin(origin, callback) {
+            if (!origin || configuredOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(null, false);
+        }
+    }));
+} else {
+    // Keep public read-only endpoints working until the canonical web origin
+    // is verified and CORS_ORIGINS is configured in the hosting environment.
+    app.use(cors());
+}
+
+app.use(express.json({ limit: "256kb" }));
 
 const DATABASE_URL =
     process.env.DATABASE_URL;
@@ -1292,6 +1394,10 @@ async function getUserStats(userId) {
 
 function createToken(user) {
 
+    if (!JWT_SECRET) {
+        throw new Error("JWT_SECRET is not configured.");
+    }
+
     return jwt.sign(
         {
             id:
@@ -1315,6 +1421,12 @@ async function authenticate(
     res,
     next
 ) {
+
+    if (!JWT_SECRET) {
+        return res.status(503).json({
+            error: "Authentication is not configured."
+        });
+    }
 
     const header =
         req.headers.authorization;
@@ -1775,6 +1887,8 @@ app.get(
 
         } catch (error) {
 
+            console.error("Health check failed:", error);
+
             res.status(500).json({
 
                 status:
@@ -1789,7 +1903,7 @@ app.get(
                         : "not connected",
 
                 error:
-                    error.message
+                    "Health check failed"
             });
         }
     }
@@ -1801,6 +1915,7 @@ app.get(
 
 app.post(
     "/api/auth/register",
+    registerRateLimit,
     async (req, res) => {
 
         try {
@@ -1937,6 +2052,7 @@ app.post(
 
 app.post(
     "/api/auth/login",
+    loginRateLimit,
     async (req, res) => {
 
         try {
@@ -3847,6 +3963,7 @@ async function importAllFlights(
 app.post(
     "/api/sync/all",
     authenticate,
+    requireAdmin,
     async (req, res) => {
 
         try {
@@ -4583,6 +4700,7 @@ app.get(
 app.get(
     "/api/admin/database-stats",
     authenticate,
+    requireAdmin,
     async (req, res) => {
 
         try {
