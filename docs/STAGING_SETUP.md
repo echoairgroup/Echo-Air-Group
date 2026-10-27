@@ -27,7 +27,7 @@ In the new staging service's **Environment** settings, add the following variabl
 |---|---|
 | `DATABASE_URL` | Copy the connection string from Neon for project **Echo Air Group** → branch **development-platform-expansion** → database **echoair_staging**. Do not use the `production` branch or the production database. |
 | `JWT_SECRET` | Generate a new staging-only random secret. For example, run `node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"` on your own machine and paste the result directly into Render. Never reuse the production secret. |
-| `CORS_ORIGINS` | `https://echoairgroup.github.io` |
+| `CORS_ORIGINS` | `http://localhost:5500,http://127.0.0.1:5500` |
 | `ADMIN_USER_IDS` | Leave empty until a staging test account is registered and its numeric `public.users.id` is verified. Then set only the trusted staging admin ID(s), comma-separated. |
 | `NODE_ENV` | `production` |
 | `NEWSKY_API_KEY` | Leave unset until NewSky integration is intentionally tested against a staging-safe configuration. |
@@ -49,7 +49,7 @@ After the environment variables are saved, let Render deploy the feature branch.
 
 ## 4. Frontend staging
 
-The static website's normal default API URL is the existing production API for backward compatibility. Do not direct production visitors to this staging service. For end-to-end staging, use a staging-only frontend or a local preview that sets `window.ECHO_API_URL` to the new Render staging API **before** loading `script.js`, `booking.html`'s inline application code, and the three admin-page scripts. Do not commit a staging URL as the public production default.
+The static website's normal default API URL is the existing production API for backward compatibility. Do not direct production visitors to this staging service. For end-to-end staging, use a local copy of this feature branch; do not test against the public production site. In that local copy, replace every occurrence of `https://echo-air-group-api.onrender.com/api` with the new Render staging API base URL (`https://YOUR-STAGING-SERVICE.onrender.com/api`) in HTML/JavaScript files. This changes both the script defaults and the native form `action` fallbacks so form submits cannot accidentally go to production. Set `CORS_ORIGINS` to the exact origin of the local preview (for example, `http://127.0.0.1:5500`; use `http://localhost:5500` instead if that is what the browser address bar shows). If you use another port, allow that exact origin instead. These edits are temporary and local only: do not commit the staging URL to the public production branch.
 
 ## 5. Release boundary
 
