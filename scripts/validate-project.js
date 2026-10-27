@@ -22,13 +22,13 @@ for (const file of htmlFiles) {
   report(!/http:\/\/(?:localhost|127\.0\.0\.1):\d+\/api/i.test(source), file + " contains a localhost API URL.");
   report(!source.includes(String.fromCharCode(96).repeat(3)), file + " contains a stray Markdown code fence.");
 
-  const scriptPattern = /<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi;
+  const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
   let scriptMatch;
   let inlineIndex = 0;
   while ((scriptMatch = scriptPattern.exec(source)) !== null) {
     const attributes = scriptMatch[1] || "";
     const body = scriptMatch[2] || "";
-    if (/\\bsrc\\s*=/.test(attributes) || /type=["'](?:application\\/(?:ld\\+json|json)|module)["']/i.test(attributes) || !body.trim()) {
+    if (/\bsrc\s*=/.test(attributes) || /type=["'](?:application\/(?:ld\+json|json)|module)["']/i.test(attributes) || !body.trim()) {
       continue;
     }
     inlineIndex += 1;
