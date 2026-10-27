@@ -34,9 +34,9 @@
 - Protected global flight synchronization and database diagnostics with administrator authorization. If no admin list is configured, the routes remain disabled rather than granting access to every registered pilot.
 - Fixed the account dashboard's hosted API fallback and shared ranking endpoint; escaped dynamic HTML values; aligned displayed rank thresholds with the backend.
 - Replaced the pilot application form's third-party mail submission with a first-party API, a privacy acknowledgement and transactional Neon persistence.
-- Added first-party APIs and Neon persistence for pilot applications, contact messages and management applications; public submissions are rate-limited and validated.
+- Added first-party APIs and Neon persistence for pilot applications, contact messages and management applications; public submissions are rate-limited and validated. Optional Discord alerts can notify a configured channel using reference numbers only.
 - Added separate pilot recruitment and combined contact/management inbox screens with admin-only access, search/filter, pagination, status updates, private review notes and transactional event history.
-- Added explicit privacy acknowledgements to the forms and updated the privacy policy. A fixed retention schedule and optional notification-channel configuration still need to be finalized before production.
+- Added explicit privacy acknowledgements to the forms and updated the privacy policy. A fixed retention schedule, a real `ADMIN_USER_IDS` list, exact CORS origins and optional `DISCORD_APPLICATIONS_CHANNEL_ID` still need to be configured before production.
 - Added accessible focus states, reduced-motion support, tests, project validation, environment examples, documentation, and a read-only CI workflow.
 - Planned removal of workflows that push generated changes directly back to the repository on this feature branch.
 
@@ -46,6 +46,7 @@
 - Configure `ADMIN_USER_IDS` with actual trusted administrator IDs from `public.users`; do not guess. Until configured, admin-only sync/statistics routes intentionally return 503.
 - Verify the canonical frontend hostname and set `CORS_ORIGINS` to the exact required origins. Until confirmed, legacy permissive CORS remains enabled for compatibility.
 - Set Render's health-check path to `/api/health` after verifying the staging deployment.
+- If recruitment wants notifications, set `DISCORD_APPLICATIONS_CHANNEL_ID` in Render to a channel the bot can send messages to. Notifications intentionally contain submission type and reference number only.
 - Configure Neon snapshots/backup retention and test restore to a separate branch.
 - Establish a concrete retention schedule for stored contact and recruitment submissions, then configure and test deletion/anonymization procedures. The current policy deliberately discloses that a fixed period is not yet published.
 - The booking page references a future `/api/google-wallet` endpoint in a code comment; no corresponding backend route was found in the API route inventory. Google Wallet passes need credentials and a real implementation.
