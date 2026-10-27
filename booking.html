@@ -3718,6 +3718,15 @@ let selectedCabin = "Economy";
 
 let bookingReference = null;
 
+document.getElementById("passengers").addEventListener("change", () => {
+    const count = Number.parseInt(document.getElementById("passengers").value, 10) || 1;
+    selectedSeats = selectedSeats.slice(0, count);
+    selectedSeat = selectedSeats[0] || null;
+    if (selectedFlight) generateSeats();
+    updateSeatSelectionStatus();
+    updateSummary();
+});
+
 
 /* =========================================================
    DATE DEFAULTS
