@@ -145,6 +145,7 @@ if (configuredOrigins.length > 0) {
 }
 
 app.use(express.json({ limit: "256kb" }));
+app.use(express.urlencoded({ extended: false, limit: "32kb" }));
 
 // ============================================================
 // ENVIRONMENT CHECKS
@@ -5000,13 +5001,13 @@ app.get(
             }
 
             if (search) {
-                params.push("%" + search.replace(/[\\%_]/g, "\\$&") + "%");
+                params.push(search.toLowerCase());
                 const searchParam = "$" + params.length;
                 filters.push(
-                    "(first_name ILIKE " + searchParam + " ESCAPE '\\\\' OR " +
-                    "last_name ILIKE " + searchParam + " ESCAPE '\\\\' OR " +
-                    "email ILIKE " + searchParam + " ESCAPE '\\\\' OR " +
-                    "discord_username ILIKE " + searchParam + " ESCAPE '\\\\')"
+                    "(POSITION(" + searchParam + " IN LOWER(first_name)) > 0 OR " +
+                    "POSITION(" + searchParam + " IN LOWER(last_name)) > 0 OR " +
+                    "POSITION(" + searchParam + " IN LOWER(email)) > 0 OR " +
+                    "POSITION(" + searchParam + " IN LOWER(discord_username)) > 0)"
                 );
             }
 
