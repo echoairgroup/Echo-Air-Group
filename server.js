@@ -5010,6 +5010,430 @@ app.get(
 );
 
 // ============================================================
+// ============================================================
+// VIRTUAL BOOKING ENGINE
+// ============================================================
+
+// The website labels these as virtual fares: they are never payments,
+// and the API intentionally has no card-number, expiry or CVV fields.
+const DEMO_FLIGHT_ROWS = [
+    ["ECV201","EHAM","LIRF","07:20","09:35","2h 15m","A320",129],
+    ["ECV203","EHAM","LIRF","11:45","14:00","2h 15m","A21N",145],
+    ["ECV205","EHAM","LIRF","16:30","18:45","2h 15m","A320",139],
+    ["ECV207","EHAM","LIRF","20:10","22:25","2h 15m","B737-800",125],
+    ["ECV202","LIRF","EHAM","08:15","10:35","2h 20m","A320",132],
+    ["ECV204","LIRF","EHAM","12:30","14:50","2h 20m","A21N",148],
+    ["ECV206","LIRF","EHAM","17:15","19:35","2h 20m","A320",142],
+    ["ECV208","LIRF","EHAM","21:00","23:20","2h 20m","B737-800",128],
+    ["ECV301","LEBL","LIRF","06:50","08:40","1h 50m","A319",99],
+    ["ECV303","LEBL","LIRF","10:25","12:15","1h 50m","A320",109],
+    ["ECV305","LEBL","LIRF","14:40","16:30","1h 50m","A21N",115],
+    ["ECV307","LEBL","LIRF","19:20","21:10","1h 50m","A320",105],
+    ["ECV302","LIRF","LEBL","08:10","10:05","1h 55m","A319",101],
+    ["ECV304","LIRF","LEBL","11:50","13:45","1h 55m","A320",111],
+    ["ECV306","LIRF","LEBL","15:25","17:20","1h 55m","A21N",117],
+    ["ECV308","LIRF","LEBL","20:10","22:05","1h 55m","A320",107],
+    ["ECV401","LIRF","LKPR","07:15","08:55","1h 40m","A320",105],
+    ["ECV403","LIRF","LKPR","13:20","15:00","1h 40m","A319",98],
+    ["ECV405","LIRF","LKPR","18:45","20:25","1h 40m","A21N",112],
+    ["ECV402","LKPR","LIRF","09:45","11:25","1h 40m","A320",108],
+    ["ECV404","LKPR","LIRF","15:55","17:35","1h 40m","A319",101],
+    ["ECV406","LKPR","LIRF","21:15","22:55","1h 40m","A21N",115],
+    ["ECV501","EHAM","LEBL","06:40","08:55","2h 15m","A320",119],
+    ["ECV503","EHAM","LEBL","12:15","14:30","2h 15m","A21N",129],
+    ["ECV505","EHAM","LEBL","17:50","20:05","2h 15m","A320",124],
+    ["ECV502","LEBL","EHAM","09:40","12:00","2h 20m","A320",122],
+    ["ECV504","LEBL","EHAM","15:15","17:35","2h 20m","A21N",132],
+    ["ECV506","LEBL","EHAM","20:50","23:10","2h 20m","A320",127],
+    ["ECV601","LGAV","LIRF","07:00","08:50","1h 50m","A320",115],
+    ["ECV603","LGAV","LIRF","12:40","14:30","1h 50m","A21N",125],
+    ["ECV605","LGAV","LIRF","18:10","20:00","1h 50m","A320",119],
+    ["ECV602","LIRF","LGAV","09:40","11:30","1h 50m","A320",118],
+    ["ECV604","LIRF","LGAV","15:20","17:10","1h 50m","A21N",128],
+    ["ECV606","LIRF","LGAV","20:50","22:40","1h 50m","A320",122],
+    ["ECV701","LIRF","LGKR","08:00","09:20","1h 20m","A319",89],
+    ["ECV703","LIRF","LGKR","13:45","15:05","1h 20m","A320",95],
+    ["ECV705","LIRF","LGKR","18:30","19:50","1h 20m","A21N",102],
+    ["ECV702","LGKR","LIRF","10:10","11:30","1h 20m","A319",92],
+    ["ECV704","LGKR","LIRF","15:55","17:15","1h 20m","A320",98],
+    ["ECV706","LGKR","LIRF","20:40","22:00","1h 20m","A21N",105],
+    ["ECV801","EHAM","LFPG","07:15","08:40","1h 25m","A320",99],
+    ["ECV803","EHAM","LFPG","12:20","13:45","1h 25m","A319",95],
+    ["ECV805","EHAM","LFPG","18:15","19:40","1h 25m","A21N",108],
+    ["ECV802","LFPG","EHAM","09:30","10:55","1h 25m","A320",102],
+    ["ECV804","LFPG","EHAM","15:00","16:25","1h 25m","A319",98],
+    ["ECV806","LFPG","EHAM","20:30","21:55","1h 25m","A21N",111],
+    ["ECV901","EGLL","EHAM","06:55","09:15","1h 20m","A320",109],
+    ["ECV903","EGLL","EHAM","12:10","14:30","1h 20m","A21N",119],
+    ["ECV905","EGLL","EHAM","18:40","21:00","1h 20m","A320",114],
+    ["ECV902","EHAM","EGLL","09:50","10:10","1h 20m","A320",112],
+    ["ECV904","EHAM","EGLL","15:25","15:45","1h 20m","A21N",122],
+    ["ECV906","EHAM","EGLL","21:45","22:05","1h 20m","A320",117],
+    ["ECV1001","KJFK","EHAM","17:30","06:20","7h 50m","A350-900",499],
+    ["ECV1003","KJFK","EHAM","21:15","10:05","7h 50m","A350-900",529],
+    ["ECV1002","EHAM","KJFK","11:20","13:55","8h 35m","A350-900",519],
+    ["ECV1004","EHAM","KJFK","15:40","18:15","8h 35m","A350-900",549],
+    ["ECV1101","WSSS","KJFK","10:30","17:20","17h 50m","A350-900",899],
+    ["ECV1103","WSSS","KJFK","23:15","06:05","17h 50m","A350-900",949]
+];
+
+const DEMO_FLIGHT_SCHEDULE = new Map(
+    DEMO_FLIGHT_ROWS.map(([number, from, to, departure, arrival, duration, aircraft, baseFare]) => [
+        number, { number, from, to, departure, arrival, duration, aircraft, baseFare }
+    ])
+);
+
+const DEMO_AIRPORT_CODES = new Set([
+    "LIRF", "LEBL", "LKPR", "EHAM", "EDDF", "LOWW", "LGKR",
+    "LGAV", "LIRN", "LIMC", "LFPG", "EGLL", "KJFK", "WSSS"
+]);
+
+function generatePersistentBookingReference() {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    return "EAG" + Array.from(
+        { length: 6 },
+        () => alphabet[crypto.randomInt(0, alphabet.length)]
+    ).join("");
+}
+
+function isValidIsoDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const parsed = new Date(value + "T00:00:00.000Z");
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+// Create a persistent virtual itinerary. This endpoint never accepts payment
+// credentials and never charges a card; the server calculates a display-only fare.
+app.post(
+    "/api/bookings",
+    bookingRateLimit,
+    async (req, res) => {
+        const input = req.body || {};
+        const flight = input.flight || {};
+        const passenger = input.passenger || {};
+        const flightNumber = String(flight.number || "").trim().toUpperCase();
+        const officialFlight = DEMO_FLIGHT_SCHEDULE.get(flightNumber);
+        const tripType = String(input.tripType || "").trim().toLowerCase();
+        const departureDate = String(flight.date || "").trim();
+        const returnDateRaw = String(input.returnDate || "").trim();
+        const returnDate = tripType === "roundtrip" ? returnDateRaw : null;
+        const passengerCount = Number(input.passengerCount);
+        const cabin = String(input.cabin || "").trim();
+        const firstName = String(passenger.firstName || "").trim();
+        const lastName = String(passenger.lastName || "").trim();
+        const email = String(passenger.email || "").trim().toLowerCase();
+        const phone = String(passenger.phone || "").trim();
+        const seatNumbers = Array.isArray(input.seatNumbers)
+            ? input.seatNumbers.map((seat) => String(seat).trim().toUpperCase())
+            : [];
+        const privacyAcknowledged =
+            input.privacyAcknowledged === true || input.privacyAcknowledged === "yes";
+        const allowedCabins = new Set(["Economy", "Premium Economy", "Business"]);
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!privacyAcknowledged) {
+            return res.status(400).json({ error: "Please acknowledge the privacy notice before confirming your virtual booking." });
+        }
+        if (!officialFlight) {
+            return res.status(400).json({ error: "The selected flight is not in the published Echo Air Group demo schedule." });
+        }
+        if (
+            String(flight.from || "").toUpperCase() !== officialFlight.from ||
+            String(flight.to || "").toUpperCase() !== officialFlight.to ||
+            String(flight.departure || "") !== officialFlight.departure ||
+            String(flight.arrival || "") !== officialFlight.arrival ||
+            String(flight.duration || "") !== officialFlight.duration ||
+            String(flight.aircraft || "") !== officialFlight.aircraft
+        ) {
+            return res.status(400).json({ error: "The selected flight details do not match the published demo schedule." });
+        }
+        if (!DEMO_AIRPORT_CODES.has(officialFlight.from) || !DEMO_AIRPORT_CODES.has(officialFlight.to) || officialFlight.from === officialFlight.to) {
+            return res.status(400).json({ error: "The selected route is invalid." });
+        }
+        if (!isValidIsoDate(departureDate) || departureDate < new Date().toISOString().slice(0, 10)) {
+            return res.status(400).json({ error: "Choose a valid departure date that is today or later." });
+        }
+        if (tripType !== "oneway" && tripType !== "roundtrip") {
+            return res.status(400).json({ error: "Choose one-way or round-trip mode." });
+        }
+        if (tripType === "roundtrip" && (!returnDate || !isValidIsoDate(returnDate) || returnDate <= departureDate)) {
+            return res.status(400).json({ error: "For a round trip, the return date must be after the departure date." });
+        }
+        if (!Number.isSafeInteger(passengerCount) || passengerCount < 1 || passengerCount > 8) {
+            return res.status(400).json({ error: "Choose between 1 and 8 passengers." });
+        }
+        if (!allowedCabins.has(cabin)) {
+            return res.status(400).json({ error: "Choose a valid cabin." });
+        }
+        if (!firstName || !lastName || firstName.length > 80 || lastName.length > 80) {
+            return res.status(400).json({ error: "Enter a valid passenger first and last name." });
+        }
+        if (!emailPattern.test(email) || email.length > 254) {
+            return res.status(400).json({ error: "Enter a valid passenger email address." });
+        }
+        if (phone.length > 40) {
+            return res.status(400).json({ error: "Phone number must be 40 characters or fewer." });
+        }
+        if (seatNumbers.length !== passengerCount || new Set(seatNumbers).size !== passengerCount) {
+            return res.status(400).json({ error: "Select one unique seat for each passenger." });
+        }
+
+        const flightNumericCode = Number(flightNumber.replace("ECV", ""));
+        for (const seat of seatNumbers) {
+            const match = seat.match(/^([1-9]|1\d|2[0-4])([A-F])$/);
+            if (!match) {
+                return res.status(400).json({ error: "One or more seat selections are invalid." });
+            }
+
+            const row = Number(match[1]);
+            const letter = match[2];
+            const cabinAllowsSeat =
+                (cabin === "Economy" && row >= 5) ||
+                (cabin === "Premium Economy" && row >= 5 && row <= 6) ||
+                (cabin === "Business" && row <= 4);
+
+            if (!cabinAllowsSeat) {
+                return res.status(400).json({ error: "One or more seats do not belong to the selected cabin." });
+            }
+            if ((row * 7 + letter.charCodeAt(0) + flightNumericCode) % 11 === 0) {
+                return res.status(409).json({ error: "One of the selected seats is marked unavailable. Please select another seat." });
+            }
+        }
+
+        const extrasInput = input.extras || {};
+        const extras = {
+            baggage: extrasInput.baggage === true,
+            meal: extrasInput.meal === true,
+            wifi: extrasInput.wifi === true,
+            insurance: extrasInput.insurance === true
+        };
+        const perPassengerSurcharge =
+            (cabin === "Premium Economy" ? 35 : cabin === "Business" ? 120 : 0) +
+            (extras.baggage ? 35 : 0) +
+            (extras.meal ? 18 : 0) +
+            (extras.wifi ? 9 : 0) +
+            (extras.insurance ? 15 : 0);
+        const estimatedTotal = Number(((officialFlight.baseFare + perPassengerSurcharge) * passengerCount).toFixed(2));
+
+        const client = await pool.connect();
+        let booking;
+        try {
+            await client.query("BEGIN");
+            const reference = generatePersistentBookingReference();
+            const inserted = await client.query(
+                "INSERT INTO bookings (booking_reference, trip_type, passenger_count, passenger_first_name, " +
+                "passenger_last_name, passenger_email, passenger_phone, flight_number, origin_icao, destination_icao, " +
+                "departure_date, return_date, departure_time, arrival_time, duration, aircraft, seat_numbers, cabin, extras, " +
+                "estimated_total, privacy_notice_version, privacy_acknowledged_at, status, payment_status) " +
+                "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,CURRENT_TIMESTAMP,'confirmed','not_applicable') " +
+                "RETURNING id, booking_reference, status, trip_type, passenger_count, flight_number, origin_icao, destination_icao, " +
+                "departure_date, return_date, departure_time, arrival_time, aircraft, seat_numbers, cabin, estimated_total, created_at",
+                [
+                    reference, tripType, passengerCount, firstName, lastName, email,
+                    phone || null, officialFlight.number, officialFlight.from, officialFlight.to,
+                    departureDate, returnDate, officialFlight.departure, officialFlight.arrival,
+                    officialFlight.duration, officialFlight.aircraft, seatNumbers, cabin,
+                    extras, estimatedTotal, "2026-10"
+                ]
+            );
+            booking = inserted.rows[0];
+
+            for (const seat of seatNumbers) {
+                await client.query(
+                    "INSERT INTO booking_seats (booking_id, flight_number, departure_date, seat_number, status) " +
+                    "VALUES ($1,$2,$3,$4,'reserved')",
+                    [booking.id, officialFlight.number, departureDate, seat]
+                );
+            }
+
+            await client.query(
+                "INSERT INTO booking_events (booking_id, action, note) VALUES ($1, 'created', $2)",
+                [booking.id, "Virtual reservation created. No payment was collected."]
+            );
+            await client.query("COMMIT");
+
+            return res.status(201).json({
+                message: "Your virtual booking is confirmed. No payment was taken.",
+                booking: {
+                    id: booking.id,
+                    reference: booking.booking_reference,
+                    status: booking.status,
+                    tripType: booking.trip_type,
+                    passengerCount: booking.passenger_count,
+                    flightNumber: booking.flight_number,
+                    from: booking.origin_icao,
+                    to: booking.destination_icao,
+                    departureDate: booking.departure_date,
+                    returnDate: booking.return_date,
+                    departure: String(booking.departure_time).slice(0, 5),
+                    arrival: String(booking.arrival_time).slice(0, 5),
+                    aircraft: booking.aircraft,
+                    seatNumbers: booking.seat_numbers,
+                    cabin: booking.cabin,
+                    estimatedTotal: Number(booking.estimated_total),
+                    paymentStatus: "not_applicable",
+                    createdAt: booking.created_at
+                }
+            });
+        } catch (error) {
+            await client.query("ROLLBACK").catch(() => {});
+            if (error?.code === "23505" && error?.constraint === "idx_booking_active_flight_seat") {
+                return res.status(409).json({ error: "One of those seats was just reserved. Please choose different seats." });
+            }
+            console.error("Unable to create virtual booking:", error);
+            return res.status(500).json({ error: "We could not save your virtual booking. Please try again." });
+        } finally {
+            client.release();
+        }
+    }
+);
+
+// Authorized booking list for operational review. Booking records are demo
+// itineraries only; payment_status is always not_applicable.
+app.get(
+    "/api/admin/bookings",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const requestedStatus = String(req.query.status || "").trim().toLowerCase();
+        const search = String(req.query.search || "").trim().slice(0, 100).toLowerCase();
+        const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 25));
+        const offset = Math.min(10000, Math.max(0, Number.parseInt(req.query.offset, 10) || 0));
+
+        if (requestedStatus && !["confirmed", "cancelled"].includes(requestedStatus)) {
+            return res.status(400).json({ error: "Invalid booking status filter." });
+        }
+
+        try {
+            const filters = [];
+            const params = [];
+            if (requestedStatus) {
+                params.push(requestedStatus);
+                filters.push("status = $" + params.length);
+            }
+            if (search) {
+                params.push(search);
+                const p = "$" + params.length;
+                filters.push(
+                    "(POSITION(" + p + " IN LOWER(booking_reference)) > 0 OR " +
+                    "POSITION(" + p + " IN LOWER(passenger_first_name)) > 0 OR " +
+                    "POSITION(" + p + " IN LOWER(passenger_last_name)) > 0 OR " +
+                    "POSITION(" + p + " IN LOWER(passenger_email)) > 0 OR " +
+                    "POSITION(" + p + " IN LOWER(flight_number)) > 0)"
+                );
+            }
+            const where = filters.length ? "WHERE " + filters.join(" AND ") : "";
+            const count = await query("SELECT COUNT(*)::int AS total FROM bookings " + where, params);
+            const pageParams = params.slice();
+            pageParams.push(limit, offset);
+            const result = await query(
+                "SELECT id, booking_reference, status, payment_status, trip_type, passenger_count, " +
+                "passenger_first_name, passenger_last_name, passenger_email, passenger_phone, " +
+                "flight_number, origin_icao, destination_icao, departure_date, return_date, " +
+                "departure_time, arrival_time, duration, aircraft, seat_numbers, cabin, extras, estimated_total, created_at, updated_at " +
+                "FROM bookings " + where +
+                " ORDER BY created_at DESC, id DESC LIMIT $" + (pageParams.length - 1) +
+                " OFFSET $" + pageParams.length,
+                pageParams
+            );
+            return res.json({
+                total: Number(count.rows[0].total),
+                limit,
+                offset,
+                bookings: result.rows
+            });
+        } catch (error) {
+            console.error("Unable to load virtual bookings:", error);
+            return res.status(500).json({ error: "Unable to load bookings." });
+        }
+    }
+);
+
+app.patch(
+    "/api/admin/bookings/:id",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const id = Number(req.params.id);
+        const action = String(req.body?.action || "").trim().toLowerCase();
+        const note = String(req.body?.note || "").trim();
+
+        if (!Number.isSafeInteger(id) || id < 1) {
+            return res.status(400).json({ error: "Invalid booking ID." });
+        }
+        if (action !== "cancel") {
+            return res.status(400).json({ error: "Only cancellation is available for virtual bookings." });
+        }
+        if (note.length > 2000) {
+            return res.status(400).json({ error: "Cancellation note must be 2,000 characters or fewer." });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+            const selected = await client.query(
+                "SELECT id, booking_reference, status FROM bookings WHERE id = $1 FOR UPDATE",
+                [id]
+            );
+            const current = selected.rows[0];
+            if (!current) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ error: "Booking not found." });
+            }
+            if (current.status === "cancelled") {
+                await client.query("COMMIT");
+                return res.json({ booking: { id: current.id, reference: current.booking_reference, status: current.status } });
+            }
+            const updated = await client.query(
+                "UPDATE bookings SET status='cancelled', updated_at=CURRENT_TIMESTAMP " +
+                "WHERE id=$1 RETURNING id, booking_reference, status, updated_at",
+                [id]
+            );
+            await client.query(
+                "UPDATE booking_seats SET status='released' WHERE booking_id=$1 AND status='reserved'",
+                [id]
+            );
+            await client.query(
+                "INSERT INTO booking_events (booking_id, actor_user_id, action, note) VALUES ($1,$2,'cancelled',$3)",
+                [id, req.user.id, note || "Virtual booking cancelled by an administrator."]
+            );
+            await client.query("COMMIT");
+            return res.json({ booking: updated.rows[0] });
+        } catch (error) {
+            await client.query("ROLLBACK").catch(() => {});
+            console.error("Unable to cancel virtual booking:", error);
+            return res.status(500).json({ error: "Unable to cancel booking." });
+        } finally {
+            client.release();
+        }
+    }
+);
+
+app.get(
+    "/api/admin/bookings/:id/events",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const id = Number(req.params.id);
+        if (!Number.isSafeInteger(id) || id < 1) {
+            return res.status(400).json({ error: "Invalid booking ID." });
+        }
+        try {
+            const result = await query(
+                "SELECT e.id, e.action, e.note, e.created_at, u.username AS actor_username, " +
+                "u.display_name AS actor_display_name FROM booking_events e " +
+                "LEFT JOIN users u ON u.id = e.actor_user_id WHERE e.booking_id=$1 " +
+                "ORDER BY e.created_at DESC, e.id DESC LIMIT 100",
+                [id]
+            );
+            return res.json({ events: result.rows });
+        } catch (error) {
+            console.error("Unable to load booking history:", error);
+            return res.status(500).json({ error: "Unable to load booking history." });
+        }
+    }
+);
+
 // PILOT APPLICATIONS
 // ============================================================
 
