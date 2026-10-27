@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("node:crypto");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
@@ -93,6 +94,12 @@ const contactRateLimit = createRateLimiter({
     windowMs: 60 * 60 * 1000,
     max: 5,
     message: "Too many messages submitted. Please try again later."
+});
+
+const bookingRateLimit = createRateLimiter({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    message: "Too many virtual booking attempts. Please try again later."
 });
 
 function requireAuthConfigured(req, res, next) {
@@ -446,6 +453,100 @@ async function initializeDatabase() {
     await query(`
         CREATE INDEX IF NOT EXISTS idx_external_submission_events_submission
         ON external_submission_events (submission_id, created_at DESC);
+    `);
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS bookings (
+            id BIGSERIAL PRIMARY KEY,
+            booking_reference VARCHAR(12) NOT NULL UNIQUE,
+            status VARCHAR(20) NOT NULL DEFAULT 'confirmed'
+                CHECK (status IN ('confirmed', 'cancelled')),
+            payment_status VARCHAR(24) NOT NULL DEFAULT 'not_applicable'
+                CHECK (payment_status = 'not_applicable'),
+            trip_type VARCHAR(12) NOT NULL
+                CHECK (trip_type IN ('oneway', 'roundtrip')),
+            passenger_count SMALLINT NOT NULL
+                CHECK (passenger_count BETWEEN 1 AND 8),
+            passenger_first_name VARCHAR(80) NOT NULL,
+            passenger_last_name VARCHAR(80) NOT NULL,
+            passenger_email VARCHAR(254) NOT NULL,
+            passenger_phone VARCHAR(40),
+            flight_number VARCHAR(12) NOT NULL,
+            origin_icao CHAR(4) NOT NULL,
+            destination_icao CHAR(4) NOT NULL,
+            departure_date DATE NOT NULL,
+            return_date DATE,
+            departure_time TIME NOT NULL,
+            arrival_time TIME NOT NULL,
+            duration VARCHAR(20) NOT NULL,
+            aircraft VARCHAR(30) NOT NULL,
+            seat_numbers VARCHAR(5)[] NOT NULL,
+            cabin VARCHAR(20) NOT NULL
+                CHECK (cabin IN ('Economy', 'Premium Economy', 'Business')),
+            extras JSONB NOT NULL DEFAULT '{}'::jsonb,
+            estimated_total NUMERIC(10, 2) NOT NULL CHECK (estimated_total >= 0),
+            privacy_notice_version VARCHAR(24) NOT NULL DEFAULT '2026-10',
+            privacy_acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CHECK (origin_icao <> destination_icao),
+            CHECK (array_length(seat_numbers, 1) = passenger_count),
+            CHECK (
+                (trip_type = 'oneway' AND return_date IS NULL) OR
+                (trip_type = 'roundtrip' AND return_date IS NOT NULL AND return_date > departure_date)
+            )
+        );
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_bookings_created_at
+        ON bookings (created_at DESC);
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_bookings_status_created_at
+        ON bookings (status, created_at DESC);
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_bookings_flight_date
+        ON bookings (flight_number, departure_date);
+    `);
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS booking_seats (
+            id BIGSERIAL PRIMARY KEY,
+            booking_id BIGINT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+            flight_number VARCHAR(12) NOT NULL,
+            departure_date DATE NOT NULL,
+            seat_number VARCHAR(5) NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'reserved'
+                CHECK (status IN ('reserved', 'released')),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (booking_id, seat_number)
+        );
+    `);
+
+    await query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_booking_active_flight_seat
+        ON booking_seats (flight_number, departure_date, seat_number)
+        WHERE status = 'reserved';
+    `);
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS booking_events (
+            id BIGSERIAL PRIMARY KEY,
+            booking_id BIGINT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+            actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            action VARCHAR(40) NOT NULL,
+            note VARCHAR(2000),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_booking_events_booking
+        ON booking_events (booking_id, created_at DESC);
     `);
 
     console.log(
