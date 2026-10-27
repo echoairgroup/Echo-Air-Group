@@ -476,6 +476,12 @@ async function initializeDatabase() {
             destination_icao CHAR(4) NOT NULL,
             departure_date DATE NOT NULL,
             return_date DATE,
+            return_flight_number VARCHAR(12),
+            return_departure_time TIME,
+            return_arrival_time TIME,
+            return_duration VARCHAR(20),
+            return_aircraft VARCHAR(30),
+            return_seat_numbers VARCHAR(5)[],
             departure_time TIME NOT NULL,
             arrival_time TIME NOT NULL,
             duration VARCHAR(20) NOT NULL,
@@ -496,6 +502,25 @@ async function initializeDatabase() {
                 (trip_type = 'roundtrip' AND return_date IS NOT NULL AND return_date > departure_date)
             )
         );
+    `);
+
+    await query(`
+        ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_flight_number VARCHAR(12);
+    `);
+    await query(`
+        ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_departure_time TIME;
+    `);
+    await query(`
+        ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_arrival_time TIME;
+    `);
+    await query(`
+        ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_duration VARCHAR(20);
+    `);
+    await query(`
+        ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_aircraft VARCHAR(30);
+    `);
+    await query(`
+        ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_seat_numbers VARCHAR(5)[];
     `);
 
     await query(`
@@ -5102,6 +5127,16 @@ function isValidIsoDate(value) {
     return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
+function findDemoReturnFlight(outboundFlight) {
+    if (!outboundFlight) return null;
+    return DEMO_FLIGHT_ROWS
+        .filter((row) => row[1] === outboundFlight.to && row[2] === outboundFlight.from)
+        .map(([number, from, to, departure, arrival, duration, aircraft, baseFare]) => ({
+            number, from, to, departure, arrival, duration, aircraft, baseFare
+        }))
+        .sort((a, b) => a.baseFare - b.baseFare || a.number.localeCompare(b.number))[0] || null;
+}
+
 // Create a persistent virtual itinerary. This endpoint never accepts payment
 // credentials and never charges a card; the server calculates a display-only fare.
 app.post(
@@ -5114,6 +5149,9 @@ app.post(
         const flightNumber = String(flight.number || "").trim().toUpperCase();
         const officialFlight = DEMO_FLIGHT_SCHEDULE.get(flightNumber);
         const tripType = String(input.tripType || "").trim().toLowerCase();
+        const returnFlight = tripType === "roundtrip"
+            ? findDemoReturnFlight(officialFlight)
+            : null;
         const departureDate = String(flight.date || "").trim();
         const returnDateRaw = String(input.returnDate || "").trim();
         const returnDate = tripType === "roundtrip" ? returnDateRaw : null;
@@ -5159,6 +5197,9 @@ app.post(
         if (tripType === "roundtrip" && (!returnDate || !isValidIsoDate(returnDate) || returnDate <= departureDate)) {
             return res.status(400).json({ error: "For a round trip, the return date must be after the departure date." });
         }
+        if (tripType === "roundtrip" && !returnFlight) {
+            return res.status(400).json({ error: "There is no published return service for this route. Choose a different route or a one-way trip." });
+        }
         if (!Number.isSafeInteger(passengerCount) || passengerCount < 1 || passengerCount > 8) {
             return res.status(400).json({ error: "Choose between 1 and 8 passengers." });
         }
@@ -5196,7 +5237,13 @@ app.post(
                 return res.status(400).json({ error: "One or more seats do not belong to the selected cabin." });
             }
             if ((row * 7 + letter.charCodeAt(0) + flightNumericCode) % 11 === 0) {
-                return res.status(409).json({ error: "One of the selected seats is marked unavailable. Please select another seat." });
+                return res.status(409).json({ error: "One of the selected seats is marked unavailable on the outbound flight. Please select another seat." });
+            }
+            if (returnFlight) {
+                const returnFlightNumericCode = Number(returnFlight.number.replace("ECV", ""));
+                if ((row * 7 + letter.charCodeAt(0) + returnFlightNumericCode) % 11 === 0) {
+                    return res.status(409).json({ error: "One of the selected seats is marked unavailable on the return flight. Please select different seats." });
+                }
             }
         }
 
@@ -5213,7 +5260,11 @@ app.post(
             (extras.meal ? 18 : 0) +
             (extras.wifi ? 9 : 0) +
             (extras.insurance ? 15 : 0);
-        const estimatedTotal = Number(((officialFlight.baseFare + perPassengerSurcharge) * passengerCount).toFixed(2));
+        const legs = returnFlight ? 2 : 1;
+        const estimatedTotal = Number((
+            (officialFlight.baseFare + (returnFlight ? returnFlight.baseFare : 0) +
+                perPassengerSurcharge * legs) * passengerCount
+        ).toFixed(2));
 
         const client = await pool.connect();
         let booking;
@@ -5223,17 +5274,22 @@ app.post(
             const inserted = await client.query(
                 "INSERT INTO bookings (booking_reference, trip_type, passenger_count, passenger_first_name, " +
                 "passenger_last_name, passenger_email, passenger_phone, flight_number, origin_icao, destination_icao, " +
-                "departure_date, return_date, departure_time, arrival_time, duration, aircraft, seat_numbers, cabin, extras, " +
-                "estimated_total, privacy_notice_version, privacy_acknowledged_at, status, payment_status) " +
-                "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,CURRENT_TIMESTAMP,'confirmed','not_applicable') " +
+                "departure_date, return_date, return_flight_number, return_departure_time, return_arrival_time, " +
+                "return_duration, return_aircraft, return_seat_numbers, departure_time, arrival_time, duration, aircraft, " +
+                "seat_numbers, cabin, extras, estimated_total, privacy_notice_version, privacy_acknowledged_at, status, payment_status) " +
+                "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,CURRENT_TIMESTAMP,'confirmed','not_applicable') " +
                 "RETURNING id, booking_reference, status, trip_type, passenger_count, flight_number, origin_icao, destination_icao, " +
-                "departure_date, return_date, departure_time, arrival_time, aircraft, seat_numbers, cabin, estimated_total, created_at",
+                "departure_date, return_date, return_flight_number, return_departure_time, return_arrival_time, return_duration, " +
+                "return_aircraft, return_seat_numbers, departure_time, arrival_time, aircraft, seat_numbers, cabin, estimated_total, created_at",
                 [
                     reference, tripType, passengerCount, firstName, lastName, email,
                     phone || null, officialFlight.number, officialFlight.from, officialFlight.to,
-                    departureDate, returnDate, officialFlight.departure, officialFlight.arrival,
-                    officialFlight.duration, officialFlight.aircraft, seatNumbers, cabin,
-                    extras, estimatedTotal, "2026-10"
+                    departureDate, returnDate, returnFlight?.number || null,
+                    returnFlight?.departure || null, returnFlight?.arrival || null,
+                    returnFlight?.duration || null, returnFlight?.aircraft || null,
+                    returnFlight ? seatNumbers : null,
+                    officialFlight.departure, officialFlight.arrival, officialFlight.duration,
+                    officialFlight.aircraft, seatNumbers, cabin, extras, estimatedTotal, "2026-10"
                 ]
             );
             booking = inserted.rows[0];
@@ -5244,6 +5300,13 @@ app.post(
                     "VALUES ($1,$2,$3,$4,'reserved')",
                     [booking.id, officialFlight.number, departureDate, seat]
                 );
+                if (returnFlight) {
+                    await client.query(
+                        "INSERT INTO booking_seats (booking_id, flight_number, departure_date, seat_number, status) " +
+                        "VALUES ($1,$2,$3,$4,'reserved')",
+                        [booking.id, returnFlight.number, returnDate, seat]
+                    );
+                }
             }
 
             await client.query(
@@ -5269,6 +5332,15 @@ app.post(
                     arrival: String(booking.arrival_time).slice(0, 5),
                     aircraft: booking.aircraft,
                     seatNumbers: booking.seat_numbers,
+                    returnFlight: booking.return_flight_number ? {
+                        number: booking.return_flight_number,
+                        departure: String(booking.return_departure_time).slice(0, 5),
+                        arrival: String(booking.return_arrival_time).slice(0, 5),
+                        duration: booking.return_duration,
+                        aircraft: booking.return_aircraft,
+                        date: booking.return_date,
+                        seatNumbers: booking.return_seat_numbers
+                    } : null,
                     cabin: booking.cabin,
                     estimatedTotal: Number(booking.estimated_total),
                     paymentStatus: "not_applicable",
@@ -5330,6 +5402,7 @@ app.get(
                 "SELECT id, booking_reference, status, payment_status, trip_type, passenger_count, " +
                 "passenger_first_name, passenger_last_name, passenger_email, passenger_phone, " +
                 "flight_number, origin_icao, destination_icao, departure_date, return_date, " +
+                "return_flight_number, return_departure_time, return_arrival_time, return_duration, return_aircraft, return_seat_numbers, " +
                 "departure_time, arrival_time, duration, aircraft, seat_numbers, cabin, extras, estimated_total, created_at, updated_at " +
                 "FROM bookings " + where +
                 " ORDER BY created_at DESC, id DESC LIMIT $" + (pageParams.length - 1) +
