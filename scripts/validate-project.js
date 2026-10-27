@@ -54,6 +54,15 @@ report(/CREATE TABLE IF NOT EXISTS pilot_application_events/.test(server), "Pilo
 report(/"\/api\/applications",[\s\S]{0,80}applicationRateLimit/.test(server), "Public application intake rate limit is missing.");
 report(/"\/api\/admin\/applications",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Application listing is not restricted to administrators.");
 report(/"\/api\/admin\/applications\/:id",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Application updates are not restricted to administrators.");
+report(/"\/api\/admin\/applications\/:id\/events",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Application history is not restricted to administrators.");
+report(/CREATE TABLE IF NOT EXISTS external_submissions/.test(server), "Contact/manager submission table is missing.");
+report(/CREATE TABLE IF NOT EXISTS external_submission_events/.test(server), "Contact/manager audit history table is missing.");
+report(/"\/api\/contact",[\s\S]{0,80}contactRateLimit/.test(server), "Contact endpoint rate limit is missing.");
+report(/"\/api\/manager-applications",[\s\S]{0,100}managerApplicationRateLimit/.test(server), "Manager application rate limit is missing.");
+report(/"\/api\/admin\/submissions",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Submissions inbox is not restricted to administrators.");
+report(/"\/api\/admin\/submissions\/:id",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Submission updates are not restricted to administrators.");
+report(/DISCORD_APPLICATIONS_CHANNEL_ID/.test(server), "Optional recruitment notification configuration is missing.");
+
 
 const accountPage = read("Server.html");
 report(accountPage.includes("https://echo-air-group-api.onrender.com/api"), "Account dashboard must have a deployed API fallback.");
@@ -68,6 +77,21 @@ const joinPage = read("join.html");
 report(joinPage.includes('id="pilotApplicationForm"'), "Pilot application form is not wired to the API.");
 report(joinPage.includes('id="privacyAcknowledged"'), "Pilot application privacy acknowledgement is missing.");
 report(!joinPage.includes("formsubmit.co"), "Pilot application still sends personal data to the legacy external form handler.");
+
+const contactPage = read("contact.html");
+report(contactPage.includes('id="contactForm"'), "Contact form is not wired to the first-party API.");
+report(contactPage.includes('id="contactPrivacyAcknowledged"'), "Contact privacy acknowledgement is missing.");
+report(!contactPage.includes("formsubmit.co"), "Contact form still submits personal data to the legacy external form handler.");
+
+const managerPage = read("manager.html");
+report(managerPage.includes('id="managerApplicationForm"'), "Manager application is not wired to the first-party API.");
+report(managerPage.includes('id="managerPrivacyAcknowledged"'), "Manager privacy acknowledgement is missing.");
+report(!managerPage.includes("formsubmit.co"), "Manager application still submits personal data to the legacy external form handler.");
+
+const submissionsDashboard = read("submissions-admin.html");
+report(submissionsDashboard.includes("escapeHtml(item.email)"), "Submissions inbox must escape personal data.");
+report(submissionsDashboard.includes("headers.Authorization = 'Bearer ' + token"), "Submissions inbox must send the session token.");
+
 
 const applicationDashboard = read("applications-admin.html");
 report(applicationDashboard.includes("escapeHtml(app.email)"), "Recruitment dashboard must escape applicant-provided values.");
