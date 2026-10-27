@@ -1,6 +1,6 @@
 # Echo Air Group staging setup
 
-This guide creates a separate staging API for the `codex/platform-expansion` branch. It must use the empty Neon development branch/database, never the production branch.
+This guide describes the manual setup of a separate staging API for the `codex/platform-expansion` branch. The staging Render service has not been created yet because the privileged Neon connection string must be entered directly into Render's dashboard. Use only the empty Neon development branch/database, never the production branch.
 
 ## 1. Render web service
 
