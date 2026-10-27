@@ -33,7 +33,9 @@
 - Added baseline HTTP security headers, a 256 KB JSON body limit, in-memory registration/login rate limits, configurable CORS origins, and an opt-in `ADMIN_USER_IDS` allow-list.
 - Protected global flight synchronization and database diagnostics with administrator authorization. If no admin list is configured, the routes remain disabled rather than granting access to every registered pilot.
 - Fixed the account dashboard's hosted API fallback and shared ranking endpoint; escaped dynamic HTML values; aligned displayed rank thresholds with the backend.
-- Restored native submission for the join page's existing email form.
+- Replaced the pilot application form's third-party mail submission with a first-party API, a privacy acknowledgement and transactional Neon persistence.
+- Added a recruitment administration screen with paginated search/filter, status changes, review notes and a transactional audit history.
+- Documented remaining FormSubmit use for contact and manager forms; these are still external submissions and are the next form workflow to migrate.
 - Added accessible focus states, reduced-motion support, tests, project validation, environment examples, documentation, and a read-only CI workflow.
 - Planned removal of workflows that push generated changes directly back to the repository on this feature branch.
 
@@ -52,7 +54,7 @@
 
 1. Establish a tested staging deployment using only the isolated Neon development database.
 2. Standardize authentication, explicit pilot/admin roles, and dashboard behavior.
-3. Centralize frontend API configuration and shared page components without changing the Echo green/charcoal brand.
-4. Add persistent pilot applications, audit history, and a secure administration/review workflow.
+3. Migrate the contact form and management application to the same first-party intake/review infrastructure.
+4. Centralize frontend API configuration and shared page components without changing the Echo green/charcoal brand.
 5. Improve booking, route/flight data integration, responsive UX, accessibility, SEO, and performance.
-6. Add database migrations, backup/restore drills, integration tests, health monitoring, and controlled releases.
+6. Add database migration tooling, backup/restore drills, integration tests, health monitoring, and controlled releases.
