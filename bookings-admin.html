@@ -174,7 +174,11 @@
           '<span class="pill '+status+'">'+status+'</span></div>'+
           '<div class="details">'+
             detail('Route',route)+detail('Departure',dateLabel(b.departure_date)+' · '+timeLabel(b.departure_time))+
-            detail('Return date',dateLabel(b.return_date)||'One-way')+detail('Flight time',timeLabel(b.departure_time)+' → '+timeLabel(b.arrival_time))+
+            detail('Return date',b.return_date ? dateLabel(b.return_date) : 'One-way')+
+            detail('Return flight',b.return_flight_number || '—')+
+            detail('Return departure',b.return_flight_number ? (timeLabel(b.return_departure_time)+' → '+timeLabel(b.return_arrival_time)) : '—')+
+            detail('Return seats',Array.isArray(b.return_seat_numbers)?b.return_seat_numbers.join(', '):'—')+
+            detail('Flight time',timeLabel(b.departure_time)+' → '+timeLabel(b.arrival_time))+
             detail('Passengers',b.passenger_count)+detail('Seats',seats)+detail('Cabin',b.cabin)+
             detail('Aircraft',b.aircraft)+detail('Duration',b.duration)+detail('Trip type',b.trip_type)+
             detail('Estimated virtual fare','€'+Number(b.estimated_total||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2} ) )+
