@@ -36,6 +36,7 @@
 - Replaced the pilot application form's third-party mail submission with a first-party API, a privacy acknowledgement and transactional Neon persistence.
 - Added first-party APIs and Neon persistence for pilot applications, contact messages, management applications and simulator-only bookings; public intake is rate-limited and validated. Optional Discord alerts can notify a configured channel using reference numbers only.
 - Added separate pilot recruitment, contact/management inbox and virtual-booking admin screens with admin-only access, search/filter, pagination, status updates, private review notes, cancellation and transactional event history.
+- Corrected the home page canonical URL to `https://echoairgroup.github.io/Echo-Air-Group/`.
 - Connected virtual booking confirmation to Neon; validates the flight schedule, round-trip return leg, seats per passenger and seat availability on both legs. The booking workflow explicitly does not collect or process payment or request card data.
 - Added explicit privacy acknowledgements to the forms and updated the privacy policy. A fixed retention schedule, a real `ADMIN_USER_IDS` list, exact CORS origins and optional `DISCORD_APPLICATIONS_CHANNEL_ID` still need to be configured before production.
 - Added accessible focus states, reduced-motion support, tests, project validation, environment examples, documentation, and a read-only CI workflow.
@@ -55,7 +56,7 @@
 
 ## Next implementation phases
 
-1. Establish a tested staging deployment using only the isolated Neon development database.
+1. Create and configure the Render staging service with the connection string for `development-platform-expansion` / `echoair_staging`, a staging-only JWT secret and `CORS_ORIGINS`; then run API, booking and form smoke tests. See `docs/STAGING_SETUP.md`.
 2. Standardize authentication, explicit pilot/admin roles, and dashboard behavior.
 3. Establish notification routing and a documented retention/deletion process for the first-party submissions inbox.
 4. Centralize frontend API configuration and shared page components without changing the Echo green/charcoal brand.
