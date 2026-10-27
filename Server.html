@@ -74,9 +74,9 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px;bor
 <h2>Earn your way up</h2>
 <p class="muted">Stars are calculated from NewSky flight ratings. The default system awards <strong>rating × 10</strong> stars per flight.</p>
 <div class="stat-grid">
-<div class="stat"><small>First Officer</small><b>100 ⭐</b></div>
-<div class="stat"><small>Senior F/O</small><b>250 ⭐</b></div>
-<div class="stat"><small>Captain</small><b>500 ⭐</b></div>
+<div class="stat"><small>First Officer</small><b>1,000 ⭐</b></div>
+<div class="stat"><small>Senior F/O</small><b>2,5,000 ⭐</b></div>
+<div class="stat"><small>Captain</small><b>5,000 ⭐</b></div>
 </div>
 </div>
 </div>
@@ -157,7 +157,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px;bor
 </div></footer>
 <script src="script.js"></script>
 <script>
-const API = (window.ECHO_API_URL || '').replace(/\/$/,'') || 'http://localhost:3000/api';
+const API = (window.ECHO_API_URL || 'https://echo-air-group-api.onrender.com/api').replace(/\/+$/, '');
 let token = localStorage.getItem('echo_token');
 
 async function api(path, options={}) {
@@ -168,9 +168,10 @@ async function api(path, options={}) {
   if(!r.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
-function msg(id,text,error=false){const e=document.getElementById(id);e.textContent=text;e.style.display='block';e.classList.toggle('error',error);}
+function msg(id,text,error=false){const e=document.getElementById(id);if(!e)return;e.textContent=text;e.style.display='block';e.classList.toggle('error',error);}
+function escapeHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');}
 function rankInfo(stars){
-  const ranks=[['Cadet',0],['First Officer',100],['Senior First Officer',250],['Captain',500],['Senior Captain',750],['Commander',1000]];
+  const ranks=[['Cadet',0],['First Officer',1000],['Senior First Officer',2500],['Captain',5000],['Senior Captain',7500],['Commander',10000]];
   let current=ranks[0],next=null;
   for(let i=0;i<ranks.length;i++){if(stars>=ranks[i][1]) current=ranks[i]; else {next=ranks[i];break;}}
   return {current,next};
@@ -192,7 +193,7 @@ function renderDashboard(d){
   } else {document.getElementById('progressBar').style.width='100%';document.getElementById('progressText').textContent='Maximum rank reached';}
   document.getElementById('newskyId').value=d.user.newskyPilotId||'';
   const rows=d.flights||[];
-  document.getElementById('flightRows').innerHTML=rows.length?rows.map(f=>`<tr><td>${new Date(f.depTimeAct||f.depTime).toLocaleDateString()}</td><td>${f.depIcao} → ${f.arrIcao}</td><td>${f.aircraft}</td><td>${Number(f.rating).toFixed(2)}</td><td>${Number(f.stars).toFixed(1)} ⭐</td></tr>`).join(''):'<tr><td colspan="5" class="muted">No linked flights yet.</td></tr>';
+  document.getElementById('flightRows').innerHTML=rows.length?rows.map(f=>`<tr><td>${escapeHtml(new Date(f.depTimeAct||f.depTime).toLocaleDateString())}</td><td>${escapeHtml(f.depIcao)} → ${escapeHtml(f.arrIcao)}</td><td>${escapeHtml(f.aircraft)}</td><td>${Number(f.rating).toFixed(2)}</td><td>${Number(f.stars).toFixed(1)} ⭐</td></tr>`).join(''):'<tr><td colspan="5" class="muted">No linked flights yet.</td></tr>';
 }
 async function loadMe(){if(!token)return;try{renderDashboard(await api('/me'));}catch(e){localStorage.removeItem('echo_token');token=null;}}
 async function leaderboard() {
@@ -200,7 +201,7 @@ async function leaderboard() {
     try {
 
         const response = await fetch(
-            "http://localhost:3000/api/ranking"
+            API + "/ranking"
         );
 
         if (!response.ok) {
@@ -237,12 +238,12 @@ async function leaderboard() {
                         </td>
 
                         <td>
-                            ${pilot.name}
+                            ${escapeHtml(pilot.name)}
                         </td>
 
                         <td>
                             <span class="badge">
-                                ${pilot.rank}
+                                ${escapeHtml(pilot.rank)}
                             </span>
                         </td>
 
