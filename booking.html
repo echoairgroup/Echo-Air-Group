@@ -4559,43 +4559,21 @@ function validatePassenger() {
             "lastName"
         ).value.trim();
 
-    const dob =
-        document.getElementById(
-            "dob"
-        ).value;
-
-    const nationality =
-        document.getElementById(
-            "nationality"
-        ).value;
-
     const email =
         document.getElementById(
             "email"
         ).value.trim();
 
+    const validEmail =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    if (
-        !first ||
-        !last ||
-        !dob ||
-        !nationality ||
-        !email
-    ) {
-
-        showToast(
-            "Please complete all required passenger fields."
-        );
-
+    if (!first || !last || !validEmail) {
+        showToast("Enter a first name, last name and valid email address.");
         return;
-
     }
 
-
     updateSummary();
-
     goStep(4);
-
 }
 
 
@@ -5598,40 +5576,6 @@ document
                 )
                 .min =
                 this.value;
-
-        }
-    );
-
-
-/* =========================================================
-   CARD NUMBER FORMAT
-========================================================= */
-
-document
-    .getElementById(
-        "cardNumber"
-    )
-    .addEventListener(
-        "input",
-        function() {
-
-            let value =
-                this.value
-                    .replace(
-                        /\D/g,
-                        ""
-                    )
-                    .substring(
-                        0,
-                        16
-                    );
-
-
-            this.value =
-                value.replace(
-                    /(.{4})/g,
-                    "$1 "
-                ).trim();
 
         }
     );
