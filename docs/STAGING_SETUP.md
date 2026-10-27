@@ -1,10 +1,12 @@
 # Echo Air Group staging setup
 
-This guide describes the manual setup of a separate staging API for the `codex/platform-expansion` branch. The staging Render service has not been created yet because the privileged Neon connection string must be entered directly into Render's dashboard. Use only the empty Neon development branch/database, never the production branch.
+This guide records the separate staging setup for the `codex/platform-expansion` branch. The staging API and static frontend are provisioned in Render and use the isolated Neon development branch/database. Use staging URLs for tests; never point test writes at the production branch.
 
 ## 1. Render web service
 
-In Render's **My Workspace**, choose **New → Web Service** and connect this repository.
+In Render's **My Workspace**, the staging services currently deployed are **`echo-air-group-staging-api`** and **`echo-air-group-staging-frontend`**. Open the [staging API](https://echo-air-group-staging-api.onrender.com/api/health), [staging frontend](https://echo-air-group-staging-frontend.onrender.com), or their [Render API dashboard](https://dashboard.render.com/web/srv-dbgeinei0phs73ejncrg) and [frontend dashboard](https://dashboard.render.com/static/srv-dbgesdqfngtc738r3dc0). The frontend is published from the feature branch; its Render build rewrites API host references in the build copy only, so the GitHub files and live production frontend remain unchanged.
+
+If rebuilding the services from scratch, use the settings below:
 
 Use these settings:
 
@@ -27,7 +29,7 @@ In the new staging service's **Environment** settings, add the following variabl
 |---|---|
 | `DATABASE_URL` | Copy the connection string from Neon for project **Echo Air Group** → branch **development-platform-expansion** → database **echoair_staging**. Do not use the `production` branch or the production database. |
 | `JWT_SECRET` | Generate a new staging-only random secret. For example, run `node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"` on your own machine and paste the result directly into Render. Never reuse the production secret. |
-| `CORS_ORIGINS` | `http://localhost:5500,http://127.0.0.1:5500` |
+| `CORS_ORIGINS` | `http://localhost:5500,http://127.0.0.1:5500,https://echo-air-group-staging-frontend.onrender.com` |
 | `ADMIN_USER_IDS` | Leave empty until a staging test account is registered and its numeric `public.users.id` is verified. Then set only the trusted staging admin ID(s), comma-separated. |
 | `NODE_ENV` | `production` |
 | `NEWSKY_API_KEY` | Leave unset until NewSky integration is intentionally tested against a staging-safe configuration. |
@@ -49,7 +51,7 @@ After the environment variables are saved, let Render deploy the feature branch.
 
 ## 4. Frontend staging
 
-The static website's normal default API URL is the existing production API for backward compatibility. Do not direct production visitors to this staging service. For end-to-end staging, use a local copy of this feature branch; do not test against the public production site. In that local copy, replace every occurrence of `https://echo-air-group-api.onrender.com/api` with the new Render staging API base URL (`https://YOUR-STAGING-SERVICE.onrender.com/api`) in HTML/JavaScript files. This changes both the script defaults and the native form `action` fallbacks so form submits cannot accidentally go to production. Set `CORS_ORIGINS` to the exact origin of the local preview (for example, `http://127.0.0.1:5500`; use `http://localhost:5500` instead if that is what the browser address bar shows). If you use another port, allow that exact origin instead. These edits are temporary and local only: do not commit the staging URL to the public production branch.
+The live staging frontend is `https://echo-air-group-staging-frontend.onrender.com`. The Render static-site build substitutes the production API hostname with `echo-air-group-staging-api.onrender.com` in root-level HTML/JavaScript files in the temporary build workspace and verifies no production API hostname remains in the published root HTML/JS. This does not commit staging URLs into GitHub and does not alter the production site. CORS allows this staging frontend plus `http://localhost:5500` and `http://127.0.0.1:5500` for a local preview. Do not test write operations on the public production site.
 
 ## 5. Release boundary
 
