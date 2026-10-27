@@ -53,7 +53,7 @@ report(!joinPage.includes("formsubmit.co"), "Pilot application still sends perso
 
 const applicationDashboard = read("applications-admin.html");
 report(applicationDashboard.includes("escapeHtml(app.email)"), "Recruitment dashboard must escape applicant-provided values.");
-report(applicationDashboard.includes("Authorization: 'Bearer ' + token"), "Recruitment dashboard must send the session token.");
+report(applicationDashboard.includes("headers.Authorization = 'Bearer ' + token"), "Recruitment dashboard must send the session token.");
 
 const workflowsDir = path.join(root, ".github", "workflows");
 if (fs.existsSync(workflowsDir)) {
