@@ -147,7 +147,7 @@ test("form dropdown options and server allow-lists stay synchronized", () => {
     assert.ok(select, "Missing select element: " + id);
     return [...select[0].matchAll(/<option\b[^>]*>([\s\S]*?)<\/option>/gi)]
       .map((match) => match[1].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim())
-      .filter(Boolean);
+      .filter((label) => label && !/^(select|choose)\b/i.test(label));
   };
 
   const allowedLabels = (name, routeOffset) => {
