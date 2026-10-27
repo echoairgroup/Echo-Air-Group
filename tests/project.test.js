@@ -134,3 +134,53 @@ test("virtual booking API persists reservations and never collects payment crede
   assert.match(dashboard, /headers\.Authorization='Bearer '\+token/);
   assert.match(dashboard, /Not applicable/);
 });
+
+
+test("form dropdown options and server allow-lists stay synchronized", () => {
+  const server = read("server.js");
+  const join = read("join.html");
+  const contact = read("contact.html");
+  const manager = read("manager.html");
+
+  const optionLabels = (html, id) => {
+    const select = html.match(new RegExp('<select\\s+id="' + id + '"[\\s\\S]*?<\\/select>', "i"));
+    assert.ok(select, "Missing select element: " + id);
+    return [...select[0].matchAll(/<option\b[^>]*>([\s\S]*?)<\/option>/gi)]
+      .map((match) => match[1].replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+  };
+
+  const allowedLabels = (name, routeOffset) => {
+    const start = server.indexOf("const " + name + " = new Set([", routeOffset);
+    assert.ok(start >= 0, "Missing API validation set: " + name);
+    const end = server.indexOf("]);", start);
+    assert.ok(end > start, "Invalid API validation set: " + name);
+    return [...server.slice(start, end).matchAll(/"([^"]+)"/g)]
+      .map((match) => match[1].replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+  };
+
+  const pilotRoute = server.indexOf('"/api/applications"');
+  for (const [field, setName] of [
+    ["simulator", "allowedSimulators"],
+    ["experience", "allowedExperience"],
+    ["network", "allowedNetworks"]
+  ]) {
+    assert.deepEqual(optionLabels(join, field), allowedLabels(setName, pilotRoute), field + " pilot options");
+  }
+
+  const contactRoute = server.indexOf('"/api/contact"');
+  assert.deepEqual(optionLabels(contact, "subject"), allowedLabels("allowedSubjects", contactRoute), "contact subject options");
+
+  const managerRoute = server.indexOf('"/api/manager-applications"');
+  for (const [field, setName] of [
+    ["current_position", "allowedPositions"],
+    ["manager_type", "allowedRoles"],
+    ["management_experience", "allowedExperience"],
+    ["availability", "allowedAvailability"],
+    ["simulator", "allowedSimulators"],
+    ["network", "allowedNetworks"]
+  ]) {
+    assert.deepEqual(optionLabels(manager, field), allowedLabels(setName, managerRoute), field + " manager options");
+  }
+});
