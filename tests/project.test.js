@@ -25,9 +25,32 @@ test("deployed account dashboard uses the shared hosted API base", () => {
   assert.match(page, /API \+ "\/ranking"/);
 });
 
-test("application form helper preserves native form submission", () => {
+test("pilot application form submits to the API and acknowledges the privacy notice", () => {
   const script = read("script.js");
-  assert.doesNotMatch(script, /function submitApplication\(e\)\s*\{\s*e\.preventDefault\(\)/);
+  const join = read("join.html");
+  assert.match(script, /fetch\(ECHO_API_BASE \+ '\/applications'/);
+  assert.match(script, /addEventListener\('submit', submitApplication\)/);
+  assert.match(join, /id="pilotApplicationForm"/);
+  assert.match(join, /id="privacyAcknowledged"[\s\S]{0,200}required/);
+  assert.doesNotMatch(join, /formsubmit\.co/);
+});
+
+test("pilot application API validates inputs and keeps review endpoints admin-only", () => {
+  const server = read("server.js");
+  assert.match(server, /CREATE TABLE IF NOT EXISTS pilot_applications/);
+  assert.match(server, /CREATE TABLE IF NOT EXISTS pilot_application_events/);
+  assert.match(server, /"\/api\/applications",[\s\S]{0,80}applicationRateLimit/);
+  assert.match(server, /"\/api\/admin\/applications",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/);
+  assert.match(server, /"\/api\/admin\/applications\/:id",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/);
+  assert.match(server, /await client\.query\("BEGIN"\)/);
+  assert.match(server, /await client\.query\("COMMIT"\)/);
+});
+
+test("recruitment dashboard escapes applicant-provided fields", () => {
+  const page = read("applications-admin.html");
+  assert.match(page, /escapeHtml\(app\.email\)/);
+  assert.match(page, /escapeHtml\(app\.reason/);
+  assert.match(page, /Authorization: 'Bearer ' \+ token/);
 });
 
 test("required public pages have titles and responsive viewport tags", () => {
@@ -35,7 +58,7 @@ test("required public pages have titles and responsive viewport tags", () => {
   assert.ok(htmlFiles.length >= 10);
   for (const file of htmlFiles) {
     const source = read(file);
-    assert.match(source, /<title\b[^>]*>[^<]+<\/title>/i, `${file} title`);
-    assert.match(source, /name=["']viewport["']/i, `${file} viewport`);
+    assert.match(source, /<title\b[^>]*>[^<]+<\/title>/i, file + " title");
+    assert.match(source, /name=["']viewport["']/i, file + " viewport");
   }
 });
