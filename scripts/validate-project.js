@@ -3,6 +3,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
@@ -20,6 +21,23 @@ for (const file of htmlFiles) {
   report(/name=["']viewport["']/i.test(source), file + " is missing a responsive viewport meta tag.");
   report(!/http:\/\/(?:localhost|127\.0\.0\.1):\d+\/api/i.test(source), file + " contains a localhost API URL.");
   report(!source.includes(String.fromCharCode(96).repeat(3)), file + " contains a stray Markdown code fence.");
+
+  const scriptPattern = /<script\\b([^>]*)>([\\s\\S]*?)<\\/script>/gi;
+  let scriptMatch;
+  let inlineIndex = 0;
+  while ((scriptMatch = scriptPattern.exec(source)) !== null) {
+    const attributes = scriptMatch[1] || "";
+    const body = scriptMatch[2] || "";
+    if (/\\bsrc\\s*=/.test(attributes) || /type=["'](?:application\\/(?:ld\\+json|json)|module)["']/i.test(attributes) || !body.trim()) {
+      continue;
+    }
+    inlineIndex += 1;
+    try {
+      new vm.Script(body, { filename: file + " inline script " + inlineIndex });
+    } catch (error) {
+      report(false, file + " inline script " + inlineIndex + " has a syntax error: " + error.message);
+    }
+  }
 }
 
 const server = read("server.js");
