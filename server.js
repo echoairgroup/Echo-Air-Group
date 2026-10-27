@@ -4942,7 +4942,7 @@ app.post(
             try {
                 await client.query("BEGIN");
                 result = await client.query(
-                    \`
+                    `
                     INSERT INTO pilot_applications (
                         first_name, last_name, age, country, email,
                         discord_username, simulator, experience_level,
@@ -4951,7 +4951,7 @@ app.post(
                     )
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
                     RETURNING id, status, created_at
-                    \`,
+                    `,
                     [
                         firstName, lastName, age, country, email, discord,
                         simulator, experience, flightHours, network || null,
@@ -4960,10 +4960,10 @@ app.post(
                 );
 
                 await client.query(
-                    \`
+                    `
                     INSERT INTO pilot_application_events (application_id, action, note)
                     VALUES ($1, 'submitted', 'Application received')
-                    \`,
+                    `,
                     [result.rows[0].id]
                 );
 
@@ -5107,7 +5107,7 @@ app.patch(
 
             const previousStatus = existing.rows[0].status;
             const updated = await client.query(
-                \`
+                `
                 UPDATE pilot_applications
                 SET status = $1,
                     review_notes = $2,
@@ -5116,17 +5116,17 @@ app.patch(
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = $4
                 RETURNING id, status, review_notes, reviewed_at, reviewed_by, updated_at
-                \`,
+                `,
                 [status, reviewNotes || null, req.user.id, applicationId]
             );
 
             await client.query(
-                \`
+                `
                 INSERT INTO pilot_application_events (
                     application_id, actor_user_id, action, note
                 )
                 VALUES ($1, $2, 'status_changed', $3)
-                \`,
+                `,
                 [
                     applicationId,
                     req.user.id,
@@ -5160,7 +5160,7 @@ app.get(
 
         try {
             const result = await query(
-                \`
+                `
                 SELECT e.id, e.action, e.note, e.created_at,
                        u.username AS actor_username,
                        u.display_name AS actor_display_name
@@ -5169,7 +5169,7 @@ app.get(
                 WHERE e.application_id = $1
                 ORDER BY e.created_at DESC, e.id DESC
                 LIMIT 100
-                \`,
+                `,
                 [applicationId]
             );
             return res.json({ events: result.rows });
