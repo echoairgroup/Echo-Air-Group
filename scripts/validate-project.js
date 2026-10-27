@@ -63,6 +63,26 @@ report(/"\/api\/admin\/submissions",[\s\S]{0,100}authenticate,[\s\S]{0,60}requir
 report(/"\/api\/admin\/submissions\/:id",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Submission updates are not restricted to administrators.");
 report(/DISCORD_APPLICATIONS_CHANNEL_ID/.test(server), "Optional recruitment notification configuration is missing.");
 
+report(/CREATE TABLE IF NOT EXISTS bookings/.test(server), "Virtual booking storage table is missing.");
+report(/CREATE TABLE IF NOT EXISTS booking_seats/.test(server), "Booking seat inventory is missing.");
+report(/CREATE TABLE IF NOT EXISTS booking_events/.test(server), "Booking audit history is missing.");
+report(/"\/api\/bookings",[\s\S]{0,80}bookingRateLimit/.test(server), "Virtual booking endpoint is not rate-limited.");
+report(/"\/api\/admin\/bookings",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Booking administration is not restricted to administrators.");
+report(/return_flight_number/.test(server) && /return_seat_numbers/.test(server), "Round-trip details are not persisted.");
+
+const bookingPage = read("booking.html");
+report(bookingPage.includes('id="bookingPrivacyAcknowledged"'), "Booking privacy acknowledgement is missing.");
+report(bookingPage.includes('fetch(apiBase + "/bookings"'), "Booking page is not connected to the first-party booking API.");
+report(bookingPage.includes("getSelectedReturnFlight"), "Round-trip return flight selection is missing.");
+report(bookingPage.includes('id="returnLegInfo"'), "Round-trip confirmation is missing its return itinerary.");
+report(!/id=["'](?:cardNumber|cardName|expiry|cvv)["']/i.test(bookingPage), "Booking page must not collect card details.");
+report(!/id=["'](?:dob|nationality|frequentFlyer)["']/i.test(bookingPage), "Booking page collects unnecessary passenger details.");
+
+const bookingsDashboard = read("bookings-admin.html");
+report(bookingsDashboard.includes("headers.Authorization='Bearer '+token"), "Bookings dashboard must send the session token.");
+report(bookingsDashboard.includes("action:'cancel'"), "Bookings dashboard does not support cancellation.");
+report(bookingsDashboard.includes("/events"), "Bookings dashboard must show the audit history.");
+
 
 const accountPage = read("Server.html");
 report(accountPage.includes("https://echo-air-group-api.onrender.com/api"), "Account dashboard must have a deployed API fallback.");
