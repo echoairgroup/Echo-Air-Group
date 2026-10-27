@@ -34,8 +34,9 @@
 - Protected global flight synchronization and database diagnostics with administrator authorization. If no admin list is configured, the routes remain disabled rather than granting access to every registered pilot.
 - Fixed the account dashboard's hosted API fallback and shared ranking endpoint; escaped dynamic HTML values; aligned displayed rank thresholds with the backend.
 - Replaced the pilot application form's third-party mail submission with a first-party API, a privacy acknowledgement and transactional Neon persistence.
-- Added first-party APIs and Neon persistence for pilot applications, contact messages and management applications; public submissions are rate-limited and validated. Optional Discord alerts can notify a configured channel using reference numbers only.
-- Added separate pilot recruitment and combined contact/management inbox screens with admin-only access, search/filter, pagination, status updates, private review notes and transactional event history.
+- Added first-party APIs and Neon persistence for pilot applications, contact messages, management applications and simulator-only bookings; public intake is rate-limited and validated. Optional Discord alerts can notify a configured channel using reference numbers only.
+- Added separate pilot recruitment, contact/management inbox and virtual-booking admin screens with admin-only access, search/filter, pagination, status updates, private review notes, cancellation and transactional event history.
+- Connected virtual booking confirmation to Neon; validates the flight schedule, round-trip return leg, seats per passenger and seat availability on both legs. The booking workflow explicitly does not collect or process payment or request card data.
 - Added explicit privacy acknowledgements to the forms and updated the privacy policy. A fixed retention schedule, a real `ADMIN_USER_IDS` list, exact CORS origins and optional `DISCORD_APPLICATIONS_CHANNEL_ID` still need to be configured before production.
 - Added accessible focus states, reduced-motion support, tests, project validation, environment examples, documentation, and a read-only CI workflow.
 - Planned removal of workflows that push generated changes directly back to the repository on this feature branch.
