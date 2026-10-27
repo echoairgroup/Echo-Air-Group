@@ -5240,6 +5240,462 @@ app.get(
     }
 );
 
+
+async function createExternalSubmission(input) {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const result = await client.query(
+            "INSERT INTO external_submissions " +
+            "(type, name, email, subject, message, details, privacy_notice_version, privacy_acknowledged_at, status) " +
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, $8) " +
+            "RETURNING id, type, status, created_at",
+            [
+                input.type, input.name, input.email, input.subject,
+                input.message, input.details || {}, "2026-10", input.status
+            ]
+        );
+        const submission = result.rows[0];
+        await client.query(
+            "INSERT INTO external_submission_events (submission_id, action, note) " +
+            "VALUES ($1, 'submitted', $2)",
+            [submission.id, input.type + " submission received"]
+        );
+        await client.query("COMMIT");
+        return submission;
+    } catch (error) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+// Contact messages are stored in the first-party inbox. Public visitors can
+// submit a message but cannot list or read the inbox.
+app.post(
+    "/api/contact",
+    contactRateLimit,
+    async (req, res) => {
+        const form = req.body || {};
+        const read = (key, legacyKey) => String(form[key] ?? form[legacyKey] ?? "").trim();
+        const name = read("name", "name");
+        const email = read("email", "email").toLowerCase();
+        const subject = read("subject", "subject");
+        const message = read("message", "message");
+        const privacyAcknowledged =
+            form.privacyAcknowledged === true ||
+            form.privacyAcknowledged === "yes";
+
+        const nativeFormPost =
+            String(req.get("content-type") || "").includes("application/x-www-form-urlencoded");
+        const respondError = (status, errorMessage) => {
+            if (nativeFormPost && req.accepts("html")) {
+                const state = status >= 500 ? "error" : "invalid";
+                return res.redirect(
+                    303,
+                    "https://echoairgroup.github.io/Echo-Air-Group/contact.html?contact=" + state + "#contact-form"
+                );
+            }
+            return res.status(status).json({ error: errorMessage });
+        };
+
+        const allowedSubjects = new Set([
+            "General Question", "Pilot Application", "Partnership",
+            "Technical Issue", "Other"
+        ]);
+        const validEmail =
+            email.length <= 254 &&
+            email.indexOf("@") > 0 &&
+            email.lastIndexOf(".") > email.indexOf("@") + 1;
+
+        if (!name || !email || !subject || !message) {
+            return respondError(400, "Complete all required contact fields.");
+        }
+        if (name.length > 160 || email.length > 254 || message.length > 5000) {
+            return respondError(400, "One or more contact fields exceed the allowed length.");
+        }
+        if (!validEmail) {
+            return respondError(400, "Enter a valid email address.");
+        }
+        if (!allowedSubjects.has(subject)) {
+            return respondError(400, "Select a valid contact subject.");
+        }
+        if (!privacyAcknowledged) {
+            return respondError(400, "Please confirm that you have read the privacy notice.");
+        }
+
+        try {
+            const submission = await createExternalSubmission({
+                type: "contact",
+                name,
+                email,
+                subject,
+                message,
+                details: {},
+                status: "new"
+            });
+
+            if (nativeFormPost && req.accepts("html")) {
+                return res.redirect(
+                    303,
+                    "https://echoairgroup.github.io/Echo-Air-Group/contact.html?contact=received#contact-form"
+                );
+            }
+
+            return res.status(201).json({
+                message: "Your message has been received.",
+                submission: {
+                    id: submission.id,
+                    status: submission.status,
+                    createdAt: submission.created_at
+                }
+            });
+        } catch (error) {
+            console.error("Contact submission failed:", error);
+            return respondError(500, "We could not save your message. Please try again later.");
+        }
+    }
+);
+
+// Management applications share the secure inbox and event history but store
+// their longer questionnaire in JSONB so new form questions remain additive.
+app.post(
+    "/api/manager-applications",
+    managerApplicationRateLimit,
+    async (req, res) => {
+        const form = req.body || {};
+        const read = (key, legacyKey) => String(form[key] ?? form[legacyKey] ?? "").trim();
+        const firstName = read("firstName", "First Name");
+        const lastName = read("lastName", "Last Name");
+        const age = Number(read("age", "Age"));
+        const country = read("country", "Country");
+        const email = read("email", "Email Address").toLowerCase();
+        const discord = read("discord", "Discord Username");
+        const newSkyUsername = read("newSkyUsername", "NewSky Username");
+        const currentPosition = read("currentPosition", "Current Echo Air Group Position");
+        const role = read("preferredManagerType", "Preferred Manager Type");
+        const secondaryArea = read("secondaryArea", "Secondary Management Area");
+        const managementExperience = read("managementExperience", "Management Experience");
+        const flightHoursRaw = read("flightHours", "Approximate Flight Hours");
+        const flightHours = flightHoursRaw === "" ? null : Number(flightHoursRaw);
+        const simulator = read("simulator", "Main Simulator");
+        const network = read("network", "Flight Network");
+        const availability = read("availability", "Weekly Availability");
+        const timezone = read("timezone", "Time Zone");
+        const motivation = read("motivation", "Why do you want to become a manager?");
+        const roleReason = read("roleReason", "Why did you choose this management role?");
+        const previousExperience = read("previousExperience", "Previous Management or Leadership Experience");
+        const improvements = read("improvements", "What would you improve at Echo Air Group?");
+        const suitability = read("suitability", "What makes you suitable for management?");
+        const communityExperience = read("communityExperience", "Discord and Community Experience");
+        const additionalInfo = read("additionalInfo", "Additional Information");
+        const privacyAcknowledged =
+            form.privacyAcknowledged === true ||
+            form.privacyAcknowledged === "yes";
+
+        const nativeFormPost =
+            String(req.get("content-type") || "").includes("application/x-www-form-urlencoded");
+        const respondError = (status, errorMessage) => {
+            if (nativeFormPost && req.accepts("html")) {
+                const state = status >= 500 ? "error" : "invalid";
+                return res.redirect(
+                    303,
+                    "https://echoairgroup.github.io/Echo-Air-Group/manager.html?application=" + state + "#application"
+                );
+            }
+            return res.status(status).json({ error: errorMessage });
+        };
+
+        const allowedRoles = new Set([
+            "Executive / General Manager", "Operations Manager", "Flight Operations Manager",
+            "Recruitment Manager", "Human Resources Manager", "Pilot Relations Manager",
+            "Training Manager", "Events Manager", "Community Manager", "Discord Manager",
+            "Discord Moderator", "Social Media Manager", "Marketing Manager",
+            "Partnerships Manager", "Fleet Manager", "Route Manager", "Scheduling Manager",
+            "Airline Development Manager", "Website / IT Manager", "Data / Statistics Manager",
+            "Other / Specialist Manager"
+        ]);
+        const allowedPositions = new Set([
+            "Pilot", "First Officer", "Senior First Officer", "Captain", "Senior Captain",
+            "Other", "Not currently an Echo pilot"
+        ]);
+        const allowedExperience = new Set([
+            "No previous management experience",
+            "Some previous management experience",
+            "1+ years of management experience",
+            "2+ years of management experience",
+            "Experienced manager / administrator"
+        ]);
+        const allowedAvailability = new Set([
+            "Less than 2 hours", "2–5 hours", "5–10 hours", "10–15 hours", "15+ hours"
+        ]);
+        const allowedSimulators = new Set([
+            "", "Microsoft Flight Simulator 2024", "Microsoft Flight Simulator 2020",
+            "X-Plane 12", "X-Plane 11", "Prepar3D", "Other"
+        ]);
+        const allowedNetworks = new Set(["", "VATSIM", "IVAO", "Both", "Offline"]);
+        const validEmail =
+            email.length <= 254 &&
+            email.indexOf("@") > 0 &&
+            email.lastIndexOf(".") > email.indexOf("@") + 1;
+
+        if (!firstName || !lastName || !country || !email || !discord ||
+            !currentPosition || !role || !managementExperience || !availability ||
+            !timezone || !motivation || !roleReason || !improvements || !suitability) {
+            return respondError(400, "Complete all required management application fields.");
+        }
+        if (firstName.length > 80 || lastName.length > 80 || country.length > 100 ||
+            email.length > 254 || discord.length > 100 || newSkyUsername.length > 100 ||
+            currentPosition.length > 80 || role.length > 120 || secondaryArea.length > 120 ||
+            managementExperience.length > 100 || simulator.length > 100 || network.length > 40 ||
+            availability.length > 80 || timezone.length > 80 || motivation.length > 3000 ||
+            roleReason.length > 3000 || previousExperience.length > 3000 ||
+            improvements.length > 3000 || suitability.length > 3000 ||
+            communityExperience.length > 3000 || additionalInfo.length > 3000) {
+            return respondError(400, "One or more management application fields exceed the allowed length.");
+        }
+        if (!validEmail) {
+            return respondError(400, "Enter a valid email address.");
+        }
+        if (!Number.isInteger(age) || age < 1 || age > 120) {
+            return respondError(400, "Enter a valid age.");
+        }
+        if (flightHours !== null && (!Number.isSafeInteger(flightHours) || flightHours < 0 || flightHours > 100000)) {
+            return respondError(400, "Enter valid approximate flight hours.");
+        }
+        if (!allowedPositions.has(currentPosition) || !allowedRoles.has(role) ||
+            !allowedExperience.has(managementExperience) || !allowedAvailability.has(availability) ||
+            !allowedSimulators.has(simulator) || !allowedNetworks.has(network)) {
+            return respondError(400, "One or more management application selections are invalid.");
+        }
+        if (!privacyAcknowledged) {
+            return respondError(400, "Please confirm that you have read the privacy notice.");
+        }
+
+        const details = {
+            newSkyUsername,
+            currentPosition,
+            preferredManagerType: role,
+            secondaryManagementArea: secondaryArea,
+            managementExperience,
+            flightHours,
+            mainSimulator: simulator,
+            flightNetwork: network,
+            weeklyAvailability: availability,
+            timezone,
+            motivation,
+            roleReason,
+            previousExperience,
+            improvements,
+            suitability,
+            communityExperience,
+            additionalInfo
+        };
+
+        try {
+            const submission = await createExternalSubmission({
+                type: "manager",
+                name: firstName + " " + lastName,
+                email,
+                subject: role,
+                message: motivation,
+                details: {
+                    firstName,
+                    lastName,
+                    age,
+                    country,
+                    discordUsername: discord,
+                    ...details
+                },
+                status: "pending"
+            });
+
+            if (nativeFormPost && req.accepts("html")) {
+                return res.redirect(
+                    303,
+                    "https://echoairgroup.github.io/Echo-Air-Group/manager.html?application=received#application"
+                );
+            }
+
+            return res.status(201).json({
+                message: "Your management application has been received.",
+                submission: {
+                    id: submission.id,
+                    status: submission.status,
+                    createdAt: submission.created_at
+                }
+            });
+        } catch (error) {
+            console.error("Manager application submission failed:", error);
+            return respondError(500, "We could not save your management application. Please try again later.");
+        }
+    }
+);
+
+// Authorized inbox for the external/contact and manager submissions. The type
+// is required to avoid accidentally mixing recruitment and general messages.
+app.get(
+    "/api/admin/submissions",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const type = String(req.query.type || "").trim().toLowerCase();
+        const requestedStatus = String(req.query.status || "").trim().toLowerCase();
+        const search = String(req.query.search || "").trim().slice(0, 100);
+        const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 25));
+        const offset = Math.min(10000, Math.max(0, Number.parseInt(req.query.offset, 10) || 0));
+        const statusOptions = type === "manager"
+            ? new Set(["pending", "reviewing", "approved", "rejected", "withdrawn"])
+            : new Set(["new", "in_progress", "responded", "closed"]);
+
+        if (!["manager", "contact"].includes(type)) {
+            return res.status(400).json({ error: "Choose manager or contact submissions." });
+        }
+        if (requestedStatus && !statusOptions.has(requestedStatus)) {
+            return res.status(400).json({ error: "Invalid status filter for this inbox." });
+        }
+
+        try {
+            const filters = [];
+            const params = [type];
+            filters.push("type = $1");
+            if (requestedStatus) {
+                params.push(requestedStatus);
+                filters.push("status = $" + params.length);
+            }
+            if (search) {
+                params.push(search.toLowerCase());
+                const searchParam = "$" + params.length;
+                filters.push(
+                    "(POSITION(" + searchParam + " IN LOWER(name)) > 0 OR " +
+                    "POSITION(" + searchParam + " IN LOWER(email)) > 0 OR " +
+                    "POSITION(" + searchParam + " IN LOWER(subject)) > 0 OR " +
+                    "POSITION(" + searchParam + " IN LOWER(message)) > 0)"
+                );
+            }
+
+            const where = "WHERE " + filters.join(" AND ");
+            const countResult = await query(
+                "SELECT COUNT(*)::int AS total FROM external_submissions " + where,
+                params
+            );
+            const pageParams = params.slice();
+            pageParams.push(limit, offset);
+            const result = await query(
+                "SELECT id, type, name, email, subject, message, details, status, review_notes, " +
+                "reviewed_at, reviewed_by, privacy_notice_version, privacy_acknowledged_at, created_at, updated_at " +
+                "FROM external_submissions " + where +
+                " ORDER BY created_at DESC, id DESC LIMIT $" + (pageParams.length - 1) +
+                " OFFSET $" + pageParams.length,
+                pageParams
+            );
+            return res.json({
+                total: Number(countResult.rows[0].total),
+                limit,
+                offset,
+                submissions: result.rows
+            });
+        } catch (error) {
+            console.error("Unable to load external submissions:", error);
+            return res.status(500).json({ error: "Unable to load submissions." });
+        }
+    }
+);
+
+app.patch(
+    "/api/admin/submissions/:id",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const submissionId = Number(req.params.id);
+        const status = String(req.body?.status || "").trim().toLowerCase();
+        const reviewNotes = String(req.body?.reviewNotes || "").trim();
+
+        if (!Number.isSafeInteger(submissionId) || submissionId < 1) {
+            return res.status(400).json({ error: "Invalid submission ID." });
+        }
+        if (reviewNotes.length > 2000) {
+            return res.status(400).json({ error: "Review notes must be 2,000 characters or fewer." });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+            const existing = await client.query(
+                "SELECT id, type, status FROM external_submissions WHERE id = $1 FOR UPDATE",
+                [submissionId]
+            );
+            const submission = existing.rows[0];
+            if (!submission) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ error: "Submission not found." });
+            }
+
+            const allowedStatuses = submission.type === "manager"
+                ? new Set(["pending", "reviewing", "approved", "rejected", "withdrawn"])
+                : new Set(["new", "in_progress", "responded", "closed"]);
+            if (!allowedStatuses.has(status)) {
+                await client.query("ROLLBACK");
+                return res.status(400).json({ error: "Invalid status for this submission type." });
+            }
+
+            const updated = await client.query(
+                "UPDATE external_submissions SET status = $1, review_notes = $2, " +
+                "reviewed_at = CASE WHEN $1 IN ('pending', 'new') THEN NULL ELSE CURRENT_TIMESTAMP END, " +
+                "reviewed_by = CASE WHEN $1 IN ('pending', 'new') THEN NULL ELSE $3 END, " +
+                "updated_at = CURRENT_TIMESTAMP WHERE id = $4 " +
+                "RETURNING id, type, status, review_notes, reviewed_at, reviewed_by, updated_at",
+                [status, reviewNotes || null, req.user.id, submissionId]
+            );
+            await client.query(
+                "INSERT INTO external_submission_events (submission_id, actor_user_id, action, note) " +
+                "VALUES ($1, $2, 'status_changed', $3)",
+                [
+                    submissionId,
+                    req.user.id,
+                    "Status changed from " + submission.status + " to " + status +
+                        (reviewNotes ? ": " + reviewNotes : "")
+                ]
+            );
+            await client.query("COMMIT");
+            return res.json({ submission: updated.rows[0] });
+        } catch (error) {
+            await client.query("ROLLBACK").catch(() => {});
+            console.error("Unable to update external submission:", error);
+            return res.status(500).json({ error: "Unable to update submission." });
+        } finally {
+            client.release();
+        }
+    }
+);
+
+app.get(
+    "/api/admin/submissions/:id/events",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const submissionId = Number(req.params.id);
+        if (!Number.isSafeInteger(submissionId) || submissionId < 1) {
+            return res.status(400).json({ error: "Invalid submission ID." });
+        }
+        try {
+            const result = await query(
+                "SELECT e.id, e.action, e.note, e.created_at, " +
+                "u.username AS actor_username, u.display_name AS actor_display_name " +
+                "FROM external_submission_events e " +
+                "LEFT JOIN users u ON u.id = e.actor_user_id " +
+                "WHERE e.submission_id = $1 ORDER BY e.created_at DESC, e.id DESC LIMIT 100",
+                [submissionId]
+            );
+            return res.json({ events: result.rows });
+        } catch (error) {
+            console.error("Unable to load submission history:", error);
+            return res.status(500).json({ error: "Unable to load submission history." });
+        }
+    }
+);
+
 // ============================================================
 // 404
 // ============================================================
