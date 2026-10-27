@@ -77,6 +77,16 @@ const loginRateLimit = createRateLimiter({
     message: "Too many login attempts. Please wait and try again."
 });
 
+function requireAuthConfigured(req, res, next) {
+    if (!JWT_SECRET) {
+        return res.status(503).json({
+            error: "Authentication is not configured."
+        });
+    }
+
+    return next();
+}
+
 function requireAdmin(req, res, next) {
     if (ADMIN_USER_IDS.size === 0) {
         return res.status(503).json({
@@ -1913,6 +1923,7 @@ app.get(
 app.post(
     "/api/auth/register",
     registerRateLimit,
+    requireAuthConfigured,
     async (req, res) => {
 
         try {
@@ -2050,6 +2061,7 @@ app.post(
 app.post(
     "/api/auth/login",
     loginRateLimit,
+    requireAuthConfigured,
     async (req, res) => {
 
         try {
