@@ -3725,6 +3725,9 @@ let selectedSeat = null;
 let selectedSeats = [];
 
 let selectedReturnFlight = null;
+let liveUnavailableSeats = new Set();
+let availabilityRequestVersion = 0;
+let availabilityLoadFailed = false;
 
 let selectedCabin = "Economy";
 
@@ -3835,6 +3838,7 @@ function setTripType(type) {
 
     }
 
+    if (selectedFlight) void refreshLiveSeatAvailability();
 }
 
 
@@ -4104,6 +4108,7 @@ function selectFlight(
     updateSelectedFlightDetails();
 
     generateSeats();
+    void refreshLiveSeatAvailability();
 
 
     document.getElementById(
@@ -4398,6 +4403,54 @@ function generateSeats() {
    CREATE SEAT
 ========================================================= */
 
+async function refreshLiveSeatAvailability() {
+    if (!selectedFlight) return;
+
+    const requestVersion = ++availabilityRequestVersion;
+    const apiBase = (window.ECHO_API_URL || "https://echo-air-group-api.onrender.com/api").replace(/\/+$/, "");
+    const params = new URLSearchParams({
+        flightNumber: selectedFlight.number,
+        departureDate: selectedFlight.date,
+        tripType
+    });
+    if (tripType === "roundtrip") {
+        params.set("returnDate", document.getElementById("returnDate").value);
+    }
+
+    availabilityLoadFailed = false;
+    try {
+        const response = await fetch(apiBase + "/bookings/seat-availability?" + params.toString(), {
+            headers: { Accept: "application/json" }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Seat availability is unavailable.");
+        if (requestVersion !== availabilityRequestVersion) return;
+
+        liveUnavailableSeats = new Set(
+            Array.isArray(data.unavailableSeats) ? data.unavailableSeats : []
+        );
+
+        const previouslySelected = selectedSeats.slice();
+        selectedSeats = selectedSeats.filter((seat) => !liveUnavailableSeats.has(seat));
+        selectedSeat = selectedSeats[0] || null;
+
+        generateSeats();
+        updateSeatSelectionStatus();
+        updateSummary();
+
+        const newlyUnavailable = previouslySelected.filter((seat) => liveUnavailableSeats.has(seat));
+        if (newlyUnavailable.length) {
+            showToast("A selected seat is no longer available: " + newlyUnavailable.join(", ") + ". Please choose another seat.");
+        }
+    } catch (error) {
+        if (requestVersion !== availabilityRequestVersion) return;
+        availabilityLoadFailed = true;
+        updateSeatSelectionStatus();
+        // The booking API still performs final server-side validation and protects
+        // reserved seats with a database uniqueness constraint.
+    }
+}
+
 function getSelectedReturnFlight() {
     if (!selectedFlight) return null;
     const route = flightDatabase.find(
@@ -4527,6 +4580,10 @@ function createSeat(
     }
 
 
+    if (liveUnavailableSeats.has(seat)) {
+        occupied = true;
+    }
+
     if (occupied) {
 
         button.classList.add(
@@ -4581,7 +4638,8 @@ function updateSeatSelectionStatus() {
     if (!status) return;
     const required = Number.parseInt(document.getElementById("passengers").value, 10) || 1;
     status.textContent = "Selected " + selectedSeats.length + " of " + required +
-        " seat(s): " + (selectedSeats.length ? selectedSeats.join(", ") : "none yet") + ".";
+        " seat(s): " + (selectedSeats.length ? selectedSeats.join(", ") : "none yet") + "." +
+        (availabilityLoadFailed ? " Live seat availability could not be loaded; the server will still validate seats when you confirm." : " Live seat availability is checked against current reservations.");
 }
 
 function validateSeat() {
@@ -5656,6 +5714,12 @@ document
             returnInput.value = nextDate;
         }
     });
+
+document.getElementById("returnDate").addEventListener("change", () => {
+    if (selectedFlight && tripType === "roundtrip") {
+        void refreshLiveSeatAvailability();
+    }
+});
 
 
 /* =========================================================
