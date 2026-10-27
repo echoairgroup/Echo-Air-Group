@@ -184,3 +184,32 @@ test("form dropdown options and server allow-lists stay synchronized", () => {
     assert.deepEqual(optionLabels(manager, field), allowedLabels(setName, managerRoute), field + " manager options");
   }
 });
+
+
+test("booking page and API use the same published demo flight schedule", () => {
+  const server = read("server.js");
+  const booking = read("booking.html");
+  const serverStart = server.indexOf("const DEMO_FLIGHT_ROWS = [");
+  const serverEnd = server.indexOf("const DEMO_FLIGHT_SCHEDULE", serverStart);
+  assert.ok(serverStart >= 0 && serverEnd > serverStart, "Missing API demo schedule");
+  const serverSection = server.slice(serverStart, serverEnd);
+  const serverRows = [...serverSection.matchAll(/\["(ECV\d+)","([A-Z]{4})","([A-Z]{4})","(\d{2}:\d{2})","(\d{2}:\d{2})","([^"]+)","([^"]+)",(\d+)\]/g)]
+    .map((m) => ({ number:m[1],from:m[2],to:m[3],departure:m[4],arrival:m[5],duration:m[6],aircraft:m[7],price:Number(m[8]) }));
+
+  const uiStart = booking.indexOf("const flightDatabase = [");
+  const uiEnd = booking.indexOf("/* =========================================================\n   STATE", uiStart);
+  assert.ok(uiStart >= 0 && uiEnd > uiStart, "Missing frontend demo schedule");
+  const uiSection = booking.slice(uiStart, uiEnd);
+  const uiRows = [];
+  for (const route of uiSection.matchAll(/from:\s*"([A-Z]{4})",\s*to:\s*"([A-Z]{4})",\s*flights:\s*\[([\s\S]*?)\]\s*\}/g)) {
+    for (const m of route[3].matchAll(/\["(ECV\d+)",\s*"(\d{2}:\d{2})",\s*"(\d{2}:\d{2})",\s*"([^"]+)",\s*"([^"]+)",\s*(\d+)\]/g)) {
+      uiRows.push({ number:m[1],from:route[1],to:route[2],departure:m[2],arrival:m[3],duration:m[4],aircraft:m[5],price:Number(m[6]) });
+    }
+  }
+
+  assert.ok(serverRows.length > 0, "No API flights parsed");
+  assert.equal(serverRows.length, uiRows.length, "Frontend and API flight counts differ");
+
+  const normalize = (rows) => rows.slice().sort((a,b)=>a.number.localeCompare(b.number));
+  assert.deepEqual(normalize(uiRows), normalize(serverRows), "Published flight schedule differs between frontend and API");
+});
