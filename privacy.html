@@ -561,16 +561,38 @@
         </p>
 
 
-        <h3>FormSubmit</h3>
+        <h3>Echo Air Group contact and recruitment forms</h3>
 
         <p>
-            The contact form and manager application form currently use
-            FormSubmit to deliver submissions to the designated Echo Air
-            Group email address. Information submitted through those forms
-            is sent to FormSubmit for processing and delivery and may be
-            handled under FormSubmit's own terms and privacy policy. The
-            pilot application form uses Echo Air Group's API and Neon
-            database on the updated application workflow.
+            Contact messages, pilot applications and management applications
+            are submitted to Echo Air Group's API hosted by Render and stored
+            in its PostgreSQL database hosted by Neon. Submitted data is used
+            to respond to contact requests or review recruitment applications.
+        </p>
+
+        <p>
+            The forms may collect your name, age and country where requested,
+            email address, Discord username, flight simulator and experience
+            details, message text, application status and internal review
+            notes. Only designated administrators who pass the application's
+            administrator authorization check can access submission records
+            and their review history. Public endpoints accept new submissions
+            but do not expose the stored inbox.
+        </p>
+
+        <p>
+            Echo Air Group does not currently publish a fixed retention period
+            for contact messages or recruitment applications. A specific
+            retention schedule must be established and applied before this
+            workflow is considered production-ready. You can ask about
+            deletion or your data rights using the privacy contact above.
+        </p>
+
+        <p>
+            If optional Discord recruitment notifications are enabled, the
+            configured Discord channel receives a notification containing
+            only the submission type and reference number, not the applicant's
+            contact details or message contents.
         </p>
 
 
