@@ -105,7 +105,7 @@ footer.site-footer {
 .site-footer-inner { position: relative; width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
 .site-footer-main { display: grid; grid-template-columns: minmax(260px,1.6fr) minmax(120px,.7fr) minmax(145px,.8fr); gap: clamp(28px,5vw,76px); padding-bottom: 42px; border-bottom: 1px solid rgba(255,255,255,.09); }
 .site-footer .site-brand { display: inline-flex; margin-bottom: 17px; text-decoration: none; }
-.site-footer .site-brand-mark { display: grid; width: 43px; height: 43px; flex: 0 0 43px; place-items: center; color: #11190b; background: linear-gradient(145deg,#c0f15d,#94cd27); border: 1px solid rgba(223,255,170,.55); border-radius: 13px; font: 950 11px/1 ui-sans-serif,system-ui,sans-serif; }
+.site-footer .site-brand-mark { position: relative; overflow: hidden; display: grid; width: 43px; height: 43px; flex: 0 0 43px; place-items: center; color: #11190b; background: linear-gradient(145deg,#c0f15d,#94cd27); border: 1px solid rgba(223,255,170,.55); border-radius: 13px; font: 950 11px/1 ui-sans-serif,system-ui,sans-serif; }
 .site-footer .site-brand-mark > span { position: absolute; right: 5px; bottom: 5px; width: 5px; height: 5px; background: #253a0d; border-radius: 50%; }
 .site-footer .site-brand-copy { display: flex; flex-direction: column; gap: 4px; }
 .site-footer .site-brand-copy strong { color: #f9fcf6; font-size: 12px; font-weight: 900; letter-spacing: .115em; }
@@ -153,23 +153,23 @@ footer.site-footer {
   .site-footer-intro { grid-column: auto; }
 }
 /* Admin pages retain their privileged navigation but use the same visual system. */
-:is(.admin-top, .ops-top, .inbox-top) {
+html body header:is(.admin-top, .ops-top, .inbox-top) {
   position: sticky !important; z-index: 80 !important; top: 0 !important; display: flex; flex-wrap: wrap;
   align-items: center; justify-content: space-between; gap: 16px 24px; padding: 15px max(22px, calc((100vw - 1220px) / 2));
   color: #f4f8ef !important; background: linear-gradient(180deg,rgba(7,12,8,.99),rgba(10,16,11,.97)) !important;
   border: 0 !important; border-bottom: 1px solid rgba(172,227,54,.2) !important; box-shadow: 0 10px 28px rgba(0,0,0,.16);
   -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
 }
-:is(.admin-top, .ops-top, .inbox-top) :is(a, h1, p, span) { color: inherit; }
-:is(.admin-links, .ops-links, .inbox-links) { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-:is(.admin-links, .ops-links, .inbox-links) a {
+html body header:is(.admin-top, .ops-top, .inbox-top) :is(a, h1, p, span) { color: inherit; }
+html body header :is(.admin-links, .ops-links, .inbox-links) { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+html body header :is(.admin-links, .ops-links, .inbox-links) a {
   display: inline-flex; min-height: 36px; align-items: center; padding: 8px 11px; color: #c4d0c1 !important;
   background: transparent; border: 1px solid transparent; border-radius: 9px; font-size: 12px; font-weight: 750; text-decoration: none;
 }
-:is(.admin-links, .ops-links, .inbox-links) a:hover,
-:is(.admin-links, .ops-links, .inbox-links) a.active { color: #e2ffba !important; background: rgba(172,227,54,.08); border-color: rgba(172,227,54,.22); }
+html body header :is(.admin-links, .ops-links, .inbox-links) a:hover,
+html body header :is(.admin-links, .ops-links, .inbox-links) a.active { color: #e2ffba !important; background: rgba(172,227,54,.08); border-color: rgba(172,227,54,.22); }
 @media (max-width: 720px) {
-  :is(.admin-top, .ops-top, .inbox-top) { align-items: flex-start; flex-direction: column; padding: 14px 18px; }
-  :is(.admin-links, .ops-links, .inbox-links) { width: 100%; gap: 4px; }
-  :is(.admin-links, .ops-links, .inbox-links) a { padding: 7px 9px; }
+  html body header:is(.admin-top, .ops-top, .inbox-top) { align-items: flex-start; flex-direction: column; padding: 14px 18px; }
+  html body header :is(.admin-links, .ops-links, .inbox-links) { width: 100%; gap: 4px; }
+  html body header :is(.admin-links, .ops-links, .inbox-links) a { padding: 7px 9px; }
 }
