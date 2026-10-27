@@ -1,3 +1,131 @@
+function initEchoAirGroupShell() {
+  if (window.__eagSiteShellLoaded || !document.body) return;
+  window.__eagSiteShellLoaded = true;
+
+  var mainLinks = [
+    { href: "index.html", label: "Home", file: "index.html" },
+    { href: "about.html", label: "About", file: "about.html" },
+    { href: "fleet.html", label: "Fleet", file: "fleet.html" },
+    { href: "routes.html", label: "Routes", file: "routes.html" },
+    { href: "team.html", label: "Team", file: "team.html" },
+    { href: "manual.html", label: "Pilot manual", file: "manual.html" },
+    { href: "ranking.html", label: "Ranking", file: "ranking.html" },
+    { href: "booking.html", label: "Book a flight", file: "booking.html" },
+    { href: "contact.html", label: "Contact", file: "contact.html" }
+  ];
+  var exploreLinks = [
+    { href: "about.html", label: "About" },
+    { href: "fleet.html", label: "Fleet" },
+    { href: "routes.html", label: "Route network" },
+    { href: "team.html", label: "Our team" },
+    { href: "index.html#news", label: "Latest news" }
+  ];
+  var pilotLinks = [
+    { href: "join.html", label: "Join the airline" },
+    { href: "booking.html", label: "Virtual bookings" },
+    { href: "ranking.html", label: "Pilot ranking" },
+    { href: "manual.html", label: "Pilot manual" },
+    { href: "contact.html", label: "Get in touch" }
+  ];
+  var currentPage = window.location.pathname.split("/").pop() || "index.html";
+  if (currentPage.indexOf(".") === -1) currentPage = "index.html";
+
+  function brandMarkup() {
+    return '<a class="site-brand" href="index.html" aria-label="Echo Air Group home">' +
+      '<span class="site-brand-mark" aria-hidden="true">EAG<span></span></span>' +
+      '<span class="site-brand-copy"><strong>ECHO AIR GROUP</strong>' +
+      '<small>VIRTUAL AIRLINE <i aria-hidden="true"></i> ECV</small></span></a>';
+  }
+  function renderLinks(items, extraClass) {
+    return items.map(function (item) {
+      var active = item.file === currentPage;
+      return '<a class="site-nav-link' + (active ? ' is-active' : '') +
+        (extraClass ? ' ' + extraClass : '') + '" href="' + item.href + '"' +
+        (active ? ' aria-current="page"' : '') + '>' + item.label + '</a>';
+    }).join("");
+  }
+  var headerHtml =
+    '<header id="siteHeader" class="site-header">' +
+      '<div class="site-header-inner">' + brandMarkup() +
+        '<nav class="site-navlinks" aria-label="Main navigation">' + renderLinks(mainLinks, "") + '</nav>' +
+        '<div class="site-header-actions">' +
+          '<a class="site-join" href="join.html">Join the airline <span aria-hidden="true">↗</span></a>' +
+          '<button class="site-menu-toggle" id="menuButton" type="button" aria-label="Open navigation menu" ' +
+            'aria-expanded="false" aria-controls="mobileNav" onclick="toggleSiteMenu()">' +
+            '<span class="site-menu-glyph" aria-hidden="true"><i></i><i></i><i></i></span></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="site-mobile-nav" id="mobileNav" aria-label="Mobile navigation" aria-hidden="true">' +
+        '<div class="site-mobile-inner"><p class="site-mobile-kicker">Explore Echo Air Group</p>' +
+          '<nav class="site-mobile-grid" aria-label="Mobile navigation links">' +
+            renderLinks(mainLinks, "site-mobile-link") +
+            '<a class="site-mobile-link site-mobile-join" href="join.html">Join the airline <span aria-hidden="true">↗</span></a>' +
+          '</nav><p class="site-mobile-note">Fly beyond the ordinary. <span>6L · ECV · CLOVER</span></p>' +
+        '</div>' +
+      '</div>' +
+    '</header>';
+  var footerHtml =
+    '<footer class="site-footer"><div class="site-footer-glow" aria-hidden="true"></div>' +
+      '<div class="site-footer-inner"><div class="site-footer-main">' +
+        '<div class="site-footer-intro">' + brandMarkup() +
+          '<p>Virtual aviation. Real passion. A community built for pilots who love the world of flight simulation.</p>' +
+          '<a class="site-discord-link" href="https://discord.gg/e7ePxYA24" target="_blank" rel="noopener noreferrer">' +
+            '<span class="site-discord-icon" aria-hidden="true">↗</span> Join our Discord community</a>' +
+        '</div>' +
+        '<div class="site-footer-column"><h2>Explore</h2>' +
+          exploreLinks.map(function (x) { return '<a href="' + x.href + '">' + x.label + '</a>'; }).join("") +
+        '</div>' +
+        '<div class="site-footer-column"><h2>For pilots</h2>' +
+          pilotLinks.map(function (x) { return '<a href="' + x.href + '">' + x.label + '</a>'; }).join("") +
+        '</div>' +
+      '</div><div class="site-footer-bottom">' +
+        '<span>© ' + new Date().getFullYear() + ' Echo Air Group. Virtual airline.</span>' +
+        '<span class="site-footer-legal"><a href="privacy.html">Privacy</a><a href="legal.html">Legal notice</a></span>' +
+        '<span>Not affiliated with any real-world airline.</span>' +
+      '</div></div></footer>';
+
+  function replaceOrInsert(selector, html, atStart) {
+    var current = document.querySelector(selector);
+    var template = document.createElement("template");
+    template.innerHTML = html;
+    var replacement = template.content.firstElementChild;
+    if (current) current.replaceWith(replacement);
+    else if (atStart) document.body.insertBefore(replacement, document.body.firstChild);
+    else document.body.appendChild(replacement);
+  }
+  replaceOrInsert("body > header, body header", headerHtml, true);
+  replaceOrInsert("body > footer, body footer", footerHtml, false);
+
+  function setMenuOpen(open) {
+    var menu = document.getElementById("mobileNav");
+    var button = document.getElementById("menuButton");
+    if (!menu || !button) return;
+    menu.classList.toggle("open", Boolean(open));
+    menu.setAttribute("aria-hidden", String(!open));
+    button.setAttribute("aria-expanded", String(Boolean(open)));
+    button.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+  }
+  window.toggleSiteMenu = function () {
+    var menu = document.getElementById("mobileNav");
+    setMenuOpen(!(menu && menu.classList.contains("open")));
+  };
+  document.addEventListener("click", function (event) {
+    var link = event.target.closest("#mobileNav a");
+    if (link) setMenuOpen(false);
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") setMenuOpen(false);
+  });
+  window.addEventListener("resize", function () {
+    if (window.innerWidth > 1120) setMenuOpen(false);
+  });
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initEchoAirGroupShell, { once: true });
+} else {
+  initEchoAirGroupShell();
+}
+
 function toggleMenu(){document.getElementById('mobileNav')?.classList.toggle('open')}
 function filterRoutes(type){document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x.dataset.filter===type));document.querySelectorAll('.route-row[data-type]').forEach(x=>x.style.display=(type==='all'||x.dataset.type===type)?'grid':'none')}
 function showLang(lang){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.lang===lang));document.querySelectorAll('.lang-panel').forEach(x=>x.style.display=x.dataset.lang===lang?'block':'none')}
