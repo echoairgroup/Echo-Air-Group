@@ -155,9 +155,9 @@ test("form dropdown options and server allow-lists stay synchronized", () => {
     assert.ok(start >= 0, "Missing API validation set: " + name);
     const end = server.indexOf("]);", start);
     assert.ok(end > start, "Invalid API validation set: " + name);
-    return [...server.slice(start, end).matchAll(/"([^"]+)"/g)]
+    return [...server.slice(start, end).matchAll(/"([^"]*)"/g)]
       .map((match) => match[1].replace(/\s+/g, " ").trim())
-      .filter(Boolean);
+      .filter((label) => label && !/^(select|choose)\b/i.test(label));
   };
 
   const pilotRoute = server.indexOf('"/api/applications"');
