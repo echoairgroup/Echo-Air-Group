@@ -372,13 +372,6 @@ footer .copy {
 
 }
 
-
-.contact-privacy label { display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.6; }
-.contact-privacy input { flex:0 0 auto; width:18px; height:18px; margin-top:2px; accent-color:#ace336; }
-.contact-privacy a { text-decoration:underline; font-weight:800; }
-.contact-status { margin:14px 0; padding:14px; border:1px solid #d4e5be; border-radius:10px; background:#f4faeb; color:#2d421e; font-weight:700; }
-.contact-status.error { background:#fff1f1; border-color:#efbaba; color:#8c2323; }
-.contact-status[hidden] { display:none; }
 </style>
 
 </head>
@@ -506,7 +499,7 @@ Have a question about Echo Air Group? We'd love to hear from you.
 
 <!-- CONTACT FORM -->
 
-<div class="contact-card" id="contact-form">
+<div class="contact-card">
 
 <h2>
 Send us a message
@@ -518,10 +511,27 @@ Fill out the form below and the Echo Air Group team will get back to you.
 
 
 <form
-    id="contactForm"
     class="contact-form"
-    action="https://echo-air-group-api.onrender.com/api/contact"
+    action="https://formsubmit.co/echoairgrouptiktok@gmail.com"
     method="POST"
+>
+
+<input
+    type="hidden"
+    name="_subject"
+    value="New Echo Air Group Contact Message"
+>
+
+<input
+    type="hidden"
+    name="_captcha"
+    value="false"
+>
+
+<input
+    type="hidden"
+    name="_template"
+    value="table"
 >
 
 
@@ -615,14 +625,6 @@ Message *
 
 </div>
 
-<div class="contact-privacy">
-    <label for="contactPrivacyAcknowledged">
-        <input id="contactPrivacyAcknowledged" name="privacyAcknowledged" type="checkbox" value="yes" required>
-        I have read the <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-        and understand that my message will be stored so Echo Air Group can respond.
-    </label>
-</div>
-<div id="contactStatus" class="contact-status" role="status" aria-live="polite" hidden></div>
 
 <button
     type="submit"
@@ -930,7 +932,6 @@ Not affiliated with any real-world airline.
 
 <script src="script.js"></script>
 
-<script src="script.js"></script>
 <script>
 
 /* HEADER SCROLL EFFECT */

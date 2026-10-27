@@ -288,40 +288,6 @@ footer .copy {
         box-shadow 0.2s ease;
 }
 
-.form-status {
-    width: 100%;
-    padding: 15px 18px;
-    border-radius: 12px;
-    border: 1px solid #d7e5c6;
-    background: #f3f8ec;
-    color: #26351b;
-    font-weight: 700;
-    line-height: 1.5;
-}
-.form-status.error {
-    border-color: #efb6b6;
-    background: #fff1f1;
-    color: #8f2323;
-}
-.privacy-acknowledgement label {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    font-size: 14px;
-    line-height: 1.65;
-}
-.privacy-acknowledgement input[type="checkbox"] {
-    flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
-    margin-top: 3px;
-    accent-color: #ace336;
-}
-.privacy-acknowledgement a {
-    text-decoration: underline;
-    font-weight: 800;
-}
-
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
@@ -631,6 +597,7 @@ footer .copy {
 
 <header id="siteHeader">
 
+```
 <div class="container nav">
 
     <a class="brand" href="index.html">
@@ -716,7 +683,7 @@ footer .copy {
     </div>
 
 </div>
-
+```
 
 </header>
 
@@ -726,6 +693,7 @@ footer .copy {
 
 <main>
 
+```
 <!-- =====================================================
      HERO
 ===================================================== -->
@@ -864,11 +832,36 @@ footer .copy {
         ================================================= -->
 
         <form
-            id="pilotApplicationForm"
             class="form-card"
-            action="https://echo-air-group-api.onrender.com/api/applications"
+            action="https://formsubmit.co/echoairgrouptiktok@gmail.com"
             method="POST"
         >
+
+            <!-- FORMSUBMIT SETTINGS -->
+
+            <input
+                type="hidden"
+                name="_subject"
+                value="New Echo Air Group Pilot Application"
+            >
+
+            <input
+                type="hidden"
+                name="_captcha"
+                value="false"
+            >
+
+            <input
+                type="hidden"
+                name="_template"
+                value="table"
+            >
+
+            <input
+                type="hidden"
+                name="_next"
+                value="https://echoairgroup.github.io/Echo-Air-Group/"
+            >
 
 
             <h3>
@@ -1293,30 +1286,6 @@ footer .copy {
                 </div>
 
 
-                <!-- PRIVACY NOTICE ACKNOWLEDGEMENT -->
-
-                <div class="field full privacy-acknowledgement">
-                    <label for="privacyAcknowledged">
-                        <input
-                            id="privacyAcknowledged"
-                            name="privacyAcknowledged"
-                            type="checkbox"
-                            value="yes"
-                            required
-                        >
-                        I have read the <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-                        and understand that my application details will be stored for recruitment review.
-                    </label>
-                </div>
-
-                <div
-                    id="applicationStatus"
-                    class="form-status"
-                    role="status"
-                    aria-live="polite"
-                    hidden
-                ></div>
-
                 <!-- SUBMIT -->
 
                 <div class="field full">
@@ -1339,10 +1308,10 @@ footer .copy {
 
                 <strong>What happens next?</strong><br>
 
-                Your application will be securely submitted to Echo Air Group
-                for recruitment review. The recruitment team can review your
-                application and contact you using the email address or Discord
-                username you provided. See our Privacy Policy for details.
+                Your application will be sent to the Echo Air Group
+                recruitment email. The recruitment team can then review
+                your application and contact you using the email address
+                or Discord username you provided.
 
             </div>
 
@@ -1351,7 +1320,7 @@ footer .copy {
     </div>
 
 </section>
-
+```
 
 </main>
 
@@ -1361,6 +1330,7 @@ footer .copy {
 
 <footer>
 
+```
 <div class="container">
 
     <div class="foot-top">
@@ -1493,7 +1463,7 @@ footer .copy {
     </div>
 
 </div>
-
+```
 
 </footer>
 

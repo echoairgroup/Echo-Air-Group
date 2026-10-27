@@ -1084,49 +1084,6 @@ header {
     grid-column: 1 / -1;
 }
 
-.virtual-booking-notice {
-    border: 1px solid #dce6d5;
-    border-radius: 12px;
-    padding: 18px;
-    background: #f6f9f2;
-    color: #33402c;
-    line-height: 1.6;
-    margin-bottom: 18px;
-}
-.virtual-booking-notice p { margin: 7px 0 0; color: #586452; }
-.booking-privacy label {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    font-size: 13px;
-    line-height: 1.6;
-}
-.booking-privacy input {
-    flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
-    margin-top: 2px;
-    accent-color: var(--green);
-}
-.booking-privacy a { text-decoration: underline; font-weight: 800; }
-.booking-status {
-    margin-top: 14px;
-    padding: 13px 15px;
-    border: 1px solid #d6e6c1;
-    border-radius: 10px;
-    background: #f3f8ec;
-    color: #2b3b1d;
-    font-weight: 750;
-    line-height: 1.5;
-}
-.booking-status.error {
-    border-color: #efb6b6;
-    background: #fff1f1;
-    color: #8f2323;
-}
-.booking-status[hidden] { display: none; }
-#seatSelectionStatus { margin: 15px 0; }
-
 
 /* =========================================================
    BUTTONS
@@ -2187,7 +2144,7 @@ Departure
 >
 
 <label>
-Return date (automatic return flight)
+Return
 </label>
 
 <input
@@ -2449,8 +2406,6 @@ ECHO AIR GROUP · FRONT
 A320 Cabin
 </div>
 
-<p id="seatSelectionStatus" class="panel-subtitle" aria-live="polite">Select one seat for each passenger.</p>
-
 <div
     class="seat-grid"
     id="seatGrid"
@@ -2562,6 +2517,52 @@ Last name *
 <div class="field">
 
 <label>
+Date of birth *
+</label>
+
+<input
+    id="dob"
+    type="date"
+>
+</div>
+
+
+<div class="field">
+
+<label>
+Nationality *
+</label>
+
+<select id="nationality">
+
+<option value="">
+Select nationality
+</option>
+
+<option>Netherlands</option>
+<option>Germany</option>
+<option>Belgium</option>
+<option>France</option>
+<option>Spain</option>
+<option>Italy</option>
+<option>United Kingdom</option>
+<option>United States</option>
+<option>Canada</option>
+<option>Greece</option>
+<option>Portugal</option>
+<option>Austria</option>
+<option>Switzerland</option>
+<option>Poland</option>
+<option>Czech Republic</option>
+
+</select>
+
+</div>
+
+
+<div class="field">
+
+<label>
 Email *
 </label>
 
@@ -2589,7 +2590,18 @@ Phone number
 </div>
 
 
+<div class="field full">
 
+<label>
+Frequent flyer / Echo Rewards number
+</label>
+
+<input
+    id="frequentFlyer"
+    placeholder="Optional"
+>
+
+</div>
 
 </div>
 
@@ -2826,29 +2838,104 @@ Continue to payment →
 >
 
 <h3>
-Confirm virtual booking
+Payment
 </h3>
 
 <p class="panel-subtitle">
-This is a simulator-only reservation with an illustrative fare. No payment is taken.
-Do not enter payment card information; Echo Air Group does not process payments here.
+This is a virtual airline demonstration booking.
+No real payment will be processed.
 </p>
 
+
 <div class="payment-box">
-  <div class="virtual-booking-notice">
-    <strong>Virtual reservation only</strong>
-    <p>Your itinerary and selected seats will be saved to Echo Air Group's booking database. The displayed total is for demonstration and is not a charge or invoice.</p>
-  </div>
 
-  <div class="field full booking-privacy">
-    <label for="bookingPrivacyAcknowledged">
-      <input id="bookingPrivacyAcknowledged" type="checkbox" required>
-      I have read the <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-      and understand that my name, email and virtual booking details will be stored to manage this reservation.
-    </label>
-  </div>
 
-  <div id="bookingStatus" class="booking-status" role="status" aria-live="polite" hidden></div>
+<div class="payment-methods">
+
+<button
+    class="payment-method selected"
+>
+💳 Card
+</button>
+
+<button
+    class="payment-method"
+>
+ Apple Pay
+</button>
+
+<button
+    class="payment-method"
+>
+PayPal
+</button>
+
+</div>
+
+
+<div class="card-fields">
+
+
+<div class="field full">
+
+<label>
+Cardholder name
+</label>
+
+<input
+    id="cardName"
+    placeholder="CARDHOLDER NAME"
+>
+
+</div>
+
+
+<div class="field full">
+
+<label>
+Card number (DO NOT FILL IN YOUR REAL CARD NUMBER!)
+</label>
+
+<input
+    id="cardNumber"
+    maxlength="19"
+    placeholder="1234 5678 9012 3456"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+Expiry
+</label>
+
+<input
+    id="expiry"
+    placeholder="MM/YY"
+>
+
+</div>
+
+
+<div class="field">
+
+<label>
+CVV
+</label>
+
+<input
+    id="cvv"
+    maxlength="4"
+    placeholder="123"
+>
+
+</div>
+
+
+</div>
+
 </div>
 
 
@@ -2865,7 +2952,7 @@ Do not enter payment card information; Echo Air Group does not process payments 
     class="btn btn-primary"
     onclick="completeBooking()"
 >
-Confirm virtual booking ✈
+Complete booking ✈
 </button>
 
 </div>
@@ -3054,16 +3141,14 @@ Total
 </div>
 
 <h2>
-Virtual booking confirmed!
+Booking confirmed!
 </h2>
 
 <p>
-Your virtual reservation is saved in Echo Air Group's booking database.
-No payment was collected or processed.
+Your Echo Air Group flight has been successfully booked.
+Your digital boarding pass is ready below.
 </p>
 
-
-<div id="returnLegInfo" class="virtual-booking-notice" hidden aria-live="polite"></div>
 
 <div class="boarding-pass" id="boardingPass">
 
@@ -3699,14 +3784,6 @@ const flightDatabase = [
             ["ECV1101", "10:30", "17:20", "17h 50m", "A350-900", 899],
             ["ECV1103", "23:15", "06:05", "17h 50m", "A350-900", 949]
         ]
-    },
-
-    {
-        from: "KJFK",
-        to: "WSSS",
-        flights: [
-            ["ECV1102", "20:10", "15:00", "17h 50m", "A350-900", 929]
-        ]
     }
 
 ];
@@ -3722,25 +3799,9 @@ let selectedFlight = null;
 
 let selectedSeat = null;
 
-let selectedSeats = [];
-
-let selectedReturnFlight = null;
-let liveUnavailableSeats = new Set();
-let availabilityRequestVersion = 0;
-let availabilityLoadFailed = false;
-
 let selectedCabin = "Economy";
 
 let bookingReference = null;
-
-document.getElementById("passengers").addEventListener("change", () => {
-    const count = Number.parseInt(document.getElementById("passengers").value, 10) || 1;
-    selectedSeats = selectedSeats.slice(0, count);
-    selectedSeat = selectedSeats[0] || null;
-    if (selectedFlight) generateSeats();
-    updateSeatSelectionStatus();
-    updateSummary();
-});
 
 
 /* =========================================================
@@ -3805,11 +3866,6 @@ function formatDateReadable(dateString) {
 function setTripType(type) {
 
     tripType = type;
-    selectedSeats = [];
-    selectedSeat = null;
-    selectedReturnFlight = null;
-    if (selectedFlight) generateSeats();
-    updateSeatSelectionStatus();
 
     const roundButton =
         document.getElementById("roundTripButton");
@@ -3838,7 +3894,6 @@ function setTripType(type) {
 
     }
 
-    if (selectedFlight) void refreshLiveSeatAvailability();
 }
 
 
@@ -4098,7 +4153,6 @@ function selectFlight(
 
 
     selectedSeat = null;
-    selectedSeats = [];
 
     selectedCabin = "Economy";
 
@@ -4108,7 +4162,6 @@ function selectFlight(
     updateSelectedFlightDetails();
 
     generateSeats();
-    void refreshLiveSeatAvailability();
 
 
     document.getElementById(
@@ -4294,7 +4347,6 @@ function selectCabin(cabin) {
     selectedCabin = cabin;
 
     selectedSeat = null;
-    selectedSeats = [];
 
 
     document
@@ -4403,77 +4455,6 @@ function generateSeats() {
    CREATE SEAT
 ========================================================= */
 
-async function refreshLiveSeatAvailability() {
-    if (!selectedFlight) return;
-
-    const requestVersion = ++availabilityRequestVersion;
-    const apiBase = (window.ECHO_API_URL || "https://echo-air-group-api.onrender.com/api").replace(/\/+$/, "");
-    const params = new URLSearchParams({
-        flightNumber: selectedFlight.number,
-        departureDate: selectedFlight.date,
-        tripType
-    });
-    if (tripType === "roundtrip") {
-        params.set("returnDate", document.getElementById("returnDate").value);
-    }
-
-    availabilityLoadFailed = false;
-    try {
-        const response = await fetch(apiBase + "/bookings/seat-availability?" + params.toString(), {
-            headers: { Accept: "application/json" }
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || "Seat availability is unavailable.");
-        if (requestVersion !== availabilityRequestVersion) return;
-
-        liveUnavailableSeats = new Set(
-            Array.isArray(data.unavailableSeats) ? data.unavailableSeats : []
-        );
-
-        const previouslySelected = selectedSeats.slice();
-        selectedSeats = selectedSeats.filter((seat) => !liveUnavailableSeats.has(seat));
-        selectedSeat = selectedSeats[0] || null;
-
-        generateSeats();
-        updateSeatSelectionStatus();
-        updateSummary();
-
-        const newlyUnavailable = previouslySelected.filter((seat) => liveUnavailableSeats.has(seat));
-        if (newlyUnavailable.length) {
-            showToast("A selected seat is no longer available: " + newlyUnavailable.join(", ") + ". Please choose another seat.");
-        }
-    } catch (error) {
-        if (requestVersion !== availabilityRequestVersion) return;
-        availabilityLoadFailed = true;
-        updateSeatSelectionStatus();
-        // The booking API still performs final server-side validation and protects
-        // reserved seats with a database uniqueness constraint.
-    }
-}
-
-function getSelectedReturnFlight() {
-    if (!selectedFlight) return null;
-    const route = flightDatabase.find(
-        (item) => item.from === selectedFlight.to && item.to === selectedFlight.from
-    );
-    if (!route || !route.flights.length) return null;
-
-    const best = route.flights.slice().sort(
-        (a, b) => a[5] - b[5] || a[0].localeCompare(b[0])
-    )[0];
-
-    return {
-        number: best[0],
-        departure: best[1],
-        arrival: best[2],
-        duration: best[3],
-        aircraft: best[4],
-        price: best[5],
-        from: route.from,
-        to: route.to
-    };
-}
-
 function createSeat(
     row,
     letter,
@@ -4565,24 +4546,8 @@ function createSeat(
                 numeric
             ) % 11 === 0;
 
-        if (!occupied && tripType === "roundtrip") {
-            const returnFlight = getSelectedReturnFlight();
-            if (returnFlight) {
-                const returnNumeric = parseInt(returnFlight.number.replace("ECV", ""), 10);
-                occupied =
-                    (
-                        row * 7 +
-                        letter.charCodeAt(0) +
-                        returnNumeric
-                    ) % 11 === 0;
-            }
-        }
     }
 
-
-    if (liveUnavailableSeats.has(seat)) {
-        occupied = true;
-    }
 
     if (occupied) {
 
@@ -4596,33 +4561,33 @@ function createSeat(
 
 
     button.textContent = seat;
-    if (selectedSeats.includes(seat)) {
-        button.classList.add("selected");
-    }
 
-    button.onclick = function() {
-        const passengerCount = Number.parseInt(
-            document.getElementById("passengers").value,
-            10
-        ) || 1;
-        const existingIndex = selectedSeats.indexOf(seat);
 
-        if (existingIndex >= 0) {
-            selectedSeats.splice(existingIndex, 1);
-            button.classList.remove("selected");
-        } else {
-            if (selectedSeats.length >= passengerCount) {
-                showToast("You can select up to " + passengerCount + " seat(s) for this booking.");
-                return;
-            }
-            selectedSeats.push(seat);
-            button.classList.add("selected");
-        }
+    button.onclick =
+        function() {
 
-        selectedSeat = selectedSeats[0] || null;
-        updateSeatSelectionStatus();
-        updateSummary();
-    };
+            document
+                .querySelectorAll(".seat.selected")
+                .forEach(
+                    s =>
+                        s.classList.remove(
+                            "selected"
+                        )
+                );
+
+
+            button.classList.add(
+                "selected"
+            );
+
+
+            selectedSeat = seat;
+
+
+            updateSummary();
+
+        };
+
 
     grid.appendChild(button);
 
@@ -4633,23 +4598,20 @@ function createSeat(
    VALIDATE SEAT
 ========================================================= */
 
-function updateSeatSelectionStatus() {
-    const status = document.getElementById("seatSelectionStatus");
-    if (!status) return;
-    const required = Number.parseInt(document.getElementById("passengers").value, 10) || 1;
-    status.textContent = "Selected " + selectedSeats.length + " of " + required +
-        " seat(s): " + (selectedSeats.length ? selectedSeats.join(", ") : "none yet") + "." +
-        (availabilityLoadFailed ? " Live seat availability could not be loaded; the server will still validate seats when you confirm." : " Live seat availability is checked against current reservations.");
-}
-
 function validateSeat() {
-    const required = Number.parseInt(document.getElementById("passengers").value, 10) || 1;
-    if (selectedSeats.length !== required) {
-        showToast("Select exactly " + required + " seat(s) before continuing.");
-        updateSeatSelectionStatus();
+
+    if (!selectedSeat) {
+
+        showToast(
+            "Please select a seat first."
+        );
+
         return;
+
     }
+
     goStep(3);
+
 }
 
 
@@ -4669,21 +4631,43 @@ function validatePassenger() {
             "lastName"
         ).value.trim();
 
+    const dob =
+        document.getElementById(
+            "dob"
+        ).value;
+
+    const nationality =
+        document.getElementById(
+            "nationality"
+        ).value;
+
     const email =
         document.getElementById(
             "email"
         ).value.trim();
 
-    const validEmail =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    if (!first || !last || !validEmail) {
-        showToast("Enter a first name, last name and valid email address.");
+    if (
+        !first ||
+        !last ||
+        !dob ||
+        !nationality ||
+        !email
+    ) {
+
+        showToast(
+            "Please complete all required passenger fields."
+        );
+
         return;
+
     }
 
+
     updateSummary();
+
     goStep(4);
+
 }
 
 
@@ -4757,12 +4741,8 @@ function calculateTotal() {
     if (!selectedFlight) return;
 
 
-    const returnFlight = tripType === "roundtrip"
-        ? getSelectedReturnFlight()
-        : null;
-    const legs = returnFlight ? 2 : 1;
     let price =
-        selectedFlight.price + (returnFlight ? returnFlight.price : 0);
+        selectedFlight.price;
 
 
     const passengerCount =
@@ -4782,7 +4762,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            35 * passengerCount * legs;
+            35 * passengerCount;
 
     }
 
@@ -4793,7 +4773,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            120 * passengerCount * legs;
+            120 * passengerCount;
 
     }
 
@@ -4805,7 +4785,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            35 * passengerCount * legs;
+            35 * passengerCount;
 
     }
 
@@ -4817,7 +4797,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            18 * passengerCount * legs;
+            18 * passengerCount;
 
     }
 
@@ -4829,7 +4809,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            9 * passengerCount * legs;
+            9 * passengerCount;
 
     }
 
@@ -4841,7 +4821,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            15 * passengerCount * legs;
+            15 * passengerCount;
 
     }
 
@@ -4935,7 +4915,7 @@ function updateSummary() {
     document.getElementById(
         "summarySeat"
     ).textContent =
-        selectedSeats.join(", ") ||
+        selectedSeat ||
         "Not selected";
 
 
@@ -4968,146 +4948,105 @@ function updateSummary() {
    COMPLETE BOOKING
 ========================================================= */
 
-async function completeBooking() {
-    const status = document.getElementById("bookingStatus");
-    const submitButton = document.querySelector('#panel5 button[onclick="completeBooking()"]');
-    const privacyAcknowledged = Boolean(
-        document.getElementById("bookingPrivacyAcknowledged")?.checked
+function completeBooking() {
+
+    const cardName =
+        document.getElementById(
+            "cardName"
+        ).value.trim();
+
+    const cardNumber =
+        document.getElementById(
+            "cardNumber"
+        ).value.trim();
+
+    const expiry =
+        document.getElementById(
+            "expiry"
+        ).value.trim();
+
+    const cvv =
+        document.getElementById(
+            "cvv"
+        ).value.trim();
+
+
+    if (
+        !cardName ||
+        !cardNumber ||
+        !expiry ||
+        !cvv
+    ) {
+
+        showToast(
+            "Please complete the payment fields."
+        );
+
+        return;
+
+    }
+
+
+    bookingReference =
+        generateBookingReference();
+
+
+    generateBoardingPass();
+
+
+    document.getElementById(
+        "bookingWorkspace"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "flightSection"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "confirmation"
+    ).classList.add("active");
+
+
+    document.getElementById(
+        "confirmation"
+    ).scrollIntoView({
+        behavior: "smooth"
+    });
+
+
+    localStorage.setItem(
+        "echoAirLastBooking",
+        JSON.stringify({
+            reference:
+                bookingReference,
+
+            flight:
+                selectedFlight,
+
+            seat:
+                selectedSeat,
+
+            cabin:
+                selectedCabin,
+
+            passenger:
+                document.getElementById(
+                    "firstName"
+                ).value +
+                " " +
+                document.getElementById(
+                    "lastName"
+                ).value
+        })
     );
-    const passengerCount = Number.parseInt(
-        document.getElementById("passengers").value,
-        10
+
+
+    showToast(
+        "Booking confirmed!"
     );
-    const firstName = document.getElementById("firstName").value.trim();
-    const lastName = document.getElementById("lastName").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const phone = document.getElementById("phone").value.trim();
 
-    if (!selectedFlight) {
-        showToast("Select a flight before confirming the booking.");
-        return;
-    }
-    if (selectedSeats.length !== passengerCount) {
-        showToast("Select one seat for each of your " + passengerCount + " passenger(s).");
-        goStep(2);
-        return;
-    }
-    if (!firstName || !lastName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showToast("Enter the passenger name and a valid email address.");
-        goStep(3);
-        return;
-    }
-    if (!privacyAcknowledged) {
-        showToast("Please acknowledge the Privacy Policy to continue.");
-        return;
-    }
-
-    const payload = {
-        tripType,
-        returnDate: tripType === "roundtrip"
-            ? document.getElementById("returnDate").value
-            : null,
-        passengerCount,
-        flight: {
-            number: selectedFlight.number,
-            from: selectedFlight.from,
-            to: selectedFlight.to,
-            departure: selectedFlight.departure,
-            arrival: selectedFlight.arrival,
-            duration: selectedFlight.duration,
-            aircraft: selectedFlight.aircraft,
-            date: selectedFlight.date
-        },
-        passenger: { firstName, lastName, email, phone },
-        seatNumbers: selectedSeats.slice(),
-        cabin: selectedCabin,
-        extras: {
-            baggage: Boolean(document.getElementById("bagExtra").checked),
-            meal: Boolean(document.getElementById("mealExtra").checked),
-            wifi: Boolean(document.getElementById("wifiExtra").checked),
-            insurance: Boolean(document.getElementById("insuranceExtra").checked)
-        },
-        privacyAcknowledged
-    };
-
-    if (status) {
-        status.textContent = "Saving your virtual reservation…";
-        status.hidden = false;
-        status.classList.remove("error");
-    }
-    if (submitButton) {
-        submitButton.disabled = true;
-        submitButton.textContent = "Saving booking…";
-    }
-
-    try {
-        const apiBase = (window.ECHO_API_URL || "https://echo-air-group-api.onrender.com/api").replace(/\/+$/, "");
-        const response = await fetch(apiBase + "/bookings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const result = await response.json().catch(() => ({
-            error: "The booking service returned an invalid response."
-        }));
-        if (!response.ok) throw new Error(result.error || "The booking could not be saved.");
-
-        const savedBooking = result.booking;
-        bookingReference = savedBooking.reference;
-        selectedFlight.date = savedBooking.departureDate;
-        selectedSeats = Array.isArray(savedBooking.seatNumbers) ? savedBooking.seatNumbers : selectedSeats;
-        selectedSeat = selectedSeats[0] || null;
-        selectedReturnFlight = savedBooking.returnFlight || null;
-        generateBoardingPass();
-
-        const returnInfo = document.getElementById("returnLegInfo");
-        if (returnInfo && selectedReturnFlight) {
-            returnInfo.hidden = false;
-            returnInfo.textContent =
-                "Return flight " + selectedReturnFlight.number + " on " +
-                formatDateReadable(selectedReturnFlight.date) + " · " +
-                selectedReturnFlight.departure + "–" + selectedReturnFlight.arrival +
-                " · seats " + (selectedReturnFlight.seatNumbers || []).join(", ") +
-                ". This return service was automatically selected from the published demo schedule.";
-        } else if (returnInfo) {
-            returnInfo.hidden = true;
-            returnInfo.textContent = "";
-        }
-
-        const confirmationMessage = document.querySelector("#confirmation > p");
-        if (confirmationMessage) {
-            confirmationMessage.textContent =
-                "Your virtual reservation is saved in Echo Air Group's booking database. " +
-                "Reference: " + bookingReference + ". No payment was collected or processed.";
-        }
-
-        document.getElementById("bookingWorkspace").style.display = "none";
-        document.getElementById("flightSection").style.display = "none";
-        document.getElementById("confirmation").classList.add("active");
-        document.getElementById("confirmation").scrollIntoView({ behavior: "smooth" });
-
-        localStorage.setItem("echoAirLastBooking", JSON.stringify({
-            reference: bookingReference,
-            flight: selectedFlight,
-            returnFlight: selectedReturnFlight,
-            seatNumbers: selectedSeats,
-            cabin: selectedCabin
-        }));
-        showToast("Virtual booking saved. No payment was taken.");
-    } catch (error) {
-        if (status) {
-            status.textContent = error.message || "We could not save your booking. Please try again.";
-            status.hidden = false;
-            status.classList.add("error");
-        } else {
-            showToast(error.message || "We could not save your booking. Please try again.");
-        }
-    } finally {
-        if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = "Confirm virtual booking";
-        }
-    }
 }
 
 
@@ -5222,7 +5161,7 @@ function generateBoardingPass() {
     document.getElementById(
         "passSeat"
     ).textContent =
-        selectedSeats.join(", ");
+        selectedSeat;
 
 
     document.getElementById(
@@ -5266,27 +5205,20 @@ function generateBoardingPass() {
             departure:
                 selectedFlight.departure,
 
-            seatNumbers:
-                selectedSeats,
+            seat:
+                selectedSeat,
 
             cabin:
                 selectedCabin,
 
-            returnFlight:
-                selectedReturnFlight
-                    ? {
-                        number: selectedReturnFlight.number,
-                        date: document.getElementById("returnDate").value,
-                        departure: selectedReturnFlight.departure,
-                        arrival: selectedReturnFlight.arrival
-                    }
-                    : null
+            passenger:
+                passenger
 
         });
 
 
     const qr =
-        "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
+        "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://cdn.discordapp.com/attachments/1535409438683439314/1540047293410181190/https_discord_gg_e7ePxYA24-removebg-preview.png?ex=6a88884f&is=6a8736cf&hm=a22b7d85d3be83b1c5b06fb69067a6fe844151f51c66ad68729ee832ee443b5e&" +
         encodeURIComponent(qrData);
 
 
@@ -5479,9 +5411,7 @@ function printBoardingPass() {
 
             </style>
 
-        
-<link rel="stylesheet" href="site-shell.css">
-</head>
+        </head>
 
         <body>
 
@@ -5705,23 +5635,56 @@ document
 ========================================================= */
 
 document
-    .getElementById("departureDate")
-    .addEventListener("change", function() {
-        const returnInput = document.getElementById("returnDate");
-        const nextDay = new Date(this.value + "T00:00:00");
-        nextDay.setDate(nextDay.getDate() + 1);
-        const nextDate = formatDateInput(nextDay);
-        returnInput.min = nextDate;
-        if (!returnInput.value || returnInput.value <= this.value) {
-            returnInput.value = nextDate;
-        }
-    });
+    .getElementById(
+        "departureDate"
+    )
+    .addEventListener(
+        "change",
+        function() {
 
-document.getElementById("returnDate").addEventListener("change", () => {
-    if (selectedFlight && tripType === "roundtrip") {
-        void refreshLiveSeatAvailability();
-    }
-});
+            document
+                .getElementById(
+                    "returnDate"
+                )
+                .min =
+                this.value;
+
+        }
+    );
+
+
+/* =========================================================
+   CARD NUMBER FORMAT
+========================================================= */
+
+document
+    .getElementById(
+        "cardNumber"
+    )
+    .addEventListener(
+        "input",
+        function() {
+
+            let value =
+                this.value
+                    .replace(
+                        /\D/g,
+                        ""
+                    )
+                    .substring(
+                        0,
+                        16
+                    );
+
+
+            this.value =
+                value.replace(
+                    /(.{4})/g,
+                    "$1 "
+                ).trim();
+
+        }
+    );
 
 
 /* =========================================================
@@ -5745,7 +5708,5 @@ calculateTotal();
 
 </script>
 
-
-<script src="script.js" defer></script>
 </body>
 </html>
