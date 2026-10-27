@@ -3699,6 +3699,14 @@ const flightDatabase = [
             ["ECV1101", "10:30", "17:20", "17h 50m", "A350-900", 899],
             ["ECV1103", "23:15", "06:05", "17h 50m", "A350-900", 949]
         ]
+    },
+
+    {
+        from: "KJFK",
+        to: "WSSS",
+        flights: [
+            ["ECV1102", "20:10", "15:00", "17h 50m", "A350-900", 929]
+        ]
     }
 
 ];
@@ -4691,8 +4699,12 @@ function calculateTotal() {
     if (!selectedFlight) return;
 
 
+    const returnFlight = tripType === "roundtrip"
+        ? getSelectedReturnFlight()
+        : null;
+    const legs = returnFlight ? 2 : 1;
     let price =
-        selectedFlight.price;
+        selectedFlight.price + (returnFlight ? returnFlight.price : 0);
 
 
     const passengerCount =
@@ -4712,7 +4724,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            35 * passengerCount;
+            35 * passengerCount * legs;
 
     }
 
@@ -4723,7 +4735,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            120 * passengerCount;
+            120 * passengerCount * legs;
 
     }
 
@@ -4735,7 +4747,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            35 * passengerCount;
+            35 * passengerCount * legs;
 
     }
 
@@ -4747,7 +4759,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            18 * passengerCount;
+            18 * passengerCount * legs;
 
     }
 
@@ -4759,7 +4771,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            9 * passengerCount;
+            9 * passengerCount * legs;
 
     }
 
@@ -4771,7 +4783,7 @@ function calculateTotal() {
     ) {
 
         price +=
-            15 * passengerCount;
+            15 * passengerCount * legs;
 
     }
 
