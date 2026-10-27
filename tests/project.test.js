@@ -92,3 +92,45 @@ test("required public pages have titles and responsive viewport tags", () => {
     assert.doesNotMatch(source, /http:\/\/(?:localhost|127\.0\.0\.1):\d+\/api/i, file + " localhost API URL");
   }
 });
+
+
+test("virtual booking API persists reservations and never collects payment credentials", () => {
+  const server = read("server.js");
+  const booking = read("booking.html");
+  const dashboard = read("bookings-admin.html");
+
+  assert.match(server, /CREATE TABLE IF NOT EXISTS bookings/);
+  assert.match(server, /CREATE TABLE IF NOT EXISTS booking_seats/);
+  assert.match(server, /CREATE TABLE IF NOT EXISTS booking_events/);
+  assert.match(server, /"\/api\/bookings",[\s\S]{0,80}bookingRateLimit/);
+  assert.match(server, /"\/api\/admin\/bookings",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/);
+  assert.match(server, /"\/api\/admin\/bookings\/:id",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/);
+  assert.match(server, /payment_status VARCHAR\(24\)[\s\S]{0,80}CHECK \(payment_status = 'not_applicable'\)/);
+  assert.match(server, /function findDemoReturnFlight/);
+  assert.match(server, /return_flight_number/);
+  assert.match(server, /return_seat_numbers/);
+  assert.match(server, /idx_booking_active_flight_seat/);
+  assert.match(server, /await client\.query\("COMMIT"\)/);
+  const bookingRoute = server.slice(server.indexOf("// VIRTUAL BOOKING ENGINE"), server.indexOf("// PILOT APPLICATIONS"));
+  assert.doesNotMatch(bookingRoute, /card_number|cardNumber|cvv/i);
+
+  assert.match(booking, /fetch\(apiBase \+ "\/bookings"/);
+  assert.match(booking, /id="bookingPrivacyAcknowledged"/);
+  assert.match(booking, /let selectedSeats = \[\]/);
+  assert.match(booking, /Select exactly/);
+  assert.match(booking, /getSelectedReturnFlight/);
+  assert.match(booking, /id="returnLegInfo"/);
+  assert.doesNotMatch(booking, /id="cardNumber"/);
+  assert.doesNotMatch(booking, /id="cardName"/);
+  assert.doesNotMatch(booking, /id="expiry"/);
+  assert.doesNotMatch(booking, /id="cvv"/);
+  assert.doesNotMatch(booking, /id="dob"/);
+  assert.doesNotMatch(booking, /id="nationality"/);
+  assert.doesNotMatch(booking, /id="frequentFlyer"/);
+
+  assert.match(dashboard, /\/admin\/bookings/);
+  assert.match(dashboard, /action:'cancel'/);
+  assert.match(dashboard, /\/events/);
+  assert.match(dashboard, /headers\.Authorization='Bearer '\+token/);
+  assert.match(dashboard, /Not applicable/);
+});
