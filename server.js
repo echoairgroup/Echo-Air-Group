@@ -83,6 +83,18 @@ const applicationRateLimit = createRateLimiter({
     message: "Too many application attempts. Please try again later."
 });
 
+const managerApplicationRateLimit = createRateLimiter({
+    windowMs: 60 * 60 * 1000,
+    max: 2,
+    message: "Too many manager application attempts. Please try again later."
+});
+
+const contactRateLimit = createRateLimiter({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    message: "Too many messages submitted. Please try again later."
+});
+
 function requireAuthConfigured(req, res, next) {
     if (!JWT_SECRET) {
         return res.status(503).json({
@@ -386,6 +398,54 @@ async function initializeDatabase() {
     await query(`
         CREATE INDEX IF NOT EXISTS idx_pilot_application_events_application
         ON pilot_application_events (application_id, created_at DESC);
+    `);
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS external_submissions (
+            id BIGSERIAL PRIMARY KEY,
+            type VARCHAR(20) NOT NULL CHECK (type IN ('manager', 'contact')),
+            name VARCHAR(160) NOT NULL,
+            email VARCHAR(254) NOT NULL,
+            subject VARCHAR(160) NOT NULL,
+            message TEXT NOT NULL,
+            details JSONB NOT NULL DEFAULT '{}'::jsonb,
+            privacy_notice_version VARCHAR(24) NOT NULL DEFAULT '2026-10',
+            privacy_acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            status VARCHAR(20) NOT NULL DEFAULT 'new'
+                CHECK (status IN ('new', 'in_progress', 'responded', 'closed', 'pending', 'reviewing', 'approved', 'rejected', 'withdrawn')),
+            review_notes VARCHAR(2000),
+            reviewed_at TIMESTAMPTZ,
+            reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_external_submissions_type_status_created
+        ON external_submissions (type, status, created_at DESC);
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_external_submissions_email
+        ON external_submissions (LOWER(email));
+    `);
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS external_submission_events (
+            id BIGSERIAL PRIMARY KEY,
+            submission_id BIGINT NOT NULL
+                REFERENCES external_submissions(id) ON DELETE CASCADE,
+            actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            action VARCHAR(40) NOT NULL,
+            note VARCHAR(2000),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_external_submission_events_submission
+        ON external_submission_events (submission_id, created_at DESC);
     `);
 
     console.log(
