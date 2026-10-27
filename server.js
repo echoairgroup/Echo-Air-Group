@@ -469,6 +469,11 @@ const DISCORD_CLIENT_SECRET =
 const DISCORD_GUILD_ID =
     process.env.DISCORD_GUILD_ID || "";
 
+// Optional channel for recruitment notifications. Messages include reference
+// numbers only; applicant names, email addresses and message contents are not posted.
+const DISCORD_APPLICATIONS_CHANNEL_ID =
+    process.env.DISCORD_APPLICATIONS_CHANNEL_ID || "";
+
 const DISCORD_REDIRECT_URI =
     process.env.DISCORD_REDIRECT_URI || "";
 
@@ -5037,6 +5042,8 @@ app.post(
 
             const application = result.rows[0];
 
+            void notifyRecruitment({ type: "pilot", id: application.id });
+
             if (isNativeFormPost && req.accepts("html")) {
                 return res.redirect(
                     303,
@@ -5241,8 +5248,40 @@ app.get(
 );
 
 
+async function notifyRecruitment({ type, id }) {
+    if (!DISCORD_APPLICATIONS_CHANNEL_ID || !discordClient || !discordReady) {
+        return;
+    }
+
+    try {
+        const channel = await discordClient.channels.fetch(
+            DISCORD_APPLICATIONS_CHANNEL_ID
+        );
+
+        if (!channel || !channel.isTextBased() || typeof channel.send !== "function") {
+            console.warn("Recruitment notification skipped: configured channel is not text-capable.");
+            return;
+        }
+
+        const reviewPage = type === "pilot"
+            ? "https://echoairgroup.github.io/Echo-Air-Group/applications-admin.html"
+            : "https://echoairgroup.github.io/Echo-Air-Group/submissions-admin.html";
+
+        await channel.send({
+            content:
+                "New " + type + " submission received (reference #" + id + "). Review: " + reviewPage,
+            allowedMentions: { parse: [] }
+        });
+    } catch (error) {
+        // Submission persistence must not fail because the optional notification failed.
+        console.error("Recruitment notification failed:", error?.message || error);
+    }
+}
+
 async function createExternalSubmission(input) {
     const client = await pool.connect();
+    let submission;
+
     try {
         await client.query("BEGIN");
         const result = await client.query(
@@ -5255,20 +5294,22 @@ async function createExternalSubmission(input) {
                 input.message, input.details || {}, "2026-10", input.status
             ]
         );
-        const submission = result.rows[0];
+        submission = result.rows[0];
         await client.query(
             "INSERT INTO external_submission_events (submission_id, action, note) " +
             "VALUES ($1, 'submitted', $2)",
             [submission.id, input.type + " submission received"]
         );
         await client.query("COMMIT");
-        return submission;
     } catch (error) {
         await client.query("ROLLBACK").catch(() => {});
         throw error;
     } finally {
         client.release();
     }
+
+    void notifyRecruitment({ type: submission.type, id: submission.id });
+    return submission;
 }
 
 // Contact messages are stored in the first-party inbox. Public visitors can
