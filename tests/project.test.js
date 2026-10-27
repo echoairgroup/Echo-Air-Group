@@ -50,7 +50,7 @@ test("recruitment dashboard escapes applicant-provided fields", () => {
   const page = read("applications-admin.html");
   assert.match(page, /escapeHtml\(app\.email\)/);
   assert.match(page, /escapeHtml\(app\.reason/);
-  assert.match(page, /Authorization: 'Bearer ' \+ token/);
+  assert.match(page, /headers\.Authorization = 'Bearer ' \+ token/);
 });
 
 test("required public pages have titles and responsive viewport tags", () => {
