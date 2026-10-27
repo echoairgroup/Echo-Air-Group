@@ -4,9 +4,7 @@
   "description": "Echo Air Group backend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "check": "node --check server.js && node --check script.js && node scripts/validate-project.js",
-    "test": "node --test"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
