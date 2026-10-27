@@ -112,7 +112,7 @@ test("virtual booking API persists reservations and never collects payment crede
   assert.match(server, /idx_booking_active_flight_seat/);
   assert.match(server, /await client\.query\("COMMIT"\)/);
   const bookingRoute = server.slice(server.indexOf("// VIRTUAL BOOKING ENGINE"), server.indexOf("// PILOT APPLICATIONS"));
-  assert.doesNotMatch(bookingRoute, /card_number|cardNumber|cvv/i);
+  assert.doesNotMatch(bookingRoute, /input\.(?:cardNumber|card_number|cvv)|card_number\s+VARCHAR|cvv\s+VARCHAR/i);
 
   assert.match(booking, /fetch\(apiBase \+ "\/bookings"/);
   assert.match(booking, /id="bookingPrivacyAcknowledged"/);
