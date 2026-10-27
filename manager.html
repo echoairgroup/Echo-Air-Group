@@ -602,36 +602,10 @@ Think you have what it takes to help lead Echo Air Group? Tell us about yourself
 
 
 <form
+id="managerApplicationForm"
 class="form-card"
-action="https://formsubmit.co/echoairgrouptiktok@gmail.com"
+action="https://echo-air-group-api.onrender.com/api/manager-applications"
 method="POST"
->
-
-
-<!-- FORMSUBMIT -->
-
-<input
-type="hidden"
-name="_subject"
-value="New Echo Air Group Manager Application"
->
-
-<input
-type="hidden"
-name="_captcha"
-value="false"
->
-
-<input
-type="hidden"
-name="_template"
-value="table"
->
-
-<input
-type="hidden"
-name="_next"
-value="https://echoairgroup.github.io/Echo-Air-Group/"
 >
 
 
@@ -1315,6 +1289,24 @@ placeholder="Anything else you would like the Echo Air Group management team to 
 </div>
 
 
+<!-- PRIVACY NOTICE -->
+
+<div class="field full privacy-acknowledgement">
+<label for="managerPrivacyAcknowledged">
+<input
+id="managerPrivacyAcknowledged"
+name="privacyAcknowledged"
+type="checkbox"
+value="yes"
+required
+>
+I have read the <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+and understand that my management application will be stored for recruitment review.
+</label>
+</div>
+
+<div id="managerApplicationStatus" class="form-status" role="status" aria-live="polite" hidden></div>
+
 <!-- =========================================================
      SUBMIT
 ========================================================= -->
@@ -1341,7 +1333,7 @@ Submit Manager Application ✈
 
 <strong>What happens next?</strong><br>
 
-Your manager application will be sent to the Echo Air Group management team. We will review your application and, if we believe you could be a good fit for the team, contact you through the email address or Discord username you provided.
+Your management application will be submitted to Echo Air Group for review. The recruitment team can contact you using the email address or Discord username you provided. See our Privacy Policy for details.
 
 </div>
 
