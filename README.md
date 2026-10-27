@@ -6,8 +6,8 @@ Echo Air Group is a virtual airline community website and pilot operations backe
 
 - **Frontend:** multi-page HTML/CSS/JavaScript site. Shared brand styling lives in `style.css`.
 - **API:** Node.js + Express in `server.js`, currently hosted as the `Echo-Air-Group-api` service on Render.
-- **Data:** PostgreSQL on Neon. The backend initializes the `users` and `flights` tables and maintains them through idempotent migrations. Feature-branch work adds first-party pilot applications, contact messages, manager applications and audit history.
-- **Integrations:** NewSky flight synchronization, optional Discord bot/OAuth integration, and first-party contact/recruitment intake with an admin-only review inbox.
+- **Data:** PostgreSQL on Neon. The backend initializes the `users` and `flights` tables and maintains them through idempotent migrations. Feature-branch work adds first-party pilot applications, contact messages, manager applications, virtual bookings and audit history.
+- **Integrations:** NewSky flight synchronization, optional Discord bot/OAuth integration, first-party contact/recruitment intake and an admin-only review inbox, plus persistent simulator-only virtual bookings with automatic return-flight matching. The booking flow takes no payment and stores no card data.
 - **Hosting:** the production API deploys from `main`. Website publishing is managed through GitHub Pages automation.
 
 ## Development setup
