@@ -50,7 +50,8 @@
 - Set Render's health-check path to `/api/health` after verifying the staging deployment.
 - If recruitment wants notifications, set `DISCORD_APPLICATIONS_CHANNEL_ID` in Render to a channel the bot can send messages to. Notifications intentionally contain submission type and reference number only.
 - Configure Neon snapshots/backup retention and test restore to a separate branch.
-- Establish a concrete retention schedule for stored contact and recruitment submissions, then configure and test deletion/anonymization procedures. The current policy deliberately discloses that a fixed period is not yet published.
+- Establish a concrete retention schedule for stored contact, recruitment and booking records, then configure and test deletion/anonymization procedures. The current policy deliberately discloses that a fixed period is not yet published.
+- Create the Render staging service manually using `docs/STAGING_SETUP.md`. The service has not been created because the privileged Neon connection string must be entered directly in Render's dashboard rather than transferred through an automated tool call.
 - The booking page references a future `/api/google-wallet` endpoint in a code comment; no corresponding backend route was found in the API route inventory. Google Wallet passes need credentials and a real implementation.
 - Continue splitting the large API module into route/service modules once regression coverage is stronger.
 
