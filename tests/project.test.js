@@ -103,6 +103,7 @@ test("virtual booking API persists reservations and never collects payment crede
   assert.match(server, /CREATE TABLE IF NOT EXISTS booking_seats/);
   assert.match(server, /CREATE TABLE IF NOT EXISTS booking_events/);
   assert.match(server, /"\/api\/bookings",[\s\S]{0,80}bookingRateLimit/);
+  assert.match(server, /"\/api\/bookings\/seat-availability",[\s\S]{0,100}bookingAvailabilityRateLimit/);
   assert.match(server, /"\/api\/admin\/bookings",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/);
   assert.match(server, /"\/api\/admin\/bookings\/:id",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/);
   assert.match(server, /payment_status VARCHAR\(24\)[\s\S]{0,80}CHECK \(payment_status = 'not_applicable'\)/);
@@ -115,6 +116,8 @@ test("virtual booking API persists reservations and never collects payment crede
   assert.doesNotMatch(bookingRoute, /input\.(?:cardNumber|card_number|cvv)|card_number\s+VARCHAR|cvv\s+VARCHAR/i);
 
   assert.match(booking, /fetch\(apiBase \+ "\/bookings"/);
+  assert.match(booking, /fetch\(apiBase \+ "\/bookings\/seat-availability\?"/);
+  assert.match(booking, /liveUnavailableSeats\.has\(seat\)/);
   assert.match(booking, /id="bookingPrivacyAcknowledged"/);
   assert.match(booking, /let selectedSeats = \[\]/);
   assert.match(booking, /Select exactly/);
