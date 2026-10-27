@@ -77,6 +77,12 @@ const loginRateLimit = createRateLimiter({
     message: "Too many login attempts. Please wait and try again."
 });
 
+const applicationRateLimit = createRateLimiter({
+    windowMs: 60 * 60 * 1000,
+    max: 3,
+    message: "Too many application attempts. Please try again later."
+});
+
 function requireAuthConfigured(req, res, next) {
     if (!JWT_SECRET) {
         return res.status(503).json({
@@ -326,6 +332,59 @@ async function initializeDatabase() {
         ALTER TABLE flights
         ADD COLUMN IF NOT EXISTS synced_at TIMESTAMPTZ
         DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS pilot_applications (
+            id BIGSERIAL PRIMARY KEY,
+            first_name VARCHAR(80) NOT NULL,
+            last_name VARCHAR(80) NOT NULL,
+            age SMALLINT NOT NULL CHECK (age BETWEEN 1 AND 120),
+            country VARCHAR(100) NOT NULL,
+            email VARCHAR(254) NOT NULL,
+            discord_username VARCHAR(100) NOT NULL,
+            simulator VARCHAR(100) NOT NULL,
+            experience_level VARCHAR(80) NOT NULL,
+            flight_hours INTEGER NOT NULL DEFAULT 0 CHECK (flight_hours >= 0),
+            network VARCHAR(40),
+            reason TEXT,
+            privacy_notice_version VARCHAR(24) NOT NULL DEFAULT '2026-10',
+            privacy_acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            status VARCHAR(20) NOT NULL DEFAULT 'pending'
+                CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'withdrawn')),
+            review_notes VARCHAR(2000),
+            reviewed_at TIMESTAMPTZ,
+            reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_pilot_applications_status_created_at
+        ON pilot_applications (status, created_at DESC);
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_pilot_applications_email
+        ON pilot_applications (LOWER(email));
+    `);
+
+    await query(`
+        CREATE TABLE IF NOT EXISTS pilot_application_events (
+            id BIGSERIAL PRIMARY KEY,
+            application_id BIGINT NOT NULL
+                REFERENCES pilot_applications(id) ON DELETE CASCADE,
+            actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            action VARCHAR(40) NOT NULL,
+            note VARCHAR(2000),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS idx_pilot_application_events_application
+        ON pilot_application_events (application_id, created_at DESC);
     `);
 
     console.log(
@@ -4779,6 +4838,318 @@ app.get(
                 error:
                     "Unable to read database stats."
             });
+        }
+    }
+);
+
+// ============================================================
+// PILOT APPLICATIONS
+// ============================================================
+
+// Public submission endpoint. Only the recruitment team can read or review
+// submitted personal data; unauthenticated requests can never list applications.
+app.post(
+    "/api/applications",
+    applicationRateLimit,
+    async (req, res) => {
+        const form = req.body || {};
+        const read = (key, legacyKey, maxLength) =>
+            String(form[key] ?? form[legacyKey] ?? "").trim().slice(0, maxLength);
+
+        const firstName = read("firstName", "First Name", 80);
+        const lastName = read("lastName", "Last Name", 80);
+        const age = Number(read("age", "Age", 3));
+        const country = read("country", "Country", 100);
+        const email = read("email", "Email Address", 254).toLowerCase();
+        const discord = read("discord", "Discord Username", 100);
+        const simulator = read("simulator", "Simulator", 100);
+        const experience = read("experience", "Experience Level", 80);
+        const flightHours = Number(read("flightHours", "Approximate Flight Hours", 8));
+        const network = read("network", "Network", 40);
+        const reason = String(form.reason ?? form["Why do you want to join Echo Air Group?"] ?? "").trim();
+
+        const allowedSimulators = new Set([
+            "Microsoft Flight Simulator 2024",
+            "Microsoft Flight Simulator 2020",
+            "X-Plane 12",
+            "X-Plane 11",
+            "Prepar3D"
+        ]);
+        const allowedExperience = new Set([
+            "Beginner — 0–50 hours",
+            "Intermediate — 50–300 hours",
+            "Advanced — 300–1,000 hours",
+            "Expert — 1,000+ hours"
+        ]);
+        const allowedNetworks = new Set(["", "VATSIM", "IVAO", "Both", "Offline"]);
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!firstName || !lastName || !country || !email || !discord || !simulator || !experience) {
+            return res.status(400).json({ error: "Complete all required application fields." });
+        }
+
+        if (!Number.isInteger(age) || age < 1 || age > 120) {
+            return res.status(400).json({ error: "Enter a valid age." });
+        }
+
+        if (!emailPattern.test(email)) {
+            return res.status(400).json({ error: "Enter a valid email address." });
+        }
+
+        if (!allowedSimulators.has(simulator) || !allowedExperience.has(experience) || !allowedNetworks.has(network)) {
+            return res.status(400).json({ error: "One or more application selections are invalid." });
+        }
+
+        if (!Number.isSafeInteger(flightHours) || flightHours < 0 || flightHours > 100000) {
+            return res.status(400).json({ error: "Enter valid approximate flight hours." });
+        }
+
+        if (reason.length > 3000) {
+            return res.status(400).json({ error: "The application message must be 3,000 characters or fewer." });
+        }
+
+        const privacyAcknowledged =
+            form.privacyAcknowledged === true ||
+            form.privacyAcknowledged === "yes" ||
+            form["Privacy acknowledgement"] === "yes";
+
+        if (!privacyAcknowledged) {
+            return res.status(400).json({ error: "Please confirm that you have read the privacy notice." });
+        }
+
+        try {
+            const result = await query(
+                \`
+                INSERT INTO pilot_applications (
+                    first_name, last_name, age, country, email,
+                    discord_username, simulator, experience_level,
+                    flight_hours, network, reason, privacy_notice_version,
+                    privacy_acknowledged_at
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+                RETURNING id, status, created_at
+                \`,
+                [
+                    firstName, lastName, age, country, email, discord,
+                    simulator, experience, flightHours, network || null,
+                    reason || null, "2026-10"
+                ]
+            );
+
+            const application = result.rows[0];
+
+            await query(
+                \`
+                INSERT INTO pilot_application_events (application_id, action, note)
+                VALUES ($1, 'submitted', 'Application received')
+                \`,
+                [application.id]
+            );
+
+            const isNativeFormPost =
+                String(req.get("content-type") || "").includes("application/x-www-form-urlencoded");
+
+            if (isNativeFormPost && req.accepts("html")) {
+                return res.redirect(
+                    303,
+                    "https://echoairgroup.github.io/Echo-Air-Group/join.html?application=received#application"
+                );
+            }
+
+            return res.status(201).json({
+                message: "Your pilot application has been received.",
+                application: {
+                    id: application.id,
+                    status: application.status,
+                    createdAt: application.created_at
+                }
+            });
+        } catch (error) {
+            console.error("Pilot application submission failed:", error);
+            return res.status(500).json({
+                error: "We could not save your application. Please try again later."
+            });
+        }
+    }
+);
+
+// Recruitment-only list. Search and status filters are parameterized, and
+// pagination is bounded so the endpoint cannot return the entire database.
+app.get(
+    "/api/admin/applications",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const allowedStatuses = new Set(["pending", "reviewing", "approved", "rejected", "withdrawn"]);
+        const requestedStatus = String(req.query.status || "").trim().toLowerCase();
+        const search = String(req.query.search || "").trim().slice(0, 100);
+        const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 25));
+        const offset = Math.min(10000, Math.max(0, Number.parseInt(req.query.offset, 10) || 0));
+
+        if (requestedStatus && !allowedStatuses.has(requestedStatus)) {
+            return res.status(400).json({ error: "Invalid application status filter." });
+        }
+
+        try {
+            const filters = [];
+            const params = [];
+
+            if (requestedStatus) {
+                params.push(requestedStatus);
+                filters.push("status = $" + params.length);
+            }
+
+            if (search) {
+                params.push("%" + search.replace(/[\\%_]/g, "\\$&") + "%");
+                const searchParam = "$" + params.length;
+                filters.push(
+                    "(first_name ILIKE " + searchParam + " ESCAPE '\\\\' OR " +
+                    "last_name ILIKE " + searchParam + " ESCAPE '\\\\' OR " +
+                    "email ILIKE " + searchParam + " ESCAPE '\\\\' OR " +
+                    "discord_username ILIKE " + searchParam + " ESCAPE '\\\\')"
+                );
+            }
+
+            const where = filters.length ? "WHERE " + filters.join(" AND ") : "";
+            const countResult = await query(
+                "SELECT COUNT(*)::int AS total FROM pilot_applications " + where,
+                params
+            );
+
+            const pageParams = params.slice();
+            pageParams.push(limit);
+            pageParams.push(offset);
+            const result = await query(
+                "SELECT id, first_name, last_name, age, country, email, discord_username, " +
+                "simulator, experience_level, flight_hours, network, reason, status, review_notes, " +
+                "reviewed_at, reviewed_by, privacy_notice_version, privacy_acknowledged_at, created_at, updated_at " +
+                "FROM pilot_applications " + where +
+                " ORDER BY created_at DESC, id DESC LIMIT $" + (pageParams.length - 1) +
+                " OFFSET $" + pageParams.length,
+                pageParams
+            );
+
+            return res.json({
+                total: Number(countResult.rows[0].total),
+                limit,
+                offset,
+                applications: result.rows
+            });
+        } catch (error) {
+            console.error("Unable to load pilot applications:", error);
+            return res.status(500).json({ error: "Unable to load pilot applications." });
+        }
+    }
+);
+
+// Status changes and the audit event are committed together.
+app.patch(
+    "/api/admin/applications/:id",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const applicationId = Number(req.params.id);
+        const status = String(req.body?.status || "").trim().toLowerCase();
+        const allowedStatuses = new Set(["pending", "reviewing", "approved", "rejected", "withdrawn"]);
+        const reviewNotes = String(req.body?.reviewNotes || "").trim();
+
+        if (!Number.isSafeInteger(applicationId) || applicationId < 1) {
+            return res.status(400).json({ error: "Invalid application ID." });
+        }
+
+        if (!allowedStatuses.has(status)) {
+            return res.status(400).json({ error: "Invalid application status." });
+        }
+
+        if (reviewNotes.length > 2000) {
+            return res.status(400).json({ error: "Review notes must be 2,000 characters or fewer." });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+
+            const existing = await client.query(
+                "SELECT id, status FROM pilot_applications WHERE id = $1 FOR UPDATE",
+                [applicationId]
+            );
+
+            if (!existing.rows[0]) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ error: "Application not found." });
+            }
+
+            const previousStatus = existing.rows[0].status;
+            const updated = await client.query(
+                \`
+                UPDATE pilot_applications
+                SET status = $1,
+                    review_notes = $2,
+                    reviewed_at = CASE WHEN $1 = 'pending' THEN NULL ELSE CURRENT_TIMESTAMP END,
+                    reviewed_by = CASE WHEN $1 = 'pending' THEN NULL ELSE $3 END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $4
+                RETURNING id, status, review_notes, reviewed_at, reviewed_by, updated_at
+                \`,
+                [status, reviewNotes || null, req.user.id, applicationId]
+            );
+
+            await client.query(
+                \`
+                INSERT INTO pilot_application_events (
+                    application_id, actor_user_id, action, note
+                )
+                VALUES ($1, $2, 'status_changed', $3)
+                \`,
+                [
+                    applicationId,
+                    req.user.id,
+                    "Status changed from " + previousStatus + " to " + status +
+                        (reviewNotes ? ": " + reviewNotes : "")
+                ]
+            );
+
+            await client.query("COMMIT");
+            return res.json({ application: updated.rows[0] });
+        } catch (error) {
+            await client.query("ROLLBACK").catch(() => {});
+            console.error("Unable to update pilot application:", error);
+            return res.status(500).json({ error: "Unable to update pilot application." });
+        } finally {
+            client.release();
+        }
+    }
+);
+
+app.get(
+    "/api/admin/applications/:id/events",
+    authenticate,
+    requireAdmin,
+    async (req, res) => {
+        const applicationId = Number(req.params.id);
+
+        if (!Number.isSafeInteger(applicationId) || applicationId < 1) {
+            return res.status(400).json({ error: "Invalid application ID." });
+        }
+
+        try {
+            const result = await query(
+                \`
+                SELECT e.id, e.action, e.note, e.created_at,
+                       u.username AS actor_username,
+                       u.display_name AS actor_display_name
+                FROM pilot_application_events e
+                LEFT JOIN users u ON u.id = e.actor_user_id
+                WHERE e.application_id = $1
+                ORDER BY e.created_at DESC, e.id DESC
+                LIMIT 100
+                \`,
+                [applicationId]
+            );
+            return res.json({ events: result.rows });
+        } catch (error) {
+            console.error("Unable to load application history:", error);
+            return res.status(500).json({ error: "Unable to load application history." });
         }
     }
 );
