@@ -4854,19 +4854,31 @@ app.post(
     applicationRateLimit,
     async (req, res) => {
         const form = req.body || {};
-        const read = (key, legacyKey, maxLength) =>
-            String(form[key] ?? form[legacyKey] ?? "").trim().slice(0, maxLength);
+        const read = (key, legacyKey) =>
+            String(form[key] ?? form[legacyKey] ?? "").trim();
+        const isNativeFormPost =
+            String(req.get("content-type") || "").includes("application/x-www-form-urlencoded");
+        const respondError = (status, message) => {
+            if (isNativeFormPost && req.accepts("html")) {
+                const state = status >= 500 ? "error" : "invalid";
+                return res.redirect(
+                    303,
+                    "https://echoairgroup.github.io/Echo-Air-Group/join.html?application=" + state + "#application"
+                );
+            }
+            return res.status(status).json({ error: message });
+        };
 
-        const firstName = read("firstName", "First Name", 80);
-        const lastName = read("lastName", "Last Name", 80);
-        const age = Number(read("age", "Age", 3));
-        const country = read("country", "Country", 100);
-        const email = read("email", "Email Address", 254).toLowerCase();
-        const discord = read("discord", "Discord Username", 100);
-        const simulator = read("simulator", "Simulator", 100);
-        const experience = read("experience", "Experience Level", 80);
-        const flightHours = Number(read("flightHours", "Approximate Flight Hours", 8));
-        const network = read("network", "Network", 40);
+        const firstName = read("firstName", "First Name");
+        const lastName = read("lastName", "Last Name");
+        const age = Number(read("age", "Age"));
+        const country = read("country", "Country");
+        const email = read("email", "Email Address").toLowerCase();
+        const discord = read("discord", "Discord Username");
+        const simulator = read("simulator", "Simulator");
+        const experience = read("experience", "Experience Level");
+        const flightHours = Number(read("flightHours", "Approximate Flight Hours"));
+        const network = read("network", "Network");
         const reason = String(form.reason ?? form["Why do you want to join Echo Air Group?"] ?? "").trim();
 
         const allowedSimulators = new Set([
@@ -4886,27 +4898,33 @@ app.post(
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!firstName || !lastName || !country || !email || !discord || !simulator || !experience) {
-            return res.status(400).json({ error: "Complete all required application fields." });
+            return respondError(400, "Complete all required application fields.");
+        }
+
+        if (firstName.length > 80 || lastName.length > 80 || country.length > 100 ||
+            email.length > 254 || discord.length > 100 || simulator.length > 100 ||
+            experience.length > 80 || network.length > 40) {
+            return respondError(400, "One or more application fields exceed the allowed length.");
         }
 
         if (!Number.isInteger(age) || age < 1 || age > 120) {
-            return res.status(400).json({ error: "Enter a valid age." });
+            return respondError(400, "Enter a valid age.");
         }
 
         if (!emailPattern.test(email)) {
-            return res.status(400).json({ error: "Enter a valid email address." });
+            return respondError(400, "Enter a valid email address.");
         }
 
         if (!allowedSimulators.has(simulator) || !allowedExperience.has(experience) || !allowedNetworks.has(network)) {
-            return res.status(400).json({ error: "One or more application selections are invalid." });
+            return respondError(400, "One or more application selections are invalid.");
         }
 
         if (!Number.isSafeInteger(flightHours) || flightHours < 0 || flightHours > 100000) {
-            return res.status(400).json({ error: "Enter valid approximate flight hours." });
+            return respondError(400, "Enter valid approximate flight hours.");
         }
 
         if (reason.length > 3000) {
-            return res.status(400).json({ error: "The application message must be 3,000 characters or fewer." });
+            return respondError(400, "The application message must be 3,000 characters or fewer.");
         }
 
         const privacyAcknowledged =
@@ -4915,40 +4933,49 @@ app.post(
             form["Privacy acknowledgement"] === "yes";
 
         if (!privacyAcknowledged) {
-            return res.status(400).json({ error: "Please confirm that you have read the privacy notice." });
+            return respondError(400, "Please confirm that you have read the privacy notice.");
         }
 
         try {
-            const result = await query(
-                \`
-                INSERT INTO pilot_applications (
-                    first_name, last_name, age, country, email,
-                    discord_username, simulator, experience_level,
-                    flight_hours, network, reason, privacy_notice_version,
-                    privacy_acknowledged_at
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
-                RETURNING id, status, created_at
-                \`,
-                [
-                    firstName, lastName, age, country, email, discord,
-                    simulator, experience, flightHours, network || null,
-                    reason || null, "2026-10"
-                ]
-            );
+            const client = await pool.connect();
+            let result;
+            try {
+                await client.query("BEGIN");
+                result = await client.query(
+                    \`
+                    INSERT INTO pilot_applications (
+                        first_name, last_name, age, country, email,
+                        discord_username, simulator, experience_level,
+                        flight_hours, network, reason, privacy_notice_version,
+                        privacy_acknowledged_at
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP)
+                    RETURNING id, status, created_at
+                    \`,
+                    [
+                        firstName, lastName, age, country, email, discord,
+                        simulator, experience, flightHours, network || null,
+                        reason || null, "2026-10"
+                    ]
+                );
+
+                await client.query(
+                    \`
+                    INSERT INTO pilot_application_events (application_id, action, note)
+                    VALUES ($1, 'submitted', 'Application received')
+                    \`,
+                    [result.rows[0].id]
+                );
+
+                await client.query("COMMIT");
+            } catch (transactionError) {
+                await client.query("ROLLBACK").catch(() => {});
+                throw transactionError;
+            } finally {
+                client.release();
+            }
 
             const application = result.rows[0];
-
-            await query(
-                \`
-                INSERT INTO pilot_application_events (application_id, action, note)
-                VALUES ($1, 'submitted', 'Application received')
-                \`,
-                [application.id]
-            );
-
-            const isNativeFormPost =
-                String(req.get("content-type") || "").includes("application/x-www-form-urlencoded");
 
             if (isNativeFormPost && req.accepts("html")) {
                 return res.redirect(
@@ -4967,9 +4994,7 @@ app.post(
             });
         } catch (error) {
             console.error("Pilot application submission failed:", error);
-            return res.status(500).json({
-                error: "We could not save your application. Please try again later."
-            });
+            return respondError(500, "We could not save your application. Please try again later.");
         }
     }
 );
