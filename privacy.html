@@ -561,6 +561,63 @@
         </p>
 
 
+        <h3>Virtual booking page</h3>
+
+        <p>
+            When you create a virtual simulator reservation, Echo Air Group
+            stores your passenger name, email address, optional phone number,
+            selected flight, departure and optional return dates, passenger
+            count, seats, cabin, selected extras, an estimated demonstration
+            fare, booking reference and booking/audit status in the Neon
+            database. No payment card number, expiry date or CVV is requested
+            or stored. The booking flow does not take payment; the displayed
+            fare is illustrative only.
+        </p>
+
+        <p>
+            The boarding-pass QR image is generated using QRServer. The QR
+            payload contains a booking reference and itinerary details such as
+            flight, route, date, seat numbers and cabin, but does not contain
+            the passenger name or email. The QR provider receives that data
+            as part of the image-generation request. Do not use the virtual
+            booking page for real-world tickets or travel.
+        </p>
+
+        <h3>Echo Air Group contact and recruitment forms</h3>
+
+        <p>
+            Contact messages, pilot applications and management applications
+            are submitted to Echo Air Group's API hosted by Render and stored
+            in its PostgreSQL database hosted by Neon. Submitted data is used
+            to respond to contact requests or review recruitment applications.
+        </p>
+
+        <p>
+            The forms may collect your name, age and country where requested,
+            email address, Discord username, flight simulator and experience
+            details, message text, application status and internal review
+            notes. Only designated administrators who pass the application's
+            administrator authorization check can access submission records
+            and their review history. Public endpoints accept new submissions
+            but do not expose the stored inbox.
+        </p>
+
+        <p>
+            Echo Air Group does not currently publish a fixed retention period
+            for contact messages or recruitment applications. A specific
+            retention schedule must be established and applied before this
+            workflow is considered production-ready. You can ask about
+            deletion or your data rights using the privacy contact above.
+        </p>
+
+        <p>
+            If optional Discord recruitment notifications are enabled, the
+            configured Discord channel receives a notification containing
+            only the submission type and reference number, not the applicant's
+            contact details or message contents.
+        </p>
+
+
         <h3>NewSky</h3>
 
         <p>
@@ -589,20 +646,32 @@
         <h2>11. Data Storage</h2>
 
         <p>
-            Echo Air Group stores application data using a hosted
-            PostgreSQL database provided by Neon.
+            Echo Air Group stores account, pilot flight and recruitment
+            application data in a hosted PostgreSQL database provided by
+            Neon. The API used to receive application forms is hosted by
+            Render.
         </p>
 
         <p>
-            Data may therefore be processed or stored using
-            infrastructure located outside the Netherlands, depending
-            on the infrastructure and configuration used by the
-            relevant service provider.
+            Pilot applications can include your name, age, country, email
+            address, Discord username, flight simulator, experience level,
+            approximate flight hours, preferred network and any message
+            you choose to provide. Application status and internal
+            recruitment review notes may also be recorded.
         </p>
 
         <p>
-            Where required by applicable data-protection law, relevant
-            safeguards for international transfers will be used.
+            Access to submitted applications and review history is limited
+            by the application's administrator authorization controls to
+            designated recruitment administrators. Public visitors cannot
+            query or list application records.
+        </p>
+
+        <p>
+            Data may be processed or stored using infrastructure located
+            outside the Netherlands, depending on each provider's
+            configuration. Where required by applicable data-protection
+            law, relevant safeguards for international transfers will be used.
         </p>
 
     </section>
@@ -621,13 +690,26 @@
 
         <p>
             Account information and associated flight information may
-            remain stored while an account is active.
+            remain stored while an account is active. Recruitment
+            applications and their review history are retained while
+            needed to assess applications, manage recruitment and
+            document decisions. They should be deleted or anonymized
+            once no longer reasonably necessary, unless a longer period
+            is required by law or another applicable legal basis.
         </p>
 
         <p>
-            If you request deletion of your account, Echo Air Group
-            will assess the request and delete or anonymize relevant
-            personal data where appropriate and legally possible.
+            Echo Air Group does not currently publish a fixed retention
+            period for recruitment applications. The recruitment team
+            should establish and apply a specific retention schedule as
+            the application workflow is put into production.
+        </p>
+
+        <p>
+            If you request deletion of your account or application data,
+            Echo Air Group will assess the request and delete or
+            anonymize relevant personal data where appropriate and
+            legally possible.
         </p>
 
     </section>

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101410">
+  <meta name="description" content="Authorized Echo Air Group virtual booking management.">
+  <title>Virtual Bookings — Echo Air Group</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root { --booking-green:#ace336; --booking-dark:#0b100c; --booking-line:#e3e9de; }
+    body { background:#f4f7f2; }
+    .ops-top { background:var(--booking-dark); color:#fff; }
+    .ops-nav { min-height:78px; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+    .ops-brand { display:flex; align-items:center; gap:12px; font-weight:900; letter-spacing:.03em; }
+    .ops-mark { display:grid; place-items:center; width:42px; height:42px; border-radius:12px; background:var(--booking-green); color:#10140d; font-weight:1000; }
+    .ops-brand small { display:block; color:var(--booking-green); font-size:10px; letter-spacing:.2em; }
+    .ops-links { display:flex; gap:16px; flex-wrap:wrap; color:#dce6d8; font-size:13px; font-weight:700; }
+    .ops-main { width:min(1180px,calc(100% - 36px)); margin:0 auto; padding:52px 0 80px; }
+    .ops-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; margin-bottom:25px; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.18em; color:#61802d; font-size:11px; font-weight:900; }
+    .ops-heading h1 { color:#121811; font-size:clamp(32px,5vw,52px); line-height:1; margin:12px 0; letter-spacing:-.04em; }
+    .ops-heading p { color:#667064; max-width:730px; }
+    .btn-ops { border:1px solid #ced8c6; background:#fff; border-radius:10px; padding:11px 16px; font-weight:850; cursor:pointer; color:#172013; }
+    .btn-ops.primary { background:var(--booking-green); border-color:var(--booking-green); }
+    .btn-ops.danger { color:#8b2a2a; border-color:#efcece; }
+    .btn-ops:disabled { opacity:.55; cursor:wait; }
+    .stat-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:24px 0; }
+    .stat-card { border:1px solid var(--booking-line); background:#fff; padding:19px; border-radius:16px; }
+    .stat-card span { display:block; color:#6a7467; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.08em; }
+    .stat-card strong { display:block; font-size:30px; margin-top:7px; color:#151b13; }
+    .filters { display:grid; grid-template-columns:minmax(220px,1fr) 210px auto; gap:12px; margin:22px 0; }
+    .filters input,.filters select,.cancel-form textarea { width:100%; border:1px solid #d7dfd1; background:#fff; border-radius:10px; padding:12px 13px; color:#172013; font:inherit; }
+    .status-banner { padding:14px 16px; border-radius:12px; margin:18px 0; background:#e8f4d9; color:#263a17; border:1px solid #c8e69c; }
+    .status-banner.error { background:#fff1f1; border-color:#efb9b9; color:#8c2020; }
+    .status-banner[hidden] { display:none; }
+    .list-head { display:flex; justify-content:space-between; align-items:center; gap:14px; margin:24px 0 12px; color:#667064; font-size:14px; }
+    .booking-list { display:grid; gap:16px; }
+    .booking-card { background:#fff; border:1px solid var(--booking-line); border-radius:18px; box-shadow:0 10px 25px rgba(17,22,18,.04); overflow:hidden; }
+    .card-head { padding:21px 24px; border-bottom:1px solid #edf0e9; display:flex; justify-content:space-between; align-items:flex-start; gap:18px; }
+    .card-head h2 { margin:0 0 7px; font-size:21px; line-height:1.2; color:#141a12; }
+    .meta { color:#697365; font-size:13px; line-height:1.65; overflow-wrap:anywhere; }
+    .pill { display:inline-flex; border-radius:999px; border:1px solid #d8e0d0; background:#f4f7f0; padding:6px 11px; font-size:11px; text-transform:uppercase; letter-spacing:.08em; font-weight:900; color:#35402f; white-space:nowrap; }
+    .pill.confirmed { background:#edf8df; color:#38610e; border-color:#d2eab5; }
+    .pill.cancelled { background:#fff0f0; color:#8b2a2a; border-color:#f0cccc; }
+    .details { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:17px; padding:21px 24px; }
+    .detail label { display:block; font-size:10px; color:#71806b; text-transform:uppercase; letter-spacing:.1em; font-weight:900; margin-bottom:4px; }
+    .detail div { color:#20291c; overflow-wrap:anywhere; }
+    .full { grid-column:1/-1; }
+    .warning { border:1px solid #eadca5; background:#fff9e6; border-radius:10px; padding:11px 13px; color:#6e5815; font-size:12px; font-weight:750; }
+    .card-actions { display:flex; flex-wrap:wrap; gap:10px; padding:18px 24px; border-top:1px solid #edf0e9; background:#f9fbf7; }
+    .cancel-form { display:flex; flex:1 1 520px; gap:10px; align-items:center; }
+    .cancel-form textarea { min-height:42px; resize:vertical; }
+    .history-panel { padding:18px 24px; border-top:1px solid #edf0e9; background:#fff; }
+    .history-panel ul { padding-left:20px; margin:0; }
+    .history-panel li { margin:7px 0; color:#56614f; font-size:13px; }
+    .empty-state { padding:36px 24px; text-align:center; color:#687267; background:#fff; border:1px dashed #ccd7c4; border-radius:16px; }
+    .pagination { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:24px; }
+    .footer-note { border-top:1px solid var(--booking-line); padding-top:20px; color:#697365; font-size:12px; display:flex; justify-content:space-between; gap:20px; margin-top:45px; }
+    @media(max-width:850px) { .details { grid-template-columns:repeat(2,minmax(0,1fr)); } .filters { grid-template-columns:1fr 1fr; } .filters input { grid-column:1/-1; } }
+    @media(max-width:560px) { .ops-main { width:calc(100% - 24px); padding-top:34px; } .ops-links { gap:9px; font-size:11px; } .stat-card { padding:15px; } .stat-card strong { font-size:25px; } .card-head,.details { padding:16px; } .card-head { flex-direction:column; } .details,.filters { grid-template-columns:1fr; } .full,.filters input { grid-column:auto; } .card-actions { padding:16px; } .cancel-form { flex-direction:column; align-items:stretch; } .footer-note { flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <header class="ops-top">
+    <div class="container ops-nav">
+      <a class="ops-brand" href="index.html" aria-label="Echo Air Group home">
+        <span class="ops-mark">E6</span>
+        <span>ECHO AIR GROUP<small>BOOKING OPERATIONS</small></span>
+      </a>
+      <nav class="ops-links" aria-label="Admin navigation">
+        <a href="applications-admin.html">Pilot applications</a>
+        <a href="submissions-admin.html">Contact / manager inbox</a>
+        <a href="Server.html">Pilot Portal</a>
+      </nav>
+    </div>
+  </header>
+  <main class="ops-main">
+    <div class="ops-heading">
+      <div>
+        <span class="eyebrow">Internal operations</span>
+        <h1>Virtual bookings</h1>
+        <p>Find virtual flight reservations, review seat assignments and cancel an itinerary when required. These bookings use illustrative fares only; the system does not collect or process payment.</p>
+      </div>
+      <button class="btn-ops primary" id="refreshButton" type="button">Refresh bookings</button>
+    </div>
+    <div class="warning">Payment status is always “not applicable”. Do not use this page as a payment or ticketing system for real-world travel.</div>
+    <div id="statusBanner" class="status-banner" role="status" aria-live="polite" hidden></div>
+    <section class="stat-grid" aria-label="Booking status summary">
+      <div class="stat-card"><span>Confirmed</span><strong id="statConfirmed">—</strong></div>
+      <div class="stat-card"><span>Cancelled</span><strong id="statCancelled">—</strong></div>
+      <div class="stat-card"><span>All bookings</span><strong id="statAll">—</strong></div>
+    </section>
+    <form id="filterForm" class="filters">
+      <input id="searchInput" type="search" maxlength="100" placeholder="Search reference, passenger, email or flight" aria-label="Search bookings">
+      <select id="statusFilter" aria-label="Filter by booking status">
+        <option value="">All statuses</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option>
+      </select>
+      <button class="btn-ops" type="submit">Apply filters</button>
+    </form>
+    <div class="list-head"><span id="resultCount">Loading bookings…</span><span>Newest first · Virtual itinerary records</span></div>
+    <section id="bookingList" class="booking-list" aria-live="polite"><div class="empty-state">Loading bookings…</div></section>
+    <div class="pagination">
+      <button class="btn-ops" id="previousButton" type="button" disabled>← Previous</button>
+      <span id="pageLabel" class="meta">Page 1</span>
+      <button class="btn-ops" id="nextButton" type="button" disabled>Next →</button>
+    </div>
+    <div class="footer-note"><span>Echo Air Group · Authorized use only</span><span>Passenger details are visible only to authorized administrators.</span></div>
+  </main>
+  <script>
+    (() => {
+      'use strict';
+      const API = (window.ECHO_API_URL || 'https://echo-air-group-api.onrender.com/api').replace(/\/+$/, '');
+      const pageSize = 25;
+      let offset = 0;
+      let total = 0;
+      const $ = (id) => document.getElementById(id);
+      const escapeHtml = (value) => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+      const dateLabel = (value) => {
+        if (!value) return '—';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+      };
+      const timeLabel = (value) => value ? escapeHtml(String(value).slice(0,5)) : '—';
+      function banner(message,isError=false) {
+        $('statusBanner').textContent=message;
+        $('statusBanner').hidden=!message;
+        $('statusBanner').classList.toggle('error',isError);
+      }
+      async function api(path,options={}) {
+        const token=localStorage.getItem('echo_token');
+        const headers={Accept:'application/json',...(options.headers||{})};
+        if(token) headers.Authorization='Bearer '+token;
+        if(options.body) headers['Content-Type']='application/json';
+        let response;
+        try { response=await fetch(API+path,{...options,headers}); }
+        catch { throw new Error('The API could not be reached. Check the staging service and CORS configuration.'); }
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok) {
+          if(response.status===401) throw new Error('Your session is missing or expired. Sign in through the Pilot Portal first.');
+          if(response.status===403) throw new Error('This account is not on the administrator allow-list.');
+          if(response.status===503) throw new Error(data.error||'Administration is not configured. Set ADMIN_USER_IDS on the API service.');
+          throw new Error(data.error||'The request failed ('+response.status+').');
+        }
+        return data;
+      }
+      async function loadStats() {
+        const statuses=['confirmed','cancelled'];
+        const results=await Promise.all(statuses.map(async status=>{
+          const data=await api('/admin/bookings?status='+status+'&limit=1&offset=0');
+          return data.total;
+        }));
+        $('statConfirmed').textContent=String(results[0]??0);
+        $('statCancelled').textContent=String(results[1]??0);
+        const all=await api('/admin/bookings?limit=1&offset=0');
+        $('statAll').textContent=String(all.total??0);
+      }
+      function detail(label,value,full=false) {
+        if(value===undefined||value===null||String(value).trim()==='') return '';
+        return '<div class="detail'+(full?' full':'')+'"><label>'+escapeHtml(label)+'</label><div>'+escapeHtml(value)+'</div></div>';
+      }
+      function card(b) {
+        const id=escapeHtml(b.id);
+        const status=escapeHtml(b.status);
+        const name=[b.passenger_first_name,b.passenger_last_name].filter(Boolean).join(' ');
+        const seats=Array.isArray(b.seat_numbers)?b.seat_numbers.join(', '):String(b.seat_numbers||'');
+        const from=escapeHtml(b.origin_icao),to=escapeHtml(b.destination_icao);
+        const route=from+' → '+to;
+        const extras=b.extras&&typeof b.extras==='object'?Object.entries(b.extras).filter(([,v])=>v===true).map(([k])=>k).join(', '):'';
+        return '<article class="booking-card" data-id="'+id+'">'+
+          '<div class="card-head"><div><h2>'+escapeHtml(b.booking_reference)+'</h2>'+
+          '<div class="meta">'+escapeHtml(name)+' · '+escapeHtml(b.passenger_email)+'</div>'+
+          '<div class="meta">Created '+escapeHtml(new Date(b.created_at).toLocaleString())+' · Flight '+escapeHtml(b.flight_number)+'</div></div>'+
+          '<span class="pill '+status+'">'+status+'</span></div>'+
+          '<div class="details">'+
+            detail('Route',route)+detail('Departure',dateLabel(b.departure_date)+' · '+timeLabel(b.departure_time))+
+            detail('Return date',b.return_date ? dateLabel(b.return_date) : 'One-way')+
+            detail('Return flight',b.return_flight_number || '—')+
+            detail('Return departure',b.return_flight_number ? (timeLabel(b.return_departure_time)+' → '+timeLabel(b.return_arrival_time)) : '—')+
+            detail('Return seats',Array.isArray(b.return_seat_numbers)?b.return_seat_numbers.join(', '):'—')+
+            detail('Flight time',timeLabel(b.departure_time)+' → '+timeLabel(b.arrival_time))+
+            detail('Passengers',b.passenger_count)+detail('Seats',seats)+detail('Cabin',b.cabin)+
+            detail('Aircraft',b.aircraft)+detail('Duration',b.duration)+detail('Trip type',b.trip_type)+
+            detail('Estimated virtual fare','€'+Number(b.estimated_total||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2} ) )+
+            detail('Payment status','Not applicable')+detail('Extras',extras||'None')+
+          '</div>'+
+          '<div class="card-actions">'+
+            (b.status==='confirmed'?'<form class="cancel-form" data-booking-id="'+id+'"><textarea name="note" maxlength="2000" aria-label="Cancellation note" placeholder="Optional cancellation note"></textarea><button class="btn-ops danger" type="submit">Cancel virtual booking</button></form>':'<span class="meta">This reservation is cancelled.</span>')+
+            '<button class="btn-ops history-button" type="button" data-history-id="'+id+'">History</button></div>'+
+          '<div class="history-panel" data-history-panel="'+id+'" hidden></div></article>';
+      }
+      async function loadBookings() {
+        $('refreshButton').disabled=true;
+        $('resultCount').textContent='Loading bookings…';
+        $('bookingList').innerHTML='<div class="empty-state">Loading bookings…</div>';
+        try {
+          const params=new URLSearchParams();
+          params.set('limit',String(pageSize));params.set('offset',String(offset));params.set('search',$('searchInput').value.trim());
+          if($('statusFilter').value) params.set('status',$('statusFilter').value);
+          const data=await api('/admin/bookings?'+params.toString());
+          total=Number(data.total)||0;
+          $('resultCount').textContent=total+' booking'+(total===1?'':'s');
+          $('pageLabel').textContent=total?'Page '+(Math.floor(offset/pageSize)+1)+' of '+Math.max(1,Math.ceil(total/pageSize)):'No results';
+          $('previousButton').disabled=offset<=0;
+          $('nextButton').disabled=offset+pageSize>=total;
+          const bookings=data.bookings||[];
+          $('bookingList').innerHTML=bookings.length?bookings.map(card).join(''):'<div class="empty-state">No bookings match these filters.</div>';
+          $('bookingList').querySelectorAll('.cancel-form').forEach(form=>form.addEventListener('submit',cancelBooking));
+          $('bookingList').querySelectorAll('.history-button').forEach(button=>button.addEventListener('click',showHistory));
+          banner('');
+          try { await loadStats(); } catch { /* Keep the list accessible if stat requests fail. */ }
+        } catch(error) {
+          $('bookingList').innerHTML='<div class="empty-state">Bookings could not be loaded.</div>';
+          $('resultCount').textContent='Unavailable';
+          banner(error.message,true);
+        } finally { $('refreshButton').disabled=false; }
+      }
+      async function cancelBooking(event) {
+        event.preventDefault();
+        const form=event.currentTarget;
+        const id=form.dataset.bookingId;
+        if(!window.confirm('Cancel virtual booking #'+id+'? This releases its reserved seats.')) return;
+        const button=form.querySelector('button[type="submit"]');
+        button.disabled=true;button.textContent='Cancelling…';
+        try {
+          await api('/admin/bookings/'+encodeURIComponent(id),{
+            method:'PATCH',
+            body:JSON.stringify({action:'cancel',note:form.elements.note.value.trim()})
+          });
+          banner('Virtual booking #'+id+' cancelled. Seat assignments have been released.');
+          await loadBookings();
+        } catch(error) { banner(error.message,true); }
+        finally { button.disabled=false;button.textContent='Cancel virtual booking'; }
+      }
+      async function showHistory(event) {
+        const button=event.currentTarget,id=button.dataset.historyId;
+        const panel=document.querySelector('[data-history-panel="'+CSS.escape(id)+'"]');
+        if(!panel)return;
+        if(!panel.hidden){panel.hidden=true;button.textContent='History';return;}
+        button.disabled=true;button.textContent='Loading…';
+        try {
+          const data=await api('/admin/bookings/'+encodeURIComponent(id)+'/events');
+          const events=data.events||[];
+          panel.innerHTML=events.length?'<ul>'+events.map(e=>'<li><strong>'+escapeHtml(e.action)+'</strong> · '+escapeHtml(new Date(e.created_at).toLocaleString())+' · '+escapeHtml(e.actor_display_name||e.actor_username||'System')+(e.note?'<br>'+escapeHtml(e.note):'')+'</li>').join('')+'</ul>':'<p>No history is available.</p>';
+          panel.hidden=false;button.textContent='Hide history';
+        } catch(error){banner(error.message,true);button.textContent='History';}
+        finally{button.disabled=false;}
+      }
+      $('filterForm').addEventListener('submit',event=>{event.preventDefault();offset=0;loadBookings();});
+      $('refreshButton').addEventListener('click',loadBookings);
+      $('previousButton').addEventListener('click',()=>{offset=Math.max(0,offset-pageSize);loadBookings();});
+      $('nextButton').addEventListener('click',()=>{if(offset+pageSize<total)offset+=pageSize;loadBookings();});
+      if(!localStorage.getItem('echo_token')) banner('Sign in through the Pilot Portal first. This page only exposes reservations to authorized administrators.',true);
+      loadBookings();
+    })();
+  </script>
+</body>
+</html>

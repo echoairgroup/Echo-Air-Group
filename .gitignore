@@ -1,3 +1,10 @@
 .env
+.env.*
+!.env.example
 node_modules/
+coverage/
+.DS_Store
+.neon
+.neon/
+.vercel/
 echo.db
