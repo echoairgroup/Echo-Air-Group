@@ -67,12 +67,15 @@ report(/CREATE TABLE IF NOT EXISTS bookings/.test(server), "Virtual booking stor
 report(/CREATE TABLE IF NOT EXISTS booking_seats/.test(server), "Booking seat inventory is missing.");
 report(/CREATE TABLE IF NOT EXISTS booking_events/.test(server), "Booking audit history is missing.");
 report(/"\/api\/bookings",[\s\S]{0,80}bookingRateLimit/.test(server), "Virtual booking endpoint is not rate-limited.");
+report(/"\/api\/bookings\/seat-availability",[\s\S]{0,100}bookingAvailabilityRateLimit/.test(server), "Seat availability endpoint is not rate-limited.");
 report(/"\/api\/admin\/bookings",[\s\S]{0,100}authenticate,[\s\S]{0,60}requireAdmin/.test(server), "Booking administration is not restricted to administrators.");
 report(/return_flight_number/.test(server) && /return_seat_numbers/.test(server), "Round-trip details are not persisted.");
 
 const bookingPage = read("booking.html");
 report(bookingPage.includes('id="bookingPrivacyAcknowledged"'), "Booking privacy acknowledgement is missing.");
 report(bookingPage.includes('fetch(apiBase + "/bookings"'), "Booking page is not connected to the first-party booking API.");
+report(bookingPage.includes('fetch(apiBase + "/bookings/seat-availability?'), "Booking seat map is not connected to live seat availability.");
+report(bookingPage.includes("liveUnavailableSeats.has(seat)"), "Reserved seats are not blocked in the booking seat map.");
 report(bookingPage.includes("getSelectedReturnFlight"), "Round-trip return flight selection is missing.");
 report(bookingPage.includes('id="returnLegInfo"'), "Round-trip confirmation is missing its return itinerary.");
 report(!/id=["'](?:cardNumber|cardName|expiry|cvv)["']/i.test(bookingPage), "Booking page must not collect card details.");
