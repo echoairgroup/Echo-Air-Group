@@ -77,7 +77,8 @@ test("administration screens escape user-supplied values and use the bearer toke
   assert.match(pilots, /escapeHtml\(app\.reason/);
   assert.match(pilots, /headers\.Authorization = 'Bearer ' \+ token/);
   assert.match(inbox, /escapeHtml\(item\.email\)/);
-  assert.match(inbox, /escapeHtml\(details\.motivation/);
+  assert.match(inbox, /const escapeHtml = \(value\)/);
+  assert.match(inbox, /detail\('Motivation', details\.motivation/);
   assert.match(inbox, /headers\.Authorization = 'Bearer ' \+ token/);
 });
 
