@@ -41,3 +41,14 @@ The server creates the `site_items` and `site_settings` tables in the existing N
 Supported categories: `news`, `aircraft`, `route`, `team`, `announcement`, `gallery`, `other`.
 
 Supported display targets include `all`, `index.html`, `about.html`, `fleet.html`, `routes.html`, `team.html`, `join.html`, `manual.html`, `contact.html`, `booking.html`, `ranking.html`, `pilot.html`, `manager.html`, `server.html`, `legal.html`, and `privacy.html`.
+
+
+## Applications inbox
+
+The private **Applications** tab in `admin.html` captures new pilot and manager application submissions in the Neon `applications` table. The existing FormSubmit email workflow is preserved: the form first attempts to save a dashboard copy, then continues to submit to FormSubmit for email delivery. If the tracker is temporarily unavailable, the email submission is still attempted.
+
+The inbox supports search, filtering by type and status, viewing all submitted answers, private admin notes, changing application status, deleting a record, and exporting CSV. Application data is personal information; keep access restricted.
+
+Only submissions made after the application tracker is deployed are captured. Historical FormSubmit emails are not imported automatically.
+
+The backend creates the table during startup. The same `ADMIN_USERNAMES` allowlist required for website content management also controls access to the Applications tab.
