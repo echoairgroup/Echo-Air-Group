@@ -4007,6 +4007,10 @@ function calculateFlightStatistics(
 
     let durationCount = 0;
 
+    let totalDistance = 0;
+
+    let distanceCount = 0;
+
 
     const aircraftSet =
         new Set();
@@ -4137,6 +4141,20 @@ function calculateFlightStatistics(
 
         }
 
+        const rawDistance = getFlightValue(
+            flight,
+            'distance',
+            'distanceKm',
+            'distance_km',
+            'routeDistance',
+            'distanceFlown'
+        );
+        const flightDistance = Number(rawDistance);
+        if (rawDistance !== null && Number.isFinite(flightDistance) && flightDistance >= 0) {
+            totalDistance += flightDistance;
+            distanceCount++;
+        }
+
     }
 
 
@@ -4172,6 +4190,14 @@ function calculateFlightStatistics(
             durationCount
                 ? totalMinutes / 60
                 : null,
+
+        distance:
+            distanceCount
+                ? totalDistance
+                : null,
+
+        flightsWithDistance:
+            distanceCount,
 
         ratedFlights:
             ratingCount,
@@ -4221,7 +4247,7 @@ function renderFlights(
             <tr>
 
                 <td
-                    colspan="5"
+                    colspan="7"
                     class="muted"
                 >
                     No linked flights yet.
@@ -4311,6 +4337,16 @@ function renderFlights(
 
                 }
 
+                const flightMinutes = getFlightDurationMinutes(flight);
+                const roundedMinutes = flightMinutes === null ? null : Math.round(flightMinutes);
+                const durationLabel = roundedMinutes === null
+                    ? '—'
+                    : (Math.floor(roundedMinutes / 60) + 'h ' + (roundedMinutes % 60) + 'm');
+                const rawDistance = getFlightValue(flight, 'distance', 'distanceKm', 'distance_km');
+                const numericDistance = Number(rawDistance);
+                const distanceLabel = rawDistance !== null && Number.isFinite(numericDistance)
+                    ? Math.round(numericDistance).toLocaleString('en-GB')
+                    : '—';
 
                 return `
 
@@ -4363,6 +4399,9 @@ function renderFlights(
                             ${starsHtml}
 
                         </td>
+
+                        <td>${durationLabel}</td>
+                        <td>${distanceLabel}</td>
 
                     </tr>
 
@@ -4462,6 +4501,39 @@ function renderFlights(
 /* ============================================================
    DASHBOARD
    ============================================================ */
+
+function renderAchievements(achievements) {
+    const grid = document.getElementById('achievementGrid');
+    if (!grid) return;
+    grid.replaceChildren();
+    if (!Array.isArray(achievements) || !achievements.length) {
+        const empty = document.createElement('div');
+        empty.className = 'achievement-tile';
+        empty.textContent = 'Achievements appear after a flight sync.';
+        grid.appendChild(empty);
+        return;
+    }
+    achievements.forEach((achievement) => {
+        const unlocked = Boolean(achievement.unlocked);
+        const tile = document.createElement('article');
+        tile.className = 'achievement-tile' + (unlocked ? ' unlocked' : '');
+        const icon = document.createElement('div');
+        icon.className = 'achievement-icon';
+        icon.textContent = String(achievement.icon || '✈');
+        const content = document.createElement('div');
+        content.style.minWidth = '0';
+        const title = document.createElement('h4');
+        title.textContent = String(achievement.name || 'Achievement');
+        const description = document.createElement('p');
+        description.textContent = String(achievement.description || '');
+        const state = document.createElement('span');
+        state.className = 'achievement-state';
+        state.textContent = unlocked ? 'Unlocked' : 'In progress';
+        content.append(title, description, state);
+        tile.append(icon, content);
+        grid.appendChild(tile);
+    });
+}
 
 function renderDashboard(
     data
@@ -4684,6 +4756,21 @@ function renderDashboard(
 
             : '—';
 
+
+    const distanceElement = document.getElementById('totalDistance');
+    if (distanceElement) {
+        distanceElement.textContent = stats.distance !== null
+            ? Math.round(stats.distance).toLocaleString('en-GB') + ' km'
+            : '—';
+    }
+
+    const lastFlightElement = document.getElementById('lastFlightDate');
+    if (lastFlightElement) {
+        const lastDatedFlight = flights.find(flight => getFlightValue(flight, 'depTime', 'dep_time', 'depTimeAct', 'departureTime', 'date', 'flightDate'));
+        lastFlightElement.textContent = lastDatedFlight ? getFlightDate(lastDatedFlight) : '—';
+    }
+
+    renderAchievements(data.achievements);
 
     document.getElementById(
         'leaderboardPosition'
@@ -5018,7 +5105,7 @@ async function loadLeaderboard() {
                 <tr>
 
                     <td
-                        colspan="5"
+                        colspan="9"
                         class="muted"
                     >
                         No pilots yet.
@@ -5300,6 +5387,11 @@ async function loadLeaderboard() {
 
                             </td>
 
+
+                            <td>${pilot.flightHours !== null && pilot.flightHours !== undefined && Number.isFinite(Number(pilot.flightHours)) ? Number(pilot.flightHours).toFixed(1) : '—'}</td>
+                            <td>${pilot.distance !== null && pilot.distance !== undefined && Number.isFinite(Number(pilot.distance)) ? Math.round(Number(pilot.distance)).toLocaleString('en-GB') : '—'}</td>
+                            <td>${pilot.averageRating !== null && pilot.averageRating !== undefined && Number.isFinite(Number(pilot.averageRating)) ? Number(pilot.averageRating).toFixed(2) : '—'}</td>
+                            <td>${pilot.lastFlight ? getFlightDate({ depTime: pilot.lastFlight }) : '—'}</td>
                         </tr>
 
                     `;
@@ -5323,7 +5415,7 @@ async function loadLeaderboard() {
             <tr>
 
                 <td
-                    colspan="5"
+                    colspan="9"
                     class="muted"
                 >
                     Unable to load leaderboard.
