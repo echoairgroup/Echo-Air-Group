@@ -87,7 +87,7 @@
 
         <section id="adminLogin" class="admin-panel admin-login-wrap">
             <h2>Sign in to continue</h2>
-            <p class="admin-muted">Use your existing Echo Air Group website account. Only account names explicitly allowed in the backend configuration can make changes.</p>
+            <p class="admin-muted">Each administrator signs in with their own Echo Air Group account. The backend allowlist can contain multiple usernames, separated by commas in ADMIN_USERNAMES; accounts not on that list cannot make changes.</p>
             <form id="loginForm" class="admin-form">
                 <div class="admin-field">
                     <label for="loginUsername">Username</label>
@@ -100,7 +100,7 @@
                 <div id="loginStatus" class="admin-status" role="status" aria-live="polite"></div>
                 <button id="loginButton" class="admin-button primary" type="submit">Sign in securely</button>
             </form>
-            <p class="admin-help" style="margin-top:16px">The admin access allowlist must be configured in the API environment as <code>ADMIN_USERNAMES</code>. This prevents ordinary pilot accounts from publishing or deleting content.</p>
+            <p class="admin-help" style="margin-top:16px">Configure <code>ADMIN_USERNAMES</code> in the API environment with the allowed Echo usernames, separated by commas (for example <code>pilotone,pilottwo</code>). Each person keeps their own password and account; the website does not share an admin password.</p>
         </section>
 
         <section id="adminDashboard" class="admin-dashboard" hidden>
