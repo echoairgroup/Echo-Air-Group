@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
@@ -900,48 +901,87 @@ function getDurationMinutes(flight) {
 function getDistance(flight) {
     if (!flight || typeof flight !== "object") return 0;
 
-    // NewSky fields can vary by endpoint/version. Prefer explicitly kilometre
-    // values, convert known nautical-mile/mile values, and ignore zero/unknown
-    // values so an empty field cannot hide another populated distance field.
-    const containers = [
-        flight,
-        flight.statistics,
-        flight.stats,
-        flight.flightStats,
-        flight.pirep,
-        flight.report,
-        flight.route,
-        flight.flightDetails,
-        flight.details,
-        flight.flight,
-        flight.data
-    ].filter(value => value && typeof value === "object" && !Array.isArray(value));
+    // NewSky can nest flight fields differently across API versions.
+    // Prefer fields with explicit units and convert distance to kilometres.
+    const seen = new Set();
+    const candidates = [];
+    const unitKeys = new Set(["distanceunit", "distanceunits", "unitdistance", "unitsdistance"]);
+    const generalUnitKeys = new Set(["unit", "units", "measureunit", "measurementunit"]);
 
-    const groups = [
-        { keys: ["distanceKm", "distance_km", "distanceInKm", "distanceFlownKm", "routeDistanceKm", "actualDistanceKm", "flightDistanceKm", "distanceFlown", "routeDistance", "distanceActual", "actualDistance", "distanceTravelled", "distanceTraveled", "flightDistance", "route_distance", "distance"], factor: 1 },
-        { keys: ["distanceNm", "distanceNM", "distanceNauticalMiles", "nauticalMiles", "distance_flown_nm", "routeDistanceNm"], factor: 1.852 },
-        { keys: ["distanceMiles", "distanceMi", "distanceInMiles", "milesFlown"], factor: 1.609344 }
-    ];
+    function scalar(value) {
+        if (value === null || value === undefined || value === "") return null;
+        if (typeof value === "number") return Number.isFinite(value) ? { amount: value, suffix: "" } : null;
+        if (typeof value !== "string") return null;
+        const match = value.trim().replace(/,/g, "").match(/^(-?\d+(?:\.\d+)?)\s*([a-zA-Z ]*)$/);
+        if (!match) return null;
+        const amount = Number(match[1]);
+        return Number.isFinite(amount) ? { amount, suffix: String(match[2] || "").trim().toLowerCase() } : null;
+    }
 
-    for (const group of groups) {
-        for (const container of containers) {
-            for (const key of group.keys) {
-                const raw = container[key];
-                if (raw === null || raw === undefined || raw === "") continue;
-
-                const parsed = typeof raw === "object"
-                    ? toNumber(firstValue(raw, ["value", "amount", "km", "nm", "miles"]), NaN)
-                    : Number(raw);
-
-                if (Number.isFinite(parsed) && parsed > 0) {
-                    const converted = parsed * group.factor;
-                    if (Number.isFinite(converted) && converted > 0) return converted;
+    function readUnit(node) {
+        if (!node || typeof node !== "object" || Array.isArray(node)) return "";
+        for (const [rawKey, value] of Object.entries(node)) {
+            const key = rawKey.toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (unitKeys.has(key) || generalUnitKeys.has(key)) {
+                if (typeof value === "string") return value;
+                if (value && typeof value === "object") {
+                    const inner = value.unit || value.units || value.name || value.label;
+                    if (inner) return String(inner);
                 }
+            }
+        }
+        return "";
+    }
+
+    function factorFor(unit, key) {
+        const u = String(unit || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const k = String(key || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (/nauticalmile|nauticalmiles|nmi/.test(k) || /^(nm|nmi|nauticalmile|nauticalmiles)$/.test(u) || /nautical/.test(u)) return 1.852;
+        if (/distancemi|distancemiles|distanceinmiles|distanceinmi/.test(k) || /^(mi|mile|miles|statutemile|statutemiles)$/.test(u)) return 1.609344;
+        // The existing stored-distance convention is kilometres when NewSky
+        // does not provide a unit.
+        return 1;
+    }
+
+    function walk(node, depth, inheritedUnit) {
+        if (!node || typeof node !== "object" || Array.isArray(node) || depth > 6 || seen.has(node)) return;
+        seen.add(node);
+        const parentUnit = readUnit(node) || inheritedUnit || "";
+
+        for (const [rawKey, rawValue] of Object.entries(node)) {
+            const key = String(rawKey);
+            const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (rawValue && typeof rawValue === "object" && !Array.isArray(rawValue)) {
+                const objectDistanceValue = rawValue.value ?? rawValue.amount ?? rawValue.distance ?? rawValue.total ?? rawValue.actual ?? rawValue.flown ?? rawValue.km ?? rawValue.nm ?? rawValue.miles;
+                if (normalized.includes("distance") && objectDistanceValue !== undefined && objectDistanceValue !== null) {
+                    const parsed = scalar(objectDistanceValue);
+                    if (parsed && parsed.amount > 0) {
+                        const unit = parsed.suffix || readUnit(rawValue) || parentUnit;
+                        const explicit = /km|kilomet|nautical|miles?|distancemi|distancenm|distancenmi/.test(normalized) ? 30 : 10;
+                        candidates.push({ value: parsed.amount * factorFor(unit, key), priority: explicit - depth / 10 });
+                    }
+                }
+                walk(rawValue, depth + 1, readUnit(rawValue) || parentUnit);
+                continue;
+            }
+
+            // Exclude distances of individual airport/runway/taxi components.
+            if (/distance(from|to|until|remaining|taxi|gate|runway|threshold|horizontal|vertical|departureairport|arrivalairport)/.test(normalized)) continue;
+            if (!normalized.includes("distance") && !["nauticalmiles", "milesflown", "nmflown"].includes(normalized)) continue;
+
+            const parsed = scalar(rawValue);
+            if (!parsed || parsed.amount <= 0) continue;
+            const explicit = /km|kilomet|nautical|miles?|distancemi|distancenm|distancenmi/.test(normalized) ? 30 : 10;
+            const converted = parsed.amount * factorFor(parsed.suffix || parentUnit, key);
+            if (Number.isFinite(converted) && converted > 0) {
+                candidates.push({ value: converted, priority: explicit - depth / 10 });
             }
         }
     }
 
-    return 0;
+    walk(flight, 0, "");
+    candidates.sort((a, b) => b.priority - a.priority);
+    return candidates.length ? round(candidates[0].value, 2) : 0;
 }
 
 // ============================================================
