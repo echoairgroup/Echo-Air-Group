@@ -14,6 +14,9 @@ dotenv.config();
 
 const app = express();
 
+// Render runs behind a reverse proxy; trust one hop so per-IP application limits use the visitor address.
+app.set("trust proxy", 1);
+
 // ============================================================
 // BASIC CONFIGURATION
 // ============================================================
