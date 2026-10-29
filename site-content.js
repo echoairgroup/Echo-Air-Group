@@ -106,7 +106,8 @@
             const response = await fetch(API_BASE + "/site/settings", { cache: "no-store" });
             if (!response.ok) return;
             const settings = await response.json();
-            if (settings && settings.discordInvite) updateDiscordLinks(settings.discordInvite);
+            currentInvite = settings && settings.discordInvite ? settings.discordInvite : null;
+            if (currentInvite) updateDiscordLinks(currentInvite);
         } catch {
             // Keep existing invite links if the API is temporarily unavailable.
         }
@@ -162,27 +163,12 @@
                 document.body.appendChild(section);
             }
 
-            updateDiscordLinksFromCurrentSettings();
+            if (currentInvite) updateDiscordLinks(currentInvite);
         } catch {
             // The original website remains usable when no items are configured.
         }
     }
 
     let currentInvite = null;
-    function updateDiscordLinksFromCurrentSettings() {
-        if (currentInvite) updateDiscordLinks(currentInvite);
-    }
-
-    loadPublicSettings().then(async () => {
-        try {
-            const response = await fetch(API_BASE + "/site/settings", { cache: "no-store" });
-            if (response.ok) {
-                const settings = await response.json();
-                currentInvite = settings.discordInvite || null;
-            }
-        } catch {
-            currentInvite = null;
-        }
-        await loadPublicItems();
-    });
+    loadPublicSettings().finally(loadPublicItems);
 })();
