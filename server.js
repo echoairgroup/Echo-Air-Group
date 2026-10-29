@@ -254,6 +254,22 @@ async function initializeDatabase() {
     `);
     await query("CREATE INDEX IF NOT EXISTS applications_submitted_at_idx ON applications (submitted_at DESC)");
     await query("CREATE INDEX IF NOT EXISTS applications_status_idx ON applications (status, application_type)");
+    
+    // Background flight-sync state. Stores only operational metadata, not flight payloads.
+    await query(
+        "CREATE TABLE IF NOT EXISTS flight_sync_state (" +
+        "sync_key TEXT PRIMARY KEY, " +
+        "status TEXT NOT NULL DEFAULT 'idle', " +
+        "last_started_at TIMESTAMPTZ, " +
+        "last_completed_at TIMESTAMPTZ, " +
+        "last_full_sync_at TIMESTAMPTZ, " +
+        "last_error TEXT, " +
+        "linked_pilots INTEGER NOT NULL DEFAULT 0, " +
+        "flights_received INTEGER NOT NULL DEFAULT 0, " +
+        "flights_imported INTEGER NOT NULL DEFAULT 0, " +
+        "flights_updated INTEGER NOT NULL DEFAULT 0)"
+    );
+
 
 
     console.log(
@@ -882,20 +898,47 @@ function getDurationMinutes(flight) {
 // ============================================================
 
 function getDistance(flight) {
+    if (!flight || typeof flight !== "object") return 0;
 
-    const value =
-        firstValue(
-            flight,
-            [
-                "distance",
-                "distanceKm",
-                "distance_km",
-                "routeDistance",
-                "distanceFlown"
-            ]
-        );
+    // NewSky fields can vary by endpoint/version. Prefer explicitly kilometre
+    // values, convert known nautical-mile/mile values, and ignore zero/unknown
+    // values so an empty field cannot hide another populated distance field.
+    const containers = [
+        flight,
+        flight.statistics,
+        flight.stats,
+        flight.flightStats,
+        flight.route,
+        flight.details,
+        flight.flight,
+        flight.data
+    ].filter(value => value && typeof value === "object" && !Array.isArray(value));
 
-    return toNumber(value);
+    const groups = [
+        { keys: ["distanceKm", "distance_km", "distanceInKm", "distanceFlownKm", "routeDistanceKm", "actualDistanceKm", "flightDistanceKm", "distance"], factor: 1 },
+        { keys: ["distanceNm", "distanceNM", "distanceNauticalMiles", "nauticalMiles", "distance_flown_nm", "routeDistanceNm"], factor: 1.852 },
+        { keys: ["distanceMiles", "distanceMi", "distanceInMiles", "milesFlown"], factor: 1.609344 }
+    ];
+
+    for (const group of groups) {
+        for (const container of containers) {
+            for (const key of group.keys) {
+                const raw = container[key];
+                if (raw === null || raw === undefined || raw === "") continue;
+
+                const parsed = typeof raw === "object"
+                    ? toNumber(firstValue(raw, ["value", "amount", "km", "nm", "miles"]), NaN)
+                    : Number(raw);
+
+                if (Number.isFinite(parsed) && parsed > 0) {
+                    const converted = parsed * group.factor;
+                    if (Number.isFinite(converted) && converted > 0) return converted;
+                }
+            }
+        }
+    }
+
+    return 0;
 }
 
 // ============================================================
@@ -1197,18 +1240,15 @@ async function getUserStats(userId) {
             0
         );
 
+    const knownDistances =
+        flights
+            .map(flight => toNumber(flight.distance))
+            .filter(value => Number.isFinite(value) && value > 0);
+
     const distance =
-        flights.reduce(
-            (
-                total,
-                flight
-            ) =>
-                total +
-                toNumber(
-                    flight.distance
-                ),
-            0
-        );
+        knownDistances.length
+            ? knownDistances.reduce((total, value) => total + value, 0)
+            : null;
 
     const duration =
         flights.reduce(
@@ -1286,10 +1326,9 @@ async function getUserStats(userId) {
             ),
 
         distance:
-            round(
-                distance,
-                2
-            ),
+            distance === null
+                ? null
+                : round(distance, 2),
 
         duration:
             round(
@@ -3565,6 +3604,47 @@ async function getAllNewSkyFlights() {
     return result;
 }
 
+
+// ============================================================
+// RECENT NEWSKY FLIGHTS (bounded incremental sync)
+// ============================================================
+
+async function getRecentNewSkyFlights(days = 7) {
+    const endDate = toDateOnly(new Date());
+    const safeDays = Math.max(1, Math.min(30, Number(days) || 7));
+    const startDate = addDays(endDate, -(safeDays - 1));
+    const allFlights = [];
+    let skip = 0;
+    let page = 0;
+
+    while (true) {
+        if (page > 0) await sleep(NEWSKY_RATE_LIMIT_DELAY);
+        page++;
+
+        const data = await getNewSkyFlightPage(startDate, endDate, skip, NEWSKY_PAGE_SIZE);
+        const flights = extractFlights(data);
+        const total = getTotalResultCount(data);
+
+        if (!flights.length) break;
+        allFlights.push(...flights);
+
+        if (total !== null && skip + flights.length >= total) break;
+        if (flights.length < NEWSKY_PAGE_SIZE) break;
+
+        skip += flights.length;
+        if (page > 10000) {
+            throw new Error("Recent NewSky pagination safety limit reached.");
+        }
+    }
+
+    const unique = new Map();
+    for (const flight of allFlights) {
+        const id = getNewSkyFlightId(flight);
+        if (id) unique.set(String(id), flight);
+    }
+    return Array.from(unique.values());
+}
+
 // ============================================================
 // USER MAP
 // ============================================================
@@ -3908,6 +3988,170 @@ async function importAllFlights(
     };
 }
 
+
+// ============================================================
+// SERVER-SIDE AUTOMATIC FLIGHT SYNC
+// ============================================================
+
+let automaticFlightSyncInProgress = false;
+let automaticFlightSyncTimer = null;
+
+async function runAutomaticFlightSync(mode = "recent") {
+    if (automaticFlightSyncInProgress) {
+        return { skipped: true, reason: "A flight sync is already running." };
+    }
+    if (!process.env.NEWSKY_API_KEY) {
+        return { skipped: true, reason: "NEWSKY_API_KEY is not configured." };
+    }
+
+    automaticFlightSyncInProgress = true;
+    const fullHistory = mode === "full";
+    let received = 0;
+    let result = { imported: 0, updated: 0, skipped: 0, unmatched: 0, matchedPilots: 0 };
+    let linkedPilots = 0;
+
+    try {
+        await query(
+            "INSERT INTO flight_sync_state (sync_key, status, last_started_at, last_error) " +
+            "VALUES ('global', 'running', CURRENT_TIMESTAMP, NULL) " +
+            "ON CONFLICT (sync_key) DO UPDATE SET status = 'running', " +
+            "last_started_at = CURRENT_TIMESTAMP, last_error = NULL"
+        );
+
+        const linked = await query(
+            "SELECT COUNT(*)::INTEGER AS count FROM users " +
+            "WHERE newsky_pilot_id IS NOT NULL AND TRIM(newsky_pilot_id) <> ''"
+        );
+        linkedPilots = Number(linked.rows[0] && linked.rows[0].count || 0);
+
+        if (!linkedPilots) {
+            await query(
+                "UPDATE flight_sync_state SET status = 'idle', last_completed_at = CURRENT_TIMESTAMP, " +
+                "linked_pilots = 0, flights_received = 0, flights_imported = 0, flights_updated = 0, " +
+                "last_error = 'No pilots have linked a NewSky Pilot ID yet.' WHERE sync_key = 'global'"
+            );
+            return { skipped: true, reason: "No linked NewSky pilots." };
+        }
+
+        console.log(
+            fullHistory
+                ? "Starting first full background NewSky sync."
+                : "Starting incremental background NewSky sync."
+        );
+
+        const externalFlights = fullHistory
+            ? await getAllNewSkyFlights()
+            : await getRecentNewSkyFlights(7);
+
+        received = externalFlights.length;
+        result = await importAllFlights(externalFlights);
+
+        if (fullHistory || result.imported > 0) {
+            console.log("Synchronizing Discord roles after flight sync.");
+            await syncAllDiscordRanks();
+        }
+
+        await query(
+            "UPDATE flight_sync_state SET status = 'completed', " +
+            "last_completed_at = CURRENT_TIMESTAMP, " +
+            "last_full_sync_at = CASE WHEN $1::BOOLEAN THEN CURRENT_TIMESTAMP ELSE last_full_sync_at END, " +
+            "last_error = NULL, linked_pilots = $2, flights_received = $3, " +
+            "flights_imported = $4, flights_updated = $5 WHERE sync_key = 'global'",
+            [fullHistory, linkedPilots, received, result.imported, result.updated]
+        );
+
+        console.log(
+            "Background NewSky sync complete. Mode: " + mode +
+            "; received: " + received +
+            "; imported: " + result.imported +
+            "; updated: " + result.updated
+        );
+
+        return {
+            mode,
+            linkedPilots,
+            flightsReceived: received,
+            flightsImported: result.imported,
+            flightsUpdated: result.updated,
+            flightsSkipped: result.skipped
+        };
+    } catch (error) {
+        console.error("Background flight sync failed:", error && error.message ? error.message : error);
+        try {
+            await query(
+                "UPDATE flight_sync_state SET status = 'error', last_completed_at = CURRENT_TIMESTAMP, " +
+                "last_error = $1, linked_pilots = $2, flights_received = $3, " +
+                "flights_imported = $4, flights_updated = $5 WHERE sync_key = 'global'",
+                [String(error && error.message || "Unknown sync error").slice(0, 1000), linkedPilots, received, result.imported, result.updated]
+            );
+        } catch (stateError) {
+            console.error("Unable to store background sync error:", stateError.message);
+        }
+        throw error;
+    } finally {
+        automaticFlightSyncInProgress = false;
+    }
+}
+
+async function startAutomaticFlightSync() {
+    if (automaticFlightSyncTimer) return;
+
+    const syncOnce = async () => {
+        if (automaticFlightSyncInProgress) return;
+        try {
+            const state = await query(
+                "SELECT last_full_sync_at FROM flight_sync_state WHERE sync_key = 'global'"
+            );
+            const hasFullHistory = Boolean(state.rows[0] && state.rows[0].last_full_sync_at);
+            await runAutomaticFlightSync(hasFullHistory ? "recent" : "full");
+        } catch (error) {
+            console.error("Scheduled flight sync did not finish:", error.message);
+        }
+    };
+
+    // Leave the health endpoint and normal API requests time to become available first.
+    setTimeout(() => { void syncOnce(); }, 15000);
+
+    // Incremental sync every 15 minutes while the Render web process is awake.
+    automaticFlightSyncTimer = setInterval(() => { void syncOnce(); }, 15 * 60 * 1000);
+    if (automaticFlightSyncTimer && typeof automaticFlightSyncTimer.unref === "function") {
+        automaticFlightSyncTimer.unref();
+    }
+}
+
+app.get("/api/sync/status", async (req, res) => {
+    try {
+        const result = await query(
+            "SELECT status, last_started_at, last_completed_at, last_full_sync_at, " +
+            "last_error, linked_pilots, flights_received, flights_imported, flights_updated " +
+            "FROM flight_sync_state WHERE sync_key = 'global'"
+        );
+        const state = result.rows[0] || null;
+        res.set("Cache-Control", "no-store");
+        return res.json({
+            automatic: true,
+            intervalMinutes: 15,
+            inProgress: automaticFlightSyncInProgress,
+            lastSync: state
+                ? {
+                    status: state.status,
+                    startedAt: state.last_started_at,
+                    completedAt: state.last_completed_at,
+                    fullHistoryCompletedAt: state.last_full_sync_at,
+                    lastError: state.last_error,
+                    linkedPilots: Number(state.linked_pilots || 0),
+                    flightsReceived: Number(state.flights_received || 0),
+                    flightsImported: Number(state.flights_imported || 0),
+                    flightsUpdated: Number(state.flights_updated || 0)
+                }
+                : null
+        });
+    } catch (error) {
+        console.error("Flight sync status error:", error);
+        return res.status(500).json({ error: "Unable to load flight sync status." });
+    }
+});
+
 // ============================================================
 // SYNC ALL ECHO AIR GROUP FLIGHTS
 // ============================================================
@@ -4056,7 +4300,7 @@ app.post(
             );
 
             const allFlights =
-                await getAllNewSkyFlights();
+                await getRecentNewSkyFlights(7);
 
             const pilotFlights =
                 allFlights.filter(
@@ -5416,6 +5660,7 @@ async function startServer() {
                 );
 
                 await startDiscordBot();
+                await startAutomaticFlightSync();
             }
         );
 
