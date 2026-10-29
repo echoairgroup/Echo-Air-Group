@@ -25,6 +25,8 @@
         document.querySelectorAll('img[src*="api.qrserver.com/v1/create-qr-code"]').forEach((img) => {
             try {
                 const url = new URL(img.src);
+                url.search = "";
+                url.searchParams.set("size", "300x300");
                 url.searchParams.set("data", invite);
                 img.src = url.toString();
             } catch {
