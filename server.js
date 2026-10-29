@@ -908,14 +908,17 @@ function getDistance(flight) {
         flight.statistics,
         flight.stats,
         flight.flightStats,
+        flight.pirep,
+        flight.report,
         flight.route,
+        flight.flightDetails,
         flight.details,
         flight.flight,
         flight.data
     ].filter(value => value && typeof value === "object" && !Array.isArray(value));
 
     const groups = [
-        { keys: ["distanceKm", "distance_km", "distanceInKm", "distanceFlownKm", "routeDistanceKm", "actualDistanceKm", "flightDistanceKm", "distance"], factor: 1 },
+        { keys: ["distanceKm", "distance_km", "distanceInKm", "distanceFlownKm", "routeDistanceKm", "actualDistanceKm", "flightDistanceKm", "distanceFlown", "routeDistance", "distanceActual", "actualDistance", "distanceTravelled", "distanceTraveled", "flightDistance", "route_distance", "distance"], factor: 1 },
         { keys: ["distanceNm", "distanceNM", "distanceNauticalMiles", "nauticalMiles", "distance_flown_nm", "routeDistanceNm"], factor: 1.852 },
         { keys: ["distanceMiles", "distanceMi", "distanceInMiles", "milesFlown"], factor: 1.609344 }
     ];
