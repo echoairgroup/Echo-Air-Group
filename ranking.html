@@ -1858,6 +1858,7 @@ td { font-size: 12px; white-space: nowrap; }
     .ranking-wrap .panel { padding:16px; }
 }
 
+.leaderboard-pilot-link{color:#2f481f;font-weight:900;text-decoration:none}.leaderboard-pilot-link:hover{color:#6e9c1e;text-decoration:underline}
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
@@ -5323,6 +5324,12 @@ async function loadLeaderboard() {
                         null;
 
 
+                    const pilotId = pilot.id ?? pilot.userId ?? pilot.user_id ?? null;
+                    const pilotName = pilot.name || pilot.displayName || pilot.username || 'Pilot';
+                    const pilotCell = pilotId !== null && pilotId !== undefined
+                        ? '<a class="leaderboard-pilot-link" href="pilot.html?id=' + encodeURIComponent(pilotId) + '">' + escapeHtml(pilotName) + '</a>'
+                        : escapeHtml(pilotName);
+
                     return `
 
                         <tr>
@@ -5339,17 +5346,7 @@ async function loadLeaderboard() {
 
                             <td>
 
-                                ${escapeHtml(
-
-                                    pilot.name ||
-
-                                    pilot.displayName ||
-
-                                    pilot.username ||
-
-                                    'Pilot'
-
-                                )}
+                                ${pilotCell}
 
                             </td>
 
