@@ -122,6 +122,7 @@
                 <button class="admin-tab active" type="button" data-admin-tab="overview">Overview</button>
                 <button class="admin-tab" type="button" data-admin-tab="add">Add item</button>
                 <button class="admin-tab" type="button" data-admin-tab="manage">Manage items</button>
+                <button class="admin-tab" type="button" data-admin-tab="applications">Applications <span id="applicationTabCount" class="admin-tab-count">0</span></button>
                 <button class="admin-tab" type="button" data-admin-tab="settings">Discord settings</button>
                 <button class="admin-tab" type="button" data-admin-tab="import">Import JSON</button>
             </nav>
@@ -238,6 +239,58 @@
                 </div>
                 <div id="manageStatus" class="admin-status" role="status" aria-live="polite"></div>
                 <div id="adminItemList" class="admin-item-list" style="margin-top:15px"></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="applications" hidden>
+                <div class="admin-view-header">
+                    <div>
+                        <h2>Applications inbox</h2>
+                        <p>Review pilot and management applications, keep private notes, update each decision and export your applicant list. New forms continue to email the team through FormSubmit.</p>
+                    </div>
+                    <div class="admin-actions">
+                        <button id="refreshApplicationsButton" class="admin-button secondary" type="button">Refresh</button>
+                        <button id="exportApplicationsButton" class="admin-button primary" type="button">Export CSV</button>
+                    </div>
+                </div>
+
+                <div class="application-stats">
+                    <div class="application-stat"><span>Total</span><strong id="applicationTotal">0</strong></div>
+                    <div class="application-stat"><span>New</span><strong id="applicationNew">0</strong></div>
+                    <div class="application-stat"><span>In progress</span><strong id="applicationInProgress">0</strong></div>
+                    <div class="application-stat"><span>Accepted</span><strong id="applicationAccepted">0</strong></div>
+                </div>
+
+                <div class="application-filters">
+                    <div class="admin-field">
+                        <label for="applicationSearch">Search applicants</label>
+                        <input id="applicationSearch" type="search" placeholder="Name, email, Discord or answer…">
+                    </div>
+                    <div class="admin-field">
+                        <label for="applicationTypeFilter">Application type</label>
+                        <select id="applicationTypeFilter">
+                            <option value="all">All applications</option>
+                            <option value="pilot">Pilot applications</option>
+                            <option value="manager">Manager applications</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label for="applicationStatusFilter">Status</label>
+                        <select id="applicationStatusFilter">
+                            <option value="all">All statuses</option>
+                            <option value="new">New</option>
+                            <option value="reviewing">In review</option>
+                            <option value="shortlisted">Shortlisted</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="applicationsStatus" class="admin-status" role="status" aria-live="polite"></div>
+                <div id="adminApplicationList" class="admin-application-list" style="margin-top:15px">
+                    <div class="admin-empty">Loading applications…</div>
+                </div>
+                <p class="admin-help application-privacy-note">Applications include personal information. Keep this page restricted to authorized administrators. Earlier FormSubmit emails are not imported automatically; this inbox stores new submissions made after the application tracker was enabled.</p>
             </section>
 
             <section class="admin-view" data-admin-view="settings" hidden>
