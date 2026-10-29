@@ -337,16 +337,22 @@
                 body: JSON.stringify(body)
             });
 
-            status("#itemStatus", result.message || "Saved.");
+            const savedMessage = result.message || "Saved.";
             resetItemForm();
-            status("#itemStatus", result.message || "Saved.");
             await loadItems();
+            clearStatus("#manageStatus");
+            status("#manageStatus", savedMessage);
             showView("manage");
         } catch (error) {
             status("#itemStatus", error.message, "error");
         } finally {
             button.disabled = false;
         }
+    });
+
+    $("#itemCancelButton").addEventListener("click", () => {
+        resetItemForm();
+        showView("manage");
     });
 
     $("#newItemButton").addEventListener("click", () => {
