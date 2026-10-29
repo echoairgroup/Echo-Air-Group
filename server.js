@@ -4527,7 +4527,8 @@ app.get(
                     SELECT
                         id,
                         username,
-                        display_name
+                        display_name,
+                        newsky_pilot_id
                     FROM users
                     `
                 );
@@ -4570,6 +4571,41 @@ app.get(
 
                     averageRating:
                         stats.averageRating,
+
+                    averageStars:
+                        stats.flightCount > 0
+                            ? round(stats.stars / stats.flightCount, 2)
+                            : null,
+
+                    flightHours:
+                        stats.flightHours,
+
+                    distance:
+                        stats.distance,
+
+                    lastFlight:
+                        stats.flights.find(flight => flight.dep_time)?.dep_time || null,
+
+                    bestRating:
+                        stats.flights.reduce((best, flight) => {
+                            const rating = Number(flight.rating);
+                            return Number.isFinite(rating) && rating > 0
+                                ? (best === null ? rating : Math.max(best, rating))
+                                : best;
+                        }, null),
+
+                    aircraftTypes:
+                        new Set(stats.flights.map(flight => String(flight.aircraft || "").trim().toLowerCase()).filter(Boolean)).size,
+
+                    routesFlown:
+                        new Set(stats.flights.map(flight => {
+                            const departure = String(flight.dep_icao || "").trim().toUpperCase();
+                            const arrival = String(flight.arr_icao || "").trim().toUpperCase();
+                            return departure && arrival ? departure + "-" + arrival : "";
+                        }).filter(Boolean)).size,
+
+                    newskyLinked:
+                        Boolean(user.newsky_pilot_id),
 
                     rank:
                         stats.rank.name
