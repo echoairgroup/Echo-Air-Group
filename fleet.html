@@ -1398,6 +1398,122 @@ footer p {
 .fleet-dialog-actions button{min-height:44px;padding:11px 16px;border:1px solid #dce4d5;border-radius:10px;background:#fff;color:#3f4b37;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
 @media(max-width:1000px){.fleet-tools{grid-template-columns:1fr 1fr}.fleet-result-count{grid-column:1/-1}}
 @media(max-width:540px){.fleet-tools{grid-template-columns:1fr;padding:15px}.fleet-result-count{grid-column:auto}.fleet-dialog-image{height:200px}.fleet-dialog-body{padding:18px}.fleet-dialog-specs{grid-template-columns:1fr 1fr}}
+
+/* Fleet aircraft cards: match the existing fcard markup */
+.cards {
+    align-items: stretch;
+}
+.cards > .fcard {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #e0e6dc;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 12px 34px rgba(12, 22, 9, .07);
+    transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+.cards > .fcard:hover {
+    transform: translateY(-5px);
+    border-color: #d2e4b6;
+    box-shadow: 0 22px 48px rgba(12, 22, 9, .13);
+}
+.fcard-visual {
+    position: relative;
+    min-height: 210px;
+    height: 220px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #101710, #263521);
+}
+.fcard-visual::after {
+    content: "";
+    position: absolute;
+    inset: 55% 0 0;
+    background: linear-gradient(transparent, rgba(5, 10, 5, .38));
+    pointer-events: none;
+}
+.fcard-plane-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .45s ease;
+}
+.fcard:hover .fcard-plane-img { transform: scale(1.045); }
+.fcard-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 2;
+    max-width: calc(100% - 30px);
+    padding: 8px 11px;
+    border: 1px solid rgba(172, 227, 54, .32);
+    border-radius: 999px;
+    background: rgba(9, 13, 8, .84);
+    color: #d4f59a;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    backdrop-filter: blur(10px);
+}
+.fcard-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 23px;
+}
+.fcard-info h3 {
+    margin: 0 0 7px;
+    color: #263025;
+    font-size: clamp(19px, 1.8vw, 24px);
+    line-height: 1.2;
+    letter-spacing: -.035em;
+}
+.fcard-sub {
+    margin: 0 0 21px;
+    color: #6e941e;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+.fcard-specs {
+    display: grid;
+    gap: 0;
+    margin-top: auto;
+    border-top: 1px solid #e6ebe2;
+}
+.fcard-specs .spec-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #edf0e9;
+}
+.fcard-specs .spec-row:last-child { border-bottom: 0; }
+.fcard-specs .spec-row span:first-child {
+    color: #77816f;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+.fcard-specs .spec-row span:last-child {
+    color: #263025;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
+}
+.fcard-detail-btn { width: 100%; }
+@media (max-width: 760px) {
+    .cards { grid-template-columns: 1fr; gap: 20px; }
+    .fcard-visual { height: 235px; }
+    .fcard-info { padding: 20px; }
+}
+
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
