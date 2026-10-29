@@ -81,7 +81,10 @@
         document.querySelectorAll("[data-admin-view]").forEach((view) => {
             view.hidden = view.dataset.adminView !== name;
         });
-        document.querySelectorAll("[data-admin-tab]").forEach((tab) => {
+        $("#itemCategory").addEventListener("change", syncNewsTargetPage);
+    syncNewsTargetPage();
+
+    document.querySelectorAll("[data-admin-tab]").forEach((tab) => {
             tab.classList.toggle("active", tab.dataset.adminTab === name);
         });
         if (name === "add" && editingId === null) $("#itemFormTitle").textContent = "Add a website item";
@@ -140,7 +143,13 @@
 
             const meta = document.createElement("div");
             meta.className = "admin-item-meta";
-            [item.category, item.target_page === "all" ? "All pages" : item.target_page, item.published ? "Published" : "Draft"].forEach((value, index) => {
+            [
+                item.category,
+                String(item.category || "").toLowerCase() === "news"
+                    ? "Homepage News section"
+                    : (item.target_page === "all" ? "All pages" : item.target_page),
+                item.published ? "Published" : "Draft"
+            ].forEach((value, index) => {
                 const chip = document.createElement("span");
                 chip.className = "admin-chip" + (index === 2 && !item.published ? " draft" : "");
                 chip.textContent = String(value || "").replace(/[-_]/g, " ");
@@ -181,9 +190,25 @@
         $("#discordInvite").value = settings.discordInvite || "";
     }
 
+    function syncNewsTargetPage() {
+        const isNews = $("#itemCategory").value === "news";
+        const pageSelect = $("#itemTargetPage");
+        const help = $("#targetPageHelp");
+
+        if (isNews) {
+            pageSelect.value = "index.html";
+            pageSelect.disabled = true;
+            if (help) help.textContent = "News items are automatically placed in the homepage News section.";
+        } else {
+            pageSelect.disabled = false;
+            if (help) help.textContent = "Choose where this item should appear.";
+        }
+    }
+
     function resetItemForm() {
         editingId = null;
         $("#itemForm").reset();
+        syncNewsTargetPage();
         $("#itemPublished").checked = true;
         $("#itemFormTitle").textContent = "Add a website item";
         $("#itemSaveButton").textContent = "Publish item";
@@ -203,6 +228,7 @@
         $("#itemDescription").value = item.description || "";
         $("#itemCategory").value = item.category || "announcement";
         $("#itemTargetPage").value = item.target_page || "all";
+        syncNewsTargetPage();
         $("#itemLinkUrl").value = item.link_url || "";
         $("#itemPublished").checked = Boolean(item.published);
         $("#itemImageFile").value = "";
