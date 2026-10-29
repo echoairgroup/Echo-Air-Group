@@ -8,6 +8,7 @@
 
     let token = sessionStorage.getItem(TOKEN_KEY) || "";
     let items = [];
+    let applications = [];
     let editingId = null;
 
     function status(target, message, type = "success") {
@@ -64,7 +65,7 @@
             $("#adminLogin").hidden = true;
             $("#adminDashboard").hidden = false;
             clearStatus("#loginStatus");
-            await Promise.all([loadItems(), loadSettings()]);
+            await Promise.all([loadItems(), loadSettings(), loadApplications()]);
             showView("overview");
         } catch (error) {
             if (error.status === 401) {
@@ -81,13 +82,11 @@
         document.querySelectorAll("[data-admin-view]").forEach((view) => {
             view.hidden = view.dataset.adminView !== name;
         });
-        $("#itemCategory").addEventListener("change", syncNewsTargetPage);
-    syncNewsTargetPage();
-
-    document.querySelectorAll("[data-admin-tab]").forEach((tab) => {
+        document.querySelectorAll("[data-admin-tab]").forEach((tab) => {
             tab.classList.toggle("active", tab.dataset.adminTab === name);
         });
         if (name === "add" && editingId === null) $("#itemFormTitle").textContent = "Add a website item";
+        if (name === "applications" && token) loadApplications().catch((error) => status("#applicationsStatus", error.message, "error"));
     }
 
     async function loadItems() {
@@ -188,6 +187,209 @@
     async function loadSettings() {
         const settings = await request("/admin/site/settings");
         $("#discordInvite").value = settings.discordInvite || "";
+    }
+
+    const APPLICATION_STATUSES = [
+        ["new", "New"],
+        ["reviewing", "In review"],
+        ["shortlisted", "Shortlisted"],
+        ["accepted", "Accepted"],
+        ["rejected", "Rejected"]
+    ];
+
+    async function loadApplications() {
+        const payload = await request("/admin/applications");
+        applications = Array.isArray(payload.applications) ? payload.applications : [];
+        const stats = payload.stats || {};
+        $("#applicationTotal").textContent = String(stats.total ?? applications.length);
+        $("#applicationNew").textContent = String(stats.new ?? applications.filter((app) => app.status === "new").length);
+        $("#applicationInProgress").textContent = String(stats.in_progress ?? applications.filter((app) => ["reviewing", "shortlisted"].includes(app.status)).length);
+        $("#applicationAccepted").textContent = String(stats.accepted ?? applications.filter((app) => app.status === "accepted").length);
+        $("#applicationTabCount").textContent = String(stats.new ?? applications.filter((app) => app.status === "new").length);
+        renderApplications();
+        clearStatus("#applicationsStatus");
+    }
+
+    function applicationDate(value) {
+        if (!value) return "Date unavailable";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime())
+            ? "Date unavailable"
+            : date.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    function createAppNode(tag, className, value) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (value !== undefined) node.textContent = String(value);
+        return node;
+    }
+
+    function renderApplications() {
+        const list = $("#adminApplicationList");
+        if (!list) return;
+        list.replaceChildren();
+
+        const search = ($("#applicationSearch")?.value || "").trim().toLowerCase();
+        const typeFilter = $("#applicationTypeFilter")?.value || "all";
+        const statusFilter = $("#applicationStatusFilter")?.value || "all";
+
+        const filtered = applications.filter((app) => {
+            if (typeFilter !== "all" && app.application_type !== typeFilter) return false;
+            if (statusFilter !== "all" && app.status !== statusFilter) return false;
+            if (!search) return true;
+            const answerText = Object.entries(app.answers || {}).map(([key, value]) => key + " " + value).join(" ");
+            return [app.full_name, app.email, app.discord_username, app.application_type, app.status, answerText]
+                .some((value) => String(value || "").toLowerCase().includes(search));
+        });
+
+        if (!filtered.length) {
+            const empty = createAppNode("div", "admin-empty",
+                applications.length
+                    ? "No applications match these filters. Try a broader search."
+                    : "No applications have been captured yet. New pilot and manager submissions will appear here.");
+            list.appendChild(empty);
+            return;
+        }
+
+        filtered.forEach((app) => {
+            const card = createAppNode("article", "admin-application-card");
+            const heading = createAppNode("div", "admin-application-heading");
+            const identity = document.createElement("div");
+            identity.appendChild(createAppNode("h3", "", app.full_name || "Applicant"));
+            const meta = createAppNode("div", "admin-application-meta");
+            meta.appendChild(createAppNode("span", "", app.application_type === "manager" ? "Manager application" : "Pilot application"));
+            meta.appendChild(createAppNode("span", "", applicationDate(app.submitted_at)));
+
+            const email = document.createElement("a");
+            email.href = "mailto:" + String(app.email || "");
+            email.textContent = app.email || "No email";
+            meta.appendChild(email);
+            if (app.discord_username) meta.appendChild(createAppNode("span", "", "Discord: " + app.discord_username));
+            identity.appendChild(meta);
+
+            const badge = createAppNode("span", "admin-application-badge " + String(app.status || "new"), (app.status || "new").replace(/[-_]/g, " "));
+            heading.append(identity, badge);
+
+            const body = createAppNode("div", "admin-application-body");
+            const answersDisclosure = document.createElement("details");
+            answersDisclosure.className = "admin-application-answers";
+            const answerSummary = createAppNode("summary", "", "View full application (" + Object.keys(app.answers || {}).length + " answers)");
+            const answersGrid = createAppNode("div", "admin-application-answer-grid");
+            const answers = app.answers && typeof app.answers === "object" ? app.answers : {};
+            Object.entries(answers).forEach(([question, answer]) => {
+                const field = createAppNode("div", "admin-application-answer");
+                field.appendChild(createAppNode("strong", "", question));
+                field.appendChild(createAppNode("p", "", answer || "—"));
+                answersGrid.appendChild(field);
+            });
+            answersDisclosure.append(answerSummary, answersGrid);
+
+            const toolbar = createAppNode("div", "admin-application-toolbar");
+            const statusField = createAppNode("div", "admin-application-field");
+            const statusLabel = createAppNode("label", "", "Application status");
+            statusLabel.htmlFor = "application-status-" + app.id;
+            const statusSelect = document.createElement("select");
+            statusSelect.id = statusLabel.htmlFor;
+            statusSelect.dataset.applicationStatus = String(app.id);
+            APPLICATION_STATUSES.forEach(([value, label]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                statusSelect.appendChild(option);
+            });
+            statusSelect.value = APPLICATION_STATUSES.some(([value]) => value === app.status) ? app.status : "new";
+            statusField.append(statusLabel, statusSelect);
+
+            const notesField = createAppNode("div", "admin-application-field");
+            const notesLabel = createAppNode("label", "", "Private admin notes");
+            notesLabel.htmlFor = "application-notes-" + app.id;
+            const notes = document.createElement("textarea");
+            notes.id = notesLabel.htmlFor;
+            notes.maxLength = 5000;
+            notes.placeholder = "Interview notes, follow-up, decision context…";
+            notes.value = app.admin_notes || "";
+            notes.dataset.applicationNotes = String(app.id);
+            notesField.append(notesLabel, notes);
+            toolbar.append(statusField, notesField);
+
+            const actions = createAppNode("div", "admin-application-actions");
+            const save = createAppNode("button", "admin-button primary", "Save review");
+            save.type = "button";
+            save.dataset.saveApplication = String(app.id);
+            const remove = createAppNode("button", "admin-button danger", "Delete record");
+            remove.type = "button";
+            remove.dataset.deleteApplication = String(app.id);
+            actions.append(save, remove);
+
+            body.append(answersDisclosure, toolbar, actions);
+            card.append(heading, body);
+            list.appendChild(card);
+        });
+    }
+
+    async function saveApplicationReview(id, card) {
+        const statusSelect = card.querySelector("[data-application-status]");
+        const notes = card.querySelector("[data-application-notes]");
+        const saveButton = card.querySelector("[data-save-application]");
+        if (!statusSelect || !notes || !saveButton) return;
+
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving…";
+        try {
+            await request("/admin/applications/" + encodeURIComponent(id), {
+                method: "PATCH",
+                body: JSON.stringify({
+                    status: statusSelect.value,
+                    adminNotes: notes.value
+                })
+            });
+            status("#applicationsStatus", "Application review saved.");
+            await loadApplications();
+        } catch (error) {
+            status("#applicationsStatus", error.message, "error");
+        } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = "Save review";
+        }
+    }
+
+    function exportApplicationsCsv() {
+        if (!applications.length) {
+            status("#applicationsStatus", "There are no application records to export.", "error");
+            return;
+        }
+
+        const answerKeys = Array.from(new Set(applications.flatMap((app) =>
+            Object.keys(app.answers && typeof app.answers === "object" ? app.answers : {})
+        )));
+        const headers = ["ID", "Type", "Name", "Email", "Discord", "Status", "Submitted", "Admin Notes", ...answerKeys];
+        const cell = (value) => {
+            let text = String(value ?? "").replace(/\r\n/g, "\n");
+            // Prevent spreadsheet formula execution in exported applicant-supplied fields.
+            if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
+            return '"' + text.replace(/"/g, '""') + '"';
+        };
+        const lines = [headers.map(cell).join(",")];
+        applications.forEach((app) => {
+            const answers = app.answers && typeof app.answers === "object" ? app.answers : {};
+            const row = [
+                app.id, app.application_type, app.full_name, app.email, app.discord_username,
+                app.status, app.submitted_at, app.admin_notes,
+                ...answerKeys.map((key) => answers[key] ?? "")
+            ];
+            lines.push(row.map(cell).join(","));
+        });
+        const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "echo-air-group-applications-" + new Date().toISOString().slice(0, 10) + ".csv";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        status("#applicationsStatus", "CSV export created.");
     }
 
     function syncNewsTargetPage() {
@@ -455,6 +657,50 @@
             status("#importStatus", error instanceof SyntaxError ? "That file is not valid JSON." : error.message, "error");
         } finally {
             button.disabled = false;
+        }
+    });
+
+    $("#itemCategory").addEventListener("change", syncNewsTargetPage);
+    syncNewsTargetPage();
+
+    $("#applicationSearch").addEventListener("input", renderApplications);
+    $("#applicationTypeFilter").addEventListener("change", renderApplications);
+    $("#applicationStatusFilter").addEventListener("change", renderApplications);
+    $("#refreshApplicationsButton").addEventListener("click", async () => {
+        const button = $("#refreshApplicationsButton");
+        button.disabled = true;
+        try {
+            await loadApplications();
+            status("#applicationsStatus", "Application list refreshed.");
+        } catch (error) {
+            status("#applicationsStatus", error.message, "error");
+        } finally {
+            button.disabled = false;
+        }
+    });
+    $("#exportApplicationsButton").addEventListener("click", exportApplicationsCsv);
+
+    $("#adminApplicationList").addEventListener("click", async (event) => {
+        const saveButton = event.target.closest("[data-save-application]");
+        const deleteButton = event.target.closest("[data-delete-application]");
+
+        if (saveButton) {
+            const card = saveButton.closest(".admin-application-card");
+            await saveApplicationReview(saveButton.dataset.saveApplication, card);
+            return;
+        }
+
+        if (deleteButton) {
+            const application = applications.find((item) => String(item.id) === deleteButton.dataset.deleteApplication);
+            if (!application || !window.confirm("Permanently delete the application from " + application.full_name + "?")) return;
+
+            try {
+                await request("/admin/applications/" + encodeURIComponent(application.id), { method: "DELETE" });
+                await loadApplications();
+                status("#applicationsStatus", "Application record deleted.");
+            } catch (error) {
+                status("#applicationsStatus", error.message, "error");
+            }
         }
     });
 
