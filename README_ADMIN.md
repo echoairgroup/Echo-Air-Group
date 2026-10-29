@@ -16,7 +16,7 @@ In the Render dashboard, open the existing `echo-air-group-api` web service and 
 - **Key:** `ADMIN_USERNAMES`
 - **Value:** the existing website login username that should be allowed to manage the site. Multiple usernames can be comma-separated.
 
-Save the environment change and let Render redeploy the service. Then open `admin.html` and sign in using that website account. Accounts not listed in `ADMIN_USERNAMES` cannot change website content.
+For multiple admins, put each person's existing Echo Air Group **username** into the same value, separated by commas (for example `pilotone,pilottwo,flightlead`). Each person signs in with their own username and password; never share a password or add email addresses unless an email address is literally the account username. Save the environment change and let Render redeploy the service. Then open `admin.html`; accounts not listed in `ADMIN_USERNAMES` cannot change website content.
 
 The server creates the `site_items` and `site_settings` tables in the existing Neon PostgreSQL database at startup. Uploaded images are stored in the database; imported JSON items can include an HTTPS `imageUrl`.
 
