@@ -4283,25 +4283,18 @@ app.post(
     "/api/sync/me",
     authenticate,
     async (req, res) => {
+        let ownsSyncLock = false;
 
         try {
-
-            const pilotId =
-                String(
-                    req.user.newsky_pilot_id ||
-                    ""
-                ).trim();
-
+            const pilotId = String(req.user.newsky_pilot_id || "").trim();
             if (!pilotId) {
-
                 return res.status(400).json({
-                    error:
-                        "Please link your NewSky Pilot ID first."
+                    error: "Please link your NewSky Pilot ID first."
                 });
             }
 
-            // If the scheduled full-history sync is active, return the saved
-            // statistics immediately rather than launching a duplicate NewSky job.
+            // A global background import already refreshes all pilots.
+            // Return saved stats instead of launching duplicate API requests.
             if (automaticFlightSyncInProgress) {
                 const cachedStats = await getUserStats(req.user.id);
                 return res.json({
@@ -4320,104 +4313,45 @@ app.post(
                 });
             }
 
-            console.log(
-                `Starting recent flight sync for ${req.user.username} (${pilotId})`
+            automaticFlightSyncInProgress = true;
+            ownsSyncLock = true;
+
+            console.log("Starting recent flight sync for " + req.user.username + " (" + pilotId + ")");
+            const allFlights = await getRecentNewSkyFlights(7);
+            const pilotFlights = allFlights.filter(flight =>
+                String(getPilotId(flight)).trim() === pilotId
             );
 
-            const allFlights =
-                await getRecentNewSkyFlights(7);
+            const result = await importAllFlights(pilotFlights);
+            const stats = await getUserStats(req.user.id);
+            const discordResult = await syncDiscordRank(req.user.id);
 
-            const pilotFlights =
-                allFlights.filter(
-                    flight =>
-                        String(
-                            getPilotId(
-                                flight
-                            )
-                        ).trim() ===
-                        pilotId
-                );
-
-            console.log(
-                `Found ${pilotFlights.length} flight(s) for pilot ${pilotId}.`
-            );
-
-            const result =
-                await importAllFlights(
-                    pilotFlights
-                );
-
-            const stats =
-                await getUserStats(
-                    req.user.id
-                );
-
-            const discordResult =
-                await syncDiscordRank(
-                    req.user.id
-                );
-
-            res.json({
-
-                message:
-                    `${pilotFlights.length} recent flight(s) found for your NewSky Pilot ID in the last 7 days.`,
-
-                historyWindowDays:
-                    7,
-
-                newskyFlightsReceived:
-                    allFlights.length,
-
-                pilotFlightsFound:
-                    pilotFlights.length,
-
-                flightsImported:
-                    result.imported,
-
-                flightsUpdated:
-                    result.updated,
-
-                flightsSkipped:
-                    result.skipped,
-
-                discordRankSync:
-                    discordResult,
-
+            return res.json({
+                message: pilotFlights.length +
+                    " recent flight(s) found for your NewSky Pilot ID in the last 7 days.",
+                historyWindowDays: 7,
+                newskyFlightsReceived: allFlights.length,
+                pilotFlightsFound: pilotFlights.length,
+                flightsImported: result.imported,
+                flightsUpdated: result.updated,
+                flightsSkipped: result.skipped,
+                discordRankSync: discordResult,
                 stats: {
-
-                    stars:
-                        stats.stars,
-
-                    rank:
-                        stats.rank.name,
-
-                    flightCount:
-                        stats.flightCount,
-
-                    averageRating:
-                        stats.averageRating,
-
-                    flightHours:
-                        stats.flightHours,
-
-                    distance:
-                        stats.distance
+                    stars: stats.stars,
+                    rank: stats.rank.name,
+                    flightCount: stats.flightCount,
+                    averageRating: stats.averageRating,
+                    flightHours: stats.flightHours,
+                    distance: stats.distance
                 }
             });
-
         } catch (error) {
-
-            console.error(
-                "Personal sync error:",
-                error
-            );
-
-            res.status(500).json({
-
-                error:
-                    error.message ||
-                    "Unable to synchronize flights."
+            console.error("Personal sync error:", error);
+            return res.status(500).json({
+                error: error.message || "Unable to synchronize flights."
             });
+        } finally {
+            if (ownsSyncLock) automaticFlightSyncInProgress = false;
         }
     }
 );
