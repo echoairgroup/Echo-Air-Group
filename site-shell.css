@@ -252,3 +252,127 @@ footer .copy {
         justify-content: start;
     }
 }
+
+
+/* Dynamically managed content cards */
+.site-added-items {
+    padding: 72px 0;
+    background: #f5f7f3;
+    color: #273025;
+}
+.site-added-container {
+    width: min(1180px, calc(100% - 50px));
+    margin: 0 auto;
+}
+.site-added-heading {
+    max-width: 760px;
+    margin-bottom: 28px;
+}
+.site-added-eyebrow {
+    color: #6e9c1e;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .18em;
+}
+.site-added-heading h2 {
+    margin: 10px 0 12px;
+    color: #101410;
+    font-size: clamp(30px, 4vw, 48px);
+    line-height: 1.08;
+}
+.site-added-heading p {
+    margin: 0;
+    color: #687267;
+    line-height: 1.7;
+}
+.site-added-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+.site-added-card {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #dfe6da;
+    border-radius: 18px;
+    box-shadow: 0 12px 35px rgba(20, 30, 15, .07);
+}
+.site-added-image {
+    width: 100%;
+    height: 210px;
+    display: block;
+    object-fit: cover;
+    background: #e7ece2;
+}
+.site-added-image-error {
+    display: none;
+}
+.site-added-card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 11px;
+    flex: 1;
+    padding: 22px;
+}
+.site-added-category {
+    display: inline-flex;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eef6df;
+    color: #52751b;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.site-added-card h3 {
+    margin: 0;
+    color: #151b13;
+    font-size: 21px;
+    line-height: 1.2;
+}
+.site-added-card p {
+    margin: 0;
+    color: #687267;
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+.site-added-link {
+    display: inline-flex;
+    margin-top: auto;
+    padding-top: 8px;
+    color: #54791b;
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+}
+.site-added-link:hover {
+    color: #17200f;
+}
+@media (max-width: 850px) {
+    .site-added-container {
+        width: min(calc(100% - 32px), 700px);
+    }
+    .site-added-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 560px) {
+    .site-added-items {
+        padding: 52px 0;
+    }
+    .site-added-container {
+        width: calc(100% - 28px);
+    }
+    .site-added-grid {
+        grid-template-columns: 1fr;
+    }
+    .site-added-image {
+        height: 220px;
+    }
+}
