@@ -4138,7 +4138,9 @@ app.get("/api/sync/status", async (req, res) => {
                     startedAt: state.last_started_at,
                     completedAt: state.last_completed_at,
                     fullHistoryCompletedAt: state.last_full_sync_at,
-                    lastError: state.last_error,
+                    lastError: state.last_error
+                        ? "The latest background sync encountered an error. The backend will retry automatically."
+                        : null,
                     linkedPilots: Number(state.linked_pilots || 0),
                     flightsReceived: Number(state.flights_received || 0),
                     flightsImported: Number(state.flights_imported || 0),
@@ -4295,8 +4297,28 @@ app.post(
                 });
             }
 
+            // If the scheduled full-history sync is active, return the saved
+            // statistics immediately rather than launching a duplicate NewSky job.
+            if (automaticFlightSyncInProgress) {
+                const cachedStats = await getUserStats(req.user.id);
+                return res.json({
+                    message: "A background NewSky sync is already running. Showing your latest saved statistics.",
+                    syncInProgress: true,
+                    flightsImported: 0,
+                    flightsUpdated: 0,
+                    stats: {
+                        stars: cachedStats.stars,
+                        rank: cachedStats.rank.name,
+                        flightCount: cachedStats.flightCount,
+                        averageRating: cachedStats.averageRating,
+                        flightHours: cachedStats.flightHours,
+                        distance: cachedStats.distance
+                    }
+                });
+            }
+
             console.log(
-                `Starting personal flight sync for ${req.user.username} (${pilotId})`
+                `Starting recent flight sync for ${req.user.username} (${pilotId})`
             );
 
             const allFlights =
@@ -4335,7 +4357,10 @@ app.post(
             res.json({
 
                 message:
-                    `${pilotFlights.length} flight(s) found for your NewSky Pilot ID.`,
+                    `${pilotFlights.length} recent flight(s) found for your NewSky Pilot ID in the last 7 days.`,
+
+                historyWindowDays:
+                    7,
 
                 newskyFlightsReceived:
                     allFlights.length,
