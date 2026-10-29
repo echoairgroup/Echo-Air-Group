@@ -287,6 +287,8 @@ async function initializeDatabase() {
         "flights_updated INTEGER NOT NULL DEFAULT 0)"
     );
 
+    await query("ALTER TABLE flight_sync_state ADD COLUMN IF NOT EXISTS distance_parser_version INTEGER NOT NULL DEFAULT 0");
+
 
 
     console.log(
@@ -4093,6 +4095,7 @@ async function runAutomaticFlightSync(mode = "recent") {
             "UPDATE flight_sync_state SET status = 'completed', " +
             "last_completed_at = CURRENT_TIMESTAMP, " +
             "last_full_sync_at = CASE WHEN $1::BOOLEAN THEN CURRENT_TIMESTAMP ELSE last_full_sync_at END, " +
+            "distance_parser_version = CASE WHEN $1::BOOLEAN THEN 2 ELSE distance_parser_version END, " +
             "last_error = NULL, linked_pilots = $2, flights_received = $3, " +
             "flights_imported = $4, flights_updated = $5 WHERE sync_key = 'global'",
             [fullHistory, linkedPilots, received, result.imported, result.updated]
@@ -4138,10 +4141,14 @@ async function startAutomaticFlightSync() {
         if (automaticFlightSyncInProgress) return;
         try {
             const state = await query(
-                "SELECT last_full_sync_at FROM flight_sync_state WHERE sync_key = 'global'"
+                "SELECT last_full_sync_at, distance_parser_version FROM flight_sync_state WHERE sync_key = 'global'"
             );
-            const hasFullHistory = Boolean(state.rows[0] && state.rows[0].last_full_sync_at);
-            await runAutomaticFlightSync(hasFullHistory ? "recent" : "full");
+            const row = state.rows[0] || {};
+            // Re-import all existing flights once after distance parsing changes,
+            // then return to the normal incremental 7-day sync.
+            const currentDataVersion = Boolean(row.last_full_sync_at) &&
+                Number(row.distance_parser_version || 0) >= 2;
+            await runAutomaticFlightSync(currentDataVersion ? "recent" : "full");
         } catch (error) {
             console.error("Scheduled flight sync did not finish:", error.message);
         }
