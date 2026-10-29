@@ -228,6 +228,10 @@ async function initializeDatabase() {
         [process.env.DISCORD_INVITE_URL || "https://discord.gg/e7ePxYA24"]
     );
 
+    await query(
+        "UPDATE site_items SET target_page = 'index.html', updated_at = CURRENT_TIMESTAMP WHERE LOWER(category) = 'news' AND target_page <> 'index.html'"
+    );
+
     console.log(
         "PostgreSQL / Neon database ready."
     );
