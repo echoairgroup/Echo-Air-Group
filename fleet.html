@@ -1496,6 +1496,33 @@ footer p {
 
     <div class="container">
 
+        <div class="fleet-tools" aria-label="Fleet filters">
+            <div class="fleet-search-field">
+                <label for="fleetSearch">Find an aircraft</label>
+                <input id="fleetSearch" type="search" placeholder="Search aircraft, engine or range…" autocomplete="off">
+            </div>
+            <div class="fleet-filter-field">
+                <label for="fleetManufacturerFilter">Manufacturer</label>
+                <select id="fleetManufacturerFilter">
+                    <option value="all">All manufacturers</option>
+                    <option value="airbus">Airbus</option>
+                    <option value="boeing">Boeing</option>
+                </select>
+            </div>
+            <div class="fleet-filter-field">
+                <label for="fleetMissionFilter">Flight mission</label>
+                <select id="fleetMissionFilter">
+                    <option value="all">All missions</option>
+                    <option value="short">Short haul</option>
+                    <option value="medium">Medium haul</option>
+                    <option value="long">Long haul</option>
+                    <option value="ultra">Ultra long haul</option>
+                </select>
+            </div>
+            <div class="fleet-result-count" id="fleetResultCount" role="status" aria-live="polite">Showing 13 aircraft</div>
+        </div>
+        <p class="fleet-disclaimer">Published aircraft specifications are indicative and can vary by variant and simulator add-on.</p>
+
         <div class="cards">
 <article class="fcard">
       <div class="fcard-visual">
@@ -2245,6 +2272,7 @@ window.addEventListener(
     <script src="site-shell.js"></script>
 
     <script src="site-content.js"></script>
+    <script src="fleet-center.js"></script>
 
 </body>
 </html>
