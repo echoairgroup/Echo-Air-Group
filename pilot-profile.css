@@ -1,0 +1,106 @@
+:root {
+    --profile-green:#ace336;
+    --profile-ink:#243020;
+    --profile-muted:#75806d;
+    --profile-line:#e2e8dc;
+    --profile-bg:#f5f8f2;
+}
+body.pilot-profile-page { margin:0; background:var(--profile-bg); color:var(--profile-ink); font-family:Inter,Arial,sans-serif; }
+.pilot-profile-page * { box-sizing:border-box; }
+.pilot-profile-page .container { width:min(1180px,calc(100% - 48px)); margin:0 auto; }
+.profile-hero {
+    position:relative; overflow:hidden; padding:160px 0 52px; color:#fff;
+    background:radial-gradient(circle at 84% 22%,rgba(172,227,54,.17),transparent 24%),linear-gradient(125deg,#080d08,#151f12 56%,#0c120a);
+}
+.profile-hero:after {
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.13;
+    background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+    background-size:48px 48px; mask-image:linear-gradient(to bottom,#000,transparent);
+}
+.profile-hero .container { position:relative; z-index:1; }
+.profile-kicker { display:inline-flex; padding:8px 12px; border:1px solid rgba(172,227,54,.34); border-radius:999px; background:rgba(172,227,54,.1); color:#c6f17a; font-size:10px; font-weight:900; letter-spacing:.13em; text-transform:uppercase; }
+.profile-hero h1 { max-width:900px; margin:18px 0 10px; color:#fff; font-size:clamp(36px,5.6vw,62px); line-height:1.03; letter-spacing:-.055em; overflow-wrap:anywhere; }
+.profile-hero p { max-width:740px; margin:0; color:#c1cbbb; font-size:14px; line-height:1.8; }
+.profile-meta { display:flex; flex-wrap:wrap; gap:8px; margin-top:21px; }
+.profile-meta span { display:inline-flex; align-items:center; gap:7px; padding:8px 11px; border:1px solid rgba(255,255,255,.13); border-radius:10px; background:rgba(255,255,255,.055); color:#e1e8db; font-size:11px; font-weight:800; }
+.profile-meta strong { color:var(--profile-green); }
+.profile-main { padding:27px 0 85px; }
+.profile-section-label { margin:0 0 12px; color:#718064; font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+.profile-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:22px; }
+.profile-stat { min-width:0; padding:17px; border:1px solid var(--profile-line); border-radius:15px; background:#fff; box-shadow:0 10px 26px rgba(20,30,16,.035); }
+.profile-stat span { display:block; margin-bottom:8px; color:#788372; font-size:10px; line-height:1.45; font-weight:900; letter-spacing:.055em; text-transform:uppercase; }
+.profile-stat strong { display:block; min-width:0; color:#2b3923; font-size:clamp(16px,1.7vw,22px); line-height:1.35; font-weight:900; overflow-wrap:anywhere; word-break:break-word; }
+.profile-stat small { display:block; margin-top:5px; color:#7a8572; font-size:10px; line-height:1.5; }
+.profile-layout { display:grid; grid-template-columns:minmax(0,1fr) 310px; align-items:start; gap:19px; }
+.profile-main-column { display:grid; gap:19px; min-width:0; }
+.profile-card,.profile-sidebar-card { min-width:0; overflow:hidden; border:1px solid var(--profile-line); border-radius:18px; background:#fff; box-shadow:0 14px 34px rgba(20,30,16,.045); }
+.profile-card-header { display:flex; align-items:center; gap:14px; padding:23px; border-bottom:1px solid #e8ede3; background:linear-gradient(125deg,#fff,#f8fbf3); }
+.pilot-avatar-large { display:flex; flex:0 0 64px; align-items:center; justify-content:center; width:64px; height:64px; border:1px solid #d7e8bd; border-radius:18px; background:linear-gradient(135deg,#eff7e3,#dceebe); color:#38521d; font-size:20px; font-weight:950; }
+.profile-card-header h2 { margin:0 0 5px; color:#283523; font-size:19px; letter-spacing:-.035em; overflow-wrap:anywhere; }
+.profile-card-header p { margin:0; color:#7b8574; font-size:11px; line-height:1.6; overflow-wrap:anywhere; }
+.profile-rank-pill { display:inline-flex; margin-top:9px; padding:5px 8px; border-radius:999px; background:#eef6df; color:#557a1b; font-size:9px; font-weight:900; letter-spacing:.05em; text-transform:uppercase; }
+.profile-card-body { padding:22px; }
+.rank-progress { padding:18px; border:1px solid #e4ebd9; border-radius:14px; background:linear-gradient(135deg,#f7fbee,#fff); }
+.rank-progress-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:11px; }
+.rank-progress-top strong { color:#334529; font-size:12px; }
+.rank-progress-top span { color:#718064; font-size:11px; text-align:right; }
+.rank-progress-track { height:9px; overflow:hidden; border-radius:999px; background:#e7eddf; }
+.rank-progress-fill { width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#82b51f,#c6ef68); transition:width .5s ease; }
+.rank-progress-note { margin:10px 0 0; color:#788372; font-size:11px; line-height:1.65; }
+.profile-sidebar-card { padding:21px; }
+.profile-sidebar-card h2 { margin:0 0 15px; color:var(--profile-ink); font-size:17px; letter-spacing:-.025em; }
+.side-stat-list { display:grid; gap:0; }
+.side-stat-row { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:12px 0; border-bottom:1px solid #edf1e9; }
+.side-stat-row:last-child { border-bottom:0; }
+.side-stat-row strong { max-width:65%; color:#34432b; font-size:11px; line-height:1.6; text-align:right; overflow-wrap:anywhere; }
+.side-stat-row span { color:#7c8675; font-size:10px; line-height:1.6; }
+.profile-toolbar { display:grid; grid-template-columns:minmax(0,1fr) minmax(180px,260px); gap:13px; align-items:end; padding:20px 22px 0; }
+.profile-toolbar label { display:block; margin-bottom:7px; color:#718064; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+.profile-toolbar input { width:100%; min-height:44px; padding:10px 12px; border:1px solid #dce4d5; border-radius:10px; background:#fff; font:inherit; font-size:13px; color:#263025; }
+.profile-toolbar input:focus { outline:3px solid rgba(172,227,54,.28); border-color:#8cb82d; }
+.flight-history-heading { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px; padding:22px 22px 0; }
+.flight-history-heading h2 { margin:0; color:#263025; font-size:22px; letter-spacing:-.035em; }
+.flight-history-heading p { margin:5px 0 0; color:#7a8572; font-size:11px; line-height:1.6; }
+#flightHistoryCount { color:#668c1e; font-size:11px; font-weight:900; }
+.profile-table-wrap { overflow:auto; max-width:100%; margin-top:17px; }
+.flight-table { width:100%; border-collapse:collapse; }
+.flight-table th { padding:13px 14px; background:#f5f8f0; color:#65705a; font-size:9px; font-weight:900; letter-spacing:.07em; text-align:left; text-transform:uppercase; white-space:nowrap; }
+.flight-table td { padding:14px; border-bottom:1px solid #e9eee4; color:#475341; font-size:11px; white-space:nowrap; vertical-align:middle; }
+.flight-table tbody tr:hover { background:#fbfcf8; }
+.flight-table tbody tr:last-child td { border-bottom:0; }
+.route-main { color:#2b3a24; font-size:11px; font-weight:900; }
+.route-sub { margin-top:4px; color:#85907c; font-size:9px; }
+.rating-value { display:inline-flex; padding:5px 8px; border-radius:8px; background:#f0f7e5; color:#56791c; font-weight:900; }
+.flight-stars { color:#53751d !important; font-weight:900; }
+.profile-show-all { min-height:42px; padding:10px 14px; border:1px solid #d8e7bd; border-radius:10px; background:#f3f8e9; color:#486819; font:inherit; font-size:11px; font-weight:900; cursor:pointer; }
+.profile-show-all:hover { background:#e9f4d6; }
+.profile-card-footer { padding:15px 22px; border-top:1px solid #edf1e9; color:#7d8776; font-size:10px; line-height:1.6; }
+.profile-empty { padding:26px 16px !important; color:#7e8877 !important; text-align:center; white-space:normal !important; line-height:1.7 !important; }
+.recent-activity-list { display:grid; }
+.recent-activity-list .side-stat-row { align-items:flex-start; }
+.recent-activity-list .side-stat-row > div:first-child { min-width:0; overflow-wrap:anywhere; }
+.profile-loading,.profile-error { padding:35px; border:1px solid var(--profile-line); border-radius:18px; background:#fff; color:#718064; line-height:1.7; }
+.profile-error { border-color:#f1d1ca; background:#fff8f7; color:#9b4236; }
+#profileContent[hidden],#profileLoading[hidden],#profileError[hidden] { display:none !important; }
+@media (max-width:1050px) {
+    .profile-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .profile-layout { grid-template-columns:minmax(0,1fr) 270px; }
+}
+@media (max-width:800px) {
+    .profile-hero { padding:130px 0 43px; }
+    .profile-main { padding:22px 0 60px; }
+    .profile-layout { grid-template-columns:1fr; }
+    .profile-sidebar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+}
+@media (max-width:560px) {
+    .pilot-profile-page .container { width:calc(100% - 28px); }
+    .profile-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .profile-stat { padding:12px; }
+    .profile-card-header,.profile-card-body { padding:16px; }
+    .profile-toolbar { grid-template-columns:1fr; padding:16px 16px 0; }
+    .flight-history-heading { padding:18px 16px 0; }
+    .profile-sidebar { grid-template-columns:1fr; }
+    .profile-card-footer { padding:14px 16px; }
+    .pilot-avatar-large { flex-basis:56px; width:56px; height:56px; border-radius:16px; }
+    .flight-table th,.flight-table td { padding:11px; }
+}
