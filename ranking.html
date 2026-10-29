@@ -1810,9 +1810,9 @@ footer p {
 .progress { height: 10px; border-radius: 999px; overflow: hidden; background: #e7eddf; }
 #progressBar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #8ebd25, #c9f36c); box-shadow: 0 0 18px rgba(172,227,54,.24); transition: width .55s ease; }
 .stat-grid { gap: 10px; }
-.stat-grid .stat { border: 1px solid #e5eadd; border-radius: 13px; background: #f9fbf6; padding: 15px; }
+.stat-grid .stat { min-width: 0; border: 1px solid #e5eadd; border-radius: 13px; background: #f9fbf6; padding: 15px; }
 .stat-grid .stat small { color: #788272; }
-.stat-grid .stat b { color: #26331d; font-size: clamp(15px, 1.6vw, 21px); overflow-wrap: anywhere; }
+.stat-grid .stat b { display: block; min-width: 0; color: #26331d; font-size: clamp(13px, 1.35vw, 18px); line-height: 1.35; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .stat-note { margin-top: 15px; padding: 11px 13px; border-left: 3px solid #ace336; border-radius: 0 9px 9px 0; background: #f7faef; color: #66715d; font-size: 11px; line-height: 1.65; }
 .ranking-wrap .panel { overflow: hidden; padding: 24px; }
 .ranking-wrap .panel h3 { font-size: 23px; }
@@ -4151,7 +4151,7 @@ function calculateFlightStatistics(
             'distanceFlown'
         );
         const flightDistance = Number(rawDistance);
-        if (rawDistance !== null && Number.isFinite(flightDistance) && flightDistance >= 0) {
+        if (rawDistance !== null && Number.isFinite(flightDistance) && flightDistance > 0) {
             totalDistance += flightDistance;
             distanceCount++;
         }
@@ -4694,12 +4694,10 @@ function renderDashboard(
     document.getElementById(
         'totalStars'
     ).textContent =
-
-        stats.totalStars !== null
-
-            ? `${stats.totalStars.toFixed(2)} ⭐`
-
-            : '—';
+        stars.toLocaleString('en-GB', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + ' ⭐';
 
 
     document.getElementById(
@@ -4773,10 +4771,8 @@ function renderDashboard(
 
     renderAchievements(data.achievements);
 
-    document.getElementById(
-        'leaderboardPosition'
-    ).textContent =
-        '—';
+    // loadLeaderboard() writes the real position asynchronously.
+    // Do not reset it here: dashboard rendering can finish afterwards.
 
 
     /* ========================================================
