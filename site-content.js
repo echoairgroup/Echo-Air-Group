@@ -103,6 +103,70 @@
         return card;
     }
 
+    function makeNewsCard(item) {
+        const card = document.createElement("article");
+        card.className = "news-card";
+
+        const imageWrap = document.createElement("div");
+        imageWrap.className = "news-image";
+
+        if (item.image_url) {
+            imageWrap.classList.add("has-image");
+            const image = document.createElement("img");
+            image.src = /^https?:\/\//i.test(item.image_url)
+                ? item.image_url
+                : API_BASE.replace(/\/api$/, "") + item.image_url;
+            image.alt = item.title ? String(item.title) : "News image";
+            image.loading = "lazy";
+            image.addEventListener("error", () => {
+                imageWrap.classList.remove("has-image");
+                image.remove();
+                imageWrap.textContent = "✈";
+            }, { once: true });
+            imageWrap.appendChild(image);
+        } else {
+            imageWrap.textContent = "✈";
+        }
+
+        const content = document.createElement("div");
+        content.className = "news-content";
+
+        const date = document.createElement("div");
+        date.className = "news-date";
+        const createdAt = item.created_at ? new Date(item.created_at) : null;
+        date.textContent = createdAt && !Number.isNaN(createdAt.getTime())
+            ? createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+            : "Latest News";
+
+        const title = document.createElement("h3");
+        title.textContent = String(item.title || "Echo Air Group News");
+
+        content.append(date, title);
+
+        if (item.description) {
+            const description = document.createElement("p");
+            description.textContent = String(item.description);
+            content.appendChild(description);
+        }
+
+        const href = safeHref(item.link_url);
+        if (href) {
+            const link = document.createElement("a");
+            link.className = "news-link";
+            link.href = href;
+            link.textContent = "Read More →";
+
+            if (/^https?:\/\//i.test(href) && new URL(href, window.location.href).origin !== window.location.origin) {
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+            }
+            content.appendChild(link);
+        }
+
+        card.append(imageWrap, content);
+        return card;
+    }
+
     async function loadPublicSettings() {
         try {
             const response = await fetch(API_BASE + "/site/settings", { cache: "no-store" });
@@ -127,7 +191,26 @@
 
             const payload = await response.json();
             const items = Array.isArray(payload.items) ? payload.items : [];
-            if (!items.length) return;
+            const newsItems = items.filter((item) =>
+                String(item.category || "").toLowerCase() === "news"
+            );
+            const regularItems = items.filter((item) =>
+                String(item.category || "").toLowerCase() !== "news"
+            );
+
+            // News belongs in the homepage's existing News tab/section, never in the generic bottom section.
+            if (pageName === "index.html" && newsItems.length) {
+                const newsGrid = document.querySelector("#news .news-grid");
+                if (newsGrid) {
+                    newsItems.forEach((item) => newsGrid.appendChild(makeNewsCard(item)));
+                }
+            }
+
+            // News is shown in the homepage News section only. Other item types use the general managed-content section.
+            if (!regularItems.length) {
+                if (currentInvite) updateDiscordLinks(currentInvite);
+                return;
+            }
 
             const section = document.createElement("section");
             section.className = "site-added-items";
@@ -153,7 +236,7 @@
 
             const grid = document.createElement("div");
             grid.className = "site-added-grid";
-            items.forEach((item) => grid.appendChild(makeItemCard(item)));
+            regularItems.forEach((item) => grid.appendChild(makeItemCard(item)));
 
             container.append(heading, grid);
             section.appendChild(container);
