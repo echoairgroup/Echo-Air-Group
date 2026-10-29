@@ -1353,6 +1353,82 @@
             }
         }
 
+    
+
+        /* Small usability refinements for the manual */
+        .manual-section {
+            scroll-margin-top: 115px;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .manual-section:target {
+            border-color: rgba(110,156,30,.45);
+            box-shadow: 0 16px 42px rgba(20,30,15,.08);
+        }
+
+        .manual-sidebar a.active {
+            background: #eef6df;
+            color: var(--manual-green-dark);
+        }
+
+        .manual-sidebar a:focus-visible,
+        .manual-faq-question:focus-visible,
+        .manual-back-top:focus-visible {
+            outline: 3px solid var(--manual-green-dark);
+            outline-offset: 3px;
+        }
+
+        .manual-faq-question[aria-expanded="true"] {
+            color: var(--manual-green-dark);
+        }
+
+        .manual-faq-answer {
+            line-height: 1.75;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        @media print {
+            #siteHeader,
+            .manual-sidebar,
+            .manual-back-top,
+            .manual-cta,
+            footer {
+                display: none !important;
+            }
+
+            .manual-wrapper {
+                width: 100%;
+                padding: 0;
+            }
+
+            .manual-layout {
+                display: block;
+            }
+
+            .manual-section {
+                break-inside: avoid;
+                box-shadow: none;
+            }
+
+            .manual-faq-answer {
+                display: block !important;
+            }
+        }
+
     </style>
 
     <link rel="stylesheet" href="site-shell.css">
@@ -3324,310 +3400,129 @@
 
 
 <script>
+(() => {
+    "use strict";
 
-    /* ============================================================
-       HEADER SCROLL EFFECT
-       ============================================================ */
+    // The shared site-shell.js owns the header and mobile menu.
+    // This script only manages the manual's interactive content.
 
-    const manualHeader =
-        document.getElementById("manualHeader");
-
-    function updateManualHeader() {
-
-        if (window.scrollY > 30) {
-
-            manualHeader.classList.add("scrolled");
-
-        } else {
-
-            manualHeader.classList.remove("scrolled");
-
-        }
-
-    }
-
-    window.addEventListener(
-        "scroll",
-        updateManualHeader,
-        { passive: true }
+    const faqQuestions = Array.from(
+        document.querySelectorAll(".manual-faq-question")
     );
 
-    updateManualHeader();
+    faqQuestions.forEach((question, index) => {
+        const item = question.closest(".manual-faq-item");
+        if (!item) return;
 
-
-    /* ============================================================
-       MOBILE MENU
-       ============================================================ */
-
-    const manualMenu =
-        document.getElementById("manualMenu");
-
-    const manualMobileNav =
-        document.getElementById("manualMobileNav");
-
-    manualMenu.addEventListener(
-        "click",
-        function () {
-
-            const isOpen =
-                manualMobileNav.classList.toggle("open");
-
-            manualMenu.setAttribute(
-                "aria-expanded",
-                String(isOpen)
-            );
-
-            document.body.classList.toggle(
-                "menu-open",
-                isOpen
-            );
-
+        const answer = item.querySelector(".manual-faq-answer");
+        if (answer) {
+            if (!answer.id) answer.id = "manual-faq-answer-" + (index + 1);
+            answer.setAttribute("role", "region");
+            answer.setAttribute("aria-labelledby", "manual-faq-question-" + (index + 1));
+            question.setAttribute("aria-controls", answer.id);
         }
-    );
 
-
-    const mobileLinks =
-        manualMobileNav.querySelectorAll("a");
-
-    mobileLinks.forEach(
-        function (link) {
-
-            link.addEventListener(
-                "click",
-                function () {
-
-                    manualMobileNav.classList.remove("open");
-
-                    manualMenu.setAttribute(
-                        "aria-expanded",
-                        "false"
-                    );
-
-                    document.body.classList.remove(
-                        "menu-open"
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-    /* ============================================================
-       FAQ
-       ============================================================ */
-
-    const faqQuestions =
-        document.querySelectorAll(
-            ".manual-faq-question"
+        question.id = "manual-faq-question-" + (index + 1);
+        question.setAttribute(
+            "aria-expanded",
+            String(item.classList.contains("open"))
         );
 
-    faqQuestions.forEach(
-        function (question) {
+        question.addEventListener("click", () => {
+            const willOpen = !item.classList.contains("open");
 
-            question.addEventListener(
-                "click",
-                function () {
-
-                    const item =
-                        question.closest(
-                            ".manual-faq-item"
-                        );
-
-                    const wasOpen =
-                        item.classList.contains("open");
-
-
-                    document
-                        .querySelectorAll(".manual-faq-item")
-                        .forEach(
-                            function (otherItem) {
-
-                                otherItem.classList.remove(
-                                    "open"
-                                );
-
-                            }
-                        );
-
-
-                    if (!wasOpen) {
-
-                        item.classList.add("open");
-
-                    }
-
-                }
-            );
-
-        }
-    );
-
-
-    /* ============================================================
-       ACTIVE SIDEBAR SECTION
-       ============================================================ */
-
-    const manualSections =
-        document.querySelectorAll(
-            ".manual-section"
-        );
-
-    const manualTocLinks =
-        document.querySelectorAll(
-            "#manualToc a"
-        );
-
-
-    const sectionObserver =
-        new IntersectionObserver(
-            function (entries) {
-
-                entries.forEach(
-                    function (entry) {
-
-                        if (!entry.isIntersecting) {
-                            return;
-                        }
-
-                        manualTocLinks.forEach(
-                            function (link) {
-
-                                link.classList.remove(
-                                    "active"
-                                );
-
-                            }
-                        );
-
-
-                        const activeLink =
-                            document.querySelector(
-                                '#manualToc a[href="#' +
-                                entry.target.id +
-                                '"]'
-                            );
-
-
-                        if (activeLink) {
-
-                            activeLink.classList.add(
-                                "active"
-                            );
-
-                        }
-
-                    }
-                );
-
-            },
-            {
-                rootMargin:
-                    "-25% 0px -60% 0px",
-                threshold: 0
-            }
-        );
-
-
-    manualSections.forEach(
-        function (section) {
-
-            sectionObserver.observe(section);
-
-        }
-    );
-
-
-    /* ============================================================
-       SMOOTH SIDEBAR NAVIGATION
-       ============================================================ */
-
-    manualTocLinks.forEach(
-        function (link) {
-
-            link.addEventListener(
-                "click",
-                function (event) {
-
-                    const targetId =
-                        link.getAttribute("href");
-
-                    const target =
-                        document.querySelector(
-                            targetId
-                        );
-
-                    if (!target) {
-                        return;
-                    }
-
-                    event.preventDefault();
-
-                    target.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-
-                }
-            );
-
-        }
-    );
-
-
-    /* ============================================================
-       BACK TO TOP
-       ============================================================ */
-
-    const manualBackTop =
-        document.getElementById(
-            "manualBackTop"
-        );
-
-
-    function updateBackTop() {
-
-        if (window.scrollY > 500) {
-
-            manualBackTop.classList.add(
-                "visible"
-            );
-
-        } else {
-
-            manualBackTop.classList.remove(
-                "visible"
-            );
-
-        }
-
-    }
-
-
-    window.addEventListener(
-        "scroll",
-        updateBackTop,
-        { passive: true }
-    );
-
-
-    manualBackTop.addEventListener(
-        "click",
-        function () {
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
+            document.querySelectorAll(".manual-faq-item").forEach((otherItem) => {
+                otherItem.classList.remove("open");
+                const otherQuestion = otherItem.querySelector(".manual-faq-question");
+                if (otherQuestion) otherQuestion.setAttribute("aria-expanded", "false");
             });
 
-        }
+            if (willOpen) {
+                item.classList.add("open");
+                question.setAttribute("aria-expanded", "true");
+            }
+        });
+    });
+
+    const manualSections = Array.from(
+        document.querySelectorAll(".manual-section[id]")
+    );
+    const manualTocLinks = Array.from(
+        document.querySelectorAll("#manualToc a[href^='#']")
     );
 
+    function setActiveSection(sectionId) {
+        manualTocLinks.forEach((link) => {
+            const isActive = link.getAttribute("href") === "#" + sectionId;
+            link.classList.toggle("active", isActive);
+            if (isActive) {
+                link.setAttribute("aria-current", "location");
+            } else {
+                link.removeAttribute("aria-current");
+            }
+        });
+    }
 
-    updateBackTop();
+    if ("IntersectionObserver" in window && manualSections.length) {
+        const sectionObserver = new IntersectionObserver((entries) => {
+            const visibleSections = entries
+                .filter((entry) => entry.isIntersecting)
+                .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
 
+            if (visibleSections.length) {
+                setActiveSection(visibleSections[0].target.id);
+            }
+        }, {
+            rootMargin: "-20% 0px -65% 0px",
+            threshold: [0, 0.15, 0.4, 0.7]
+        });
 
+        manualSections.forEach((section) => sectionObserver.observe(section));
+    }
+
+    manualTocLinks.forEach((link) => {
+        link.addEventListener("click", (event) => {
+            const href = link.getAttribute("href") || "";
+            const target = document.getElementById(href.slice(1));
+
+            if (!target) return;
+
+            event.preventDefault();
+            setActiveSection(target.id);
+            target.scrollIntoView({
+                behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                    ? "auto"
+                    : "smooth",
+                block: "start"
+            });
+
+            if (history.replaceState) {
+                history.replaceState(null, "", "#" + target.id);
+            }
+        });
+    });
+
+    const manualBackTop = document.getElementById("manualBackTop");
+
+    if (manualBackTop) {
+        const updateBackTop = () => {
+            manualBackTop.classList.toggle("visible", window.scrollY > 500);
+        };
+
+        window.addEventListener("scroll", updateBackTop, { passive: true });
+
+        manualBackTop.addEventListener("click", () => {
+            window.scrollTo({
+                top: 0,
+                behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                    ? "auto"
+                    : "smooth"
+            });
+        });
+
+        updateBackTop();
+    }
+})();
 </script>
 
     <script src="site-shell.js"></script>
