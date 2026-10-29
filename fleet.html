@@ -1366,6 +1366,38 @@ footer p {
    END CSS
    ============================================================ */
 
+
+/* Interactive Fleet Center */
+.fleet-tools{display:grid;grid-template-columns:minmax(230px,1.5fr) repeat(2,minmax(165px,.8fr)) auto;gap:13px;align-items:end;margin:0 0 13px;padding:20px;border:1px solid #e0e6dc;border-radius:18px;background:linear-gradient(135deg,#fff 20%,#f6f9f0);box-shadow:0 14px 38px rgba(20,30,15,.045)}
+.fleet-search-field,.fleet-filter-field{display:grid;gap:7px;min-width:0}
+.fleet-tools label{color:#59654f;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.fleet-tools input,.fleet-tools select{width:100%;min-height:45px;padding:11px 12px;border:1px solid #dce4d5;border-radius:10px;background:#fff;color:#263025;font:inherit;font-size:13px}
+.fleet-tools input:focus,.fleet-tools select:focus{outline:3px solid rgba(172,227,54,.32);border-color:#8cb82d}
+.fleet-result-count{align-self:center;color:#697563;font-size:12px;font-weight:800;white-space:nowrap}
+.fleet-disclaimer{margin:0 0 25px;color:#77816f;font-size:11px;line-height:1.6}
+.fcard[hidden]{display:none!important}
+.fcard-detail-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:17px;padding:11px 14px;border:1px solid rgba(110,156,30,.35);border-radius:10px;background:#f3f8e9;color:#486819;font:inherit;font-size:12px;font-weight:900;cursor:pointer;transition:transform .2s ease,background .2s ease}
+.fcard-detail-btn:hover{transform:translateY(-2px);background:#e9f4d6}
+.fleet-dialog{width:min(740px,calc(100% - 28px));max-width:740px;max-height:min(88vh,900px);padding:0;overflow:auto;border:1px solid rgba(172,227,54,.23);border-radius:22px;background:#fff;color:#263025;box-shadow:0 35px 110px rgba(0,0,0,.42)}
+.fleet-dialog::backdrop{background:rgba(5,9,5,.76);backdrop-filter:blur(8px)}
+.fleet-dialog-header{position:relative;min-height:190px;background:#101710;color:white}
+.fleet-dialog-image{width:100%;height:260px;display:block;object-fit:cover;opacity:.88}
+.fleet-dialog-header-content{position:absolute;inset:auto 0 0;padding:26px;background:linear-gradient(transparent,rgba(7,12,7,.97))}
+.fleet-dialog-eyebrow{color:#c7ef7a;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.13em}
+.fleet-dialog-header h2{margin:7px 0 0;color:#fff;font-size:clamp(25px,5vw,39px);letter-spacing:-.04em}
+.fleet-dialog-close{position:absolute;z-index:3;right:14px;top:14px;width:40px;height:40px;border:1px solid rgba(255,255,255,.25);border-radius:50%;background:rgba(5,9,5,.7);color:#fff;font-size:22px;cursor:pointer}
+.fleet-dialog-body{padding:25px}
+.fleet-dialog-subtitle{margin:0 0 18px;color:#687267;line-height:1.7}
+.fleet-dialog-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+.fleet-dialog-specs .spec-row{display:flex;flex-direction:column;gap:6px;padding:15px;border:1px solid #e3e9dd;border-radius:12px;background:#f7f9f4}
+.fleet-dialog-specs .spec-row span:first-child{color:#7a8473;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em}
+.fleet-dialog-specs .spec-row span:last-child{color:#283522;font-size:16px;font-weight:900}
+.fleet-dialog-note{margin:18px 0 0;color:#737d6b;font-size:11px;line-height:1.7}
+.fleet-dialog-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.fleet-dialog-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 16px;border-radius:10px;background:#ace336;color:#17200f;font-size:12px;font-weight:900;text-decoration:none}
+.fleet-dialog-actions button{min-height:44px;padding:11px 16px;border:1px solid #dce4d5;border-radius:10px;background:#fff;color:#3f4b37;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
+@media(max-width:1000px){.fleet-tools{grid-template-columns:1fr 1fr}.fleet-result-count{grid-column:1/-1}}
+@media(max-width:540px){.fleet-tools{grid-template-columns:1fr;padding:15px}.fleet-result-count{grid-column:auto}.fleet-dialog-image{height:200px}.fleet-dialog-body{padding:18px}.fleet-dialog-specs{grid-template-columns:1fr 1fr}}
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
