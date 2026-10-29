@@ -60,7 +60,7 @@
       const dist=distanceOf(f);row.appendChild(el("td","",dist===null?"—":fmt(dist,0)+" km"));const stars=starsOf(f);row.appendChild(el("td","flight-stars",stars===null?"—":fmt(stars,2)+" ⭐"));target.appendChild(row);
     });
     const old=$("#showAllFlightsButton");if(old)old.remove();
-    if(!q&&filtered.length>20){const button=el("button","btn btn-secondary",showAll?"Show recent flights":"Show all "+filtered.length.toLocaleString("en-GB")+" flights");button.id="showAllFlightsButton";button.type="button";button.style.display="block";button.style.margin="16px 22px 20px";button.addEventListener("click",()=>{showAll=!showAll;renderFlights();});$("#flightHistoryFooter").insertAdjacentElement("beforebegin",button);}
+    if(!q&&filtered.length>20){const button=el("button","profile-show-all",showAll?"Show recent flights":"Show all "+filtered.length.toLocaleString("en-GB")+" flights");button.id="showAllFlightsButton";button.type="button";button.style.display="block";button.style.margin="16px 22px 20px";button.addEventListener("click",()=>{showAll=!showAll;renderFlights();});$("#flightHistoryFooter").insertAdjacentElement("beforebegin",button);}
   }
   async function load(){
     const id=new URLSearchParams(window.location.search).get("id");if(!id||!/^\d+$/.test(id))throw new Error("This profile link is missing a valid pilot ID. Open a pilot from the Pilot Dashboard.");
