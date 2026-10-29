@@ -4,6 +4,10 @@
     const mobileNav = document.getElementById("mobileNav");
     const menuButton = document.getElementById("menuButton");
 
+    document.querySelectorAll('a[href="ranking.html"]').forEach((link) => {
+        link.textContent = "Pilot Dashboard";
+    });
+
     function closeMenu() {
         if (mobileNav) mobileNav.classList.remove("open");
         if (menuButton) {
