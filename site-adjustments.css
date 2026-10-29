@@ -11,6 +11,13 @@
 .join-page .pagehero {
     margin-top: 0 !important;
     border-top: 0 !important;
+    padding-top: 150px !important;
+}
+@media (max-width: 800px) {
+    .join-page .pagehero { padding-top: 122px !important; }
+}
+@media (max-width: 520px) {
+    .join-page .pagehero { padding-top: 108px !important; }
 }
 /* The shared header is fixed at 100px on desktop; start the reservation
    copy clearly below it instead of allowing the title to sit behind it. */
