@@ -587,6 +587,8 @@ footer .copy {
 
 </style>
 
+    <link rel="stylesheet" href="site-shell.css">
+
 </head>
 
 <body>
@@ -596,95 +598,64 @@ footer .copy {
 ========================================================= -->
 
 <header id="siteHeader">
+    <div class="container nav">
 
-```
-<div class="container nav">
+        <a class="brand" href="index.html" aria-label="Echo Air Group home">
+            <img
+                class="brand-logo"
+                src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768"
+                alt="Echo Air Group Logo"
+            >
+            <div class="brand-text">
+                ECHO AIR GROUP
+                <small>6L · ECV · CLOVER</small>
+            </div>
+        </a>
 
-    <a class="brand" href="index.html">
+        <nav class="navlinks" aria-label="Primary navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="fleet.html">Fleet</a>
+            <a href="routes.html">Routes</a>
+            <a href="team.html">Team</a>
+            <a href="index.html#news">News</a>
+            <a class="active" href="join.html">Join Us</a>
+            <a href="manual.html">Pilot Manual</a>
+            <a href="contact.html">Contact Us</a>
+            <a href="ranking.html">Ranking</a>
+            <a href="booking.html">Book a flight</a>
+        </nav>
 
-        <img
-            class="header-logo"
-            src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768"
-            alt="Echo Air Group"
-        >
+        <a class="register" href="join.html">REGISTER</a>
 
-    </a>
-
-
-    <nav class="navlinks">
-
-        <a href="index.html">Home</a>
-
-        <a href="about.html">About</a>
-
-        <a href="fleet.html">Fleet</a>
-
-        <a href="routes.html">Routes</a>
-
-        <a href="team.html">Team</a>
-
-        <a href="join.html">Join Us</a>
-
-        <a href="manual.html">Pilot Manual</a>
-
-        <a href="contact.html">Contact Us</a>
-
-        <a href="ranking.html">Ranking</a>
-
-        <a href="booking.html">Book a flight</a>
-
-    </nav>
-
-
-    <a class="register" href="join.html">
-        REGISTER
-    </a>
-
-
-    <button
-        class="menu"
-        onclick="toggleMenu()"
-        aria-label="Open navigation menu"
-    >
-        ☰
-    </button>
-
-</div>
-
-
-<!-- MOBILE NAV -->
-
-<div id="mobileNav" class="mobileNav">
-
-    <div class="container">
-
-        <a href="index.html">Home</a>
-
-        <a href="about.html">About</a>
-
-        <a href="fleet.html">Fleet</a>
-
-        <a href="routes.html">Routes</a>
-
-        <a href="team.html">Team</a>
-
-        <a href="join.html">Join Us</a>
-
-        <a href="manual.html">Pilot Manual</a>
-
-        <a href="contact.html">Contact Us</a>
-
-        <a href="ranking.html">Ranking</a>
-
-        <a href="booking.html">Book a flight</a>
-
-        <a href="join.html">Register</a>
+        <button
+            class="menu"
+            id="menuButton"
+            onclick="toggleMenu()"
+            type="button"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="mobileNav"
+        >☰</button>
 
     </div>
 
-</div>
-```
-
+    <div id="mobileNav" class="mobileNav">
+        <div class="container">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="fleet.html">Fleet</a>
+            <a href="routes.html">Routes</a>
+            <a href="team.html">Team</a>
+            <a href="index.html#news">News</a>
+            <a href="join.html">Join Us</a>
+            <a href="manual.html">Pilot Manual</a>
+            <a href="contact.html">Contact Us</a>
+            <a href="ranking.html">Ranking</a>
+            <a href="booking.html">Book a flight</a>
+            <a href="join.html">Register</a>
+        </div>
+    </div>
 </header>
 
 <!-- =========================================================
@@ -1330,140 +1301,90 @@ footer .copy {
 
 <footer>
 
-```
-<div class="container">
+    <div class="container">
 
-    <div class="foot-top">
+        <div class="foot-top">
 
+            <div>
 
-        <!-- FOOTER BRAND -->
+                <a class="brand" href="index.html">
 
-        <div>
+                    <img
+                        class="brand-logo"
+                        src="https://media.discordapp.net/attachments/1535409438683439314/1535737684818006096/Full_Logo_White_1.png?ex=6a78daac&is=6a77892c&hm=101b0167be79e5d76583ad0d1ed08fb313fc8bef82d875871fa81643e0f811fc&=&format=webp&quality=lossless&width=768&height=768"
+                        alt="Echo Air Group Logo"
+                    >
 
-            <a
-                class="brand"
-                href="index.html"
-            >
+                    <div class="brand-text">
+                        ECHO AIR GROUP
+                        <small>6L · ECV · CLOVER</small>
+                    </div>
 
-                <img
-                    class="brand-logo"
-                    src="https://media.discordapp.net/attachments/1535409438683439314/1535737684818006096/Full_Logo_White_1.png?ex=6a78daac&is=6a77892c&hm=101b0167be79e5d76583ad0d1ed08fb313fc8bef82d875871fa81643e0f811fc&=&format=webp&quality=lossless&width=768&height=768"
-                    alt="Echo Air Group Logo"
-                >
+                </a>
 
-                <div class="brand-text">
+                <p style="max-width:450px">
+                    Virtual aviation. Real passion.
+                    A community built for pilots who love
+                    the world of flight simulation.
+                </p>
 
-                    ECHO AIR GROUP
+                <div class="footer-social">
 
-                    <small>
-                        6L · ECV · CLOVER
-                    </small>
+                    <a
+                        href="https://discord.gg/e7ePxYA24"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Discord"
+                    >
+                        <img
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL3851zWBAakGfTIxIoavLpD9xempKolcjVkbw-HmqvrpX_orWo4J7FMgr84kloUD2WyNy33gU7V6uQoLq3_g3esyH0N_u-oEsU5-w8CCR&s=10"
+                            alt="Discord"
+                        >
+                    </a>
+
+                    <a
+                        href="https://www.tiktok.com/@echoairgroup"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="TikTok"
+                    >
+                        <img
+                            src="https://sf-static.tiktokcdn.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png"
+                            alt="TikTok"
+                        >
+                    </a>
 
                 </div>
 
-            </a>
+            </div>
 
+            <div class="foot-links">
 
-            <p style="max-width:450px">
-
-                Virtual aviation. Real passion.
-                A community built for pilots who love
-                the world of flight simulation.
-
-            </p>
-
-
-            <!-- SOCIAL BUTTONS -->
-
-            <div class="footer-social">
-
-                <!-- DISCORD -->
-
-                <a
-                    href="https://discord.gg/e7ePxYA24"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Discord"
-                >
-
-                    <img
-                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL3851zWBAakGfTIxIoavLpD9xempKolcjVkbw-HmqvrpX_orWo4J7FMgr84kloUD2WyNy33gU7V6uQoLq3_g3esyH0N_u-oEsU5-w8CCR&s=10"
-                        alt="Discord"
-                    >
-
-                </a>
-
-
-                <!-- TIKTOK -->
-
-                <a
-                    href="https://www.tiktok.com/@echoairgroup"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="TikTok"
-                >
-
-                    <img
-                        src="https://sf-static.tiktokcdn.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png"
-                        alt="TikTok"
-                    >
-
-                </a>
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="fleet.html">Fleet</a>
+                <a href="routes.html">Routes</a>
+                <a href="team.html">Team</a>
+                <a href="index.html#news">News</a>
+                <a href="join.html">Join Us</a>
+                <a href="manual.html">Pilot Manual</a>
+                <a href="contact.html">Contact Us</a>
+                <a href="ranking.html">Ranking</a>
+                <a href="booking.html">Book a flight</a>
+                <a href="join.html">Register</a>
+                <a href="index.html#operations">Operations</a>
+                <a href="index.html#faq">FAQ</a>
 
             </div>
 
         </div>
 
-
-        <!-- FOOTER NAVIGATION -->
-
-        <div class="foot-links">
-
-            <a href="index.html">Home</a>
-
-            <a href="about.html">About</a>
-
-            <a href="index.html#fleet">Fleet</a>
-
-            <a href="routes.html">Routes</a>
-
-            <a href="team.html">Team</a>
-
-            <a href="index.html#news">News</a>
-
-            <a href="join.html">Join Us</a>
-
-            <a href="manual.html">Pilot Manual</a>
-
-            <a href="contact.html">Contact Us</a>
-
-            <a href="ranking.html">Ranking</a>
-
-            <a href="booking.html">Book a flight</a>
-
-            <a href="join.html">Register</a>
-
+        <div class="copy">
+            <span>© 2026 Echo Air Group. Virtual airline.</span>
+            <span>Not affiliated with any real-world airline.</span>
         </div>
 
     </div>
-
-
-    <!-- COPYRIGHT -->
-
-    <div class="copy">
-
-        <span>
-            © 2026 Echo Air Group. Virtual airline.
-        </span>
-
-        <span>
-            Not affiliated with any real-world airline.
-        </span>
-
-    </div>
-
-</div>
-```
 
 </footer>
 
@@ -1518,6 +1439,8 @@ function toggleMenu() {
 }
 
 </script>
+
+    <script src="site-shell.js"></script>
 
 </body>
 </html>
