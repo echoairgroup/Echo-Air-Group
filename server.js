@@ -4814,7 +4814,8 @@ function normalizeSiteItem(body = {}) {
         title,
         description,
         category,
-        targetPage,
+        // News items always belong in the homepage News section, not the generic content block.
+        targetPage: category === "news" ? "index.html" : targetPage,
         linkUrl: normalizeSiteUrl(body.linkUrl || body.link_url, "Link URL", true),
         imageBuffer: image ? image.buffer : null,
         imageMime: image ? image.mime : null,
