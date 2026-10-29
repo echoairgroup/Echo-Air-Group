@@ -449,6 +449,24 @@ footer p {
 
 }
 
+
+.application-honeypot {
+    position: absolute !important;
+    left: -10000px !important;
+    top: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+}
+.application-submit-status {
+    margin: 12px 0 0;
+    color: #687267;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.application-submit-status:empty { display: none; }
+button[type="submit"]:disabled { opacity: .65; cursor: wait; }
+
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
@@ -589,10 +607,16 @@ Think you have what it takes to help lead Echo Air Group? Tell us about yourself
 
 
 <form
+id="managerApplicationForm"
 class="form-card"
+data-application-type="manager"
 action="https://formsubmit.co/echoairgrouptiktok@gmail.com"
 method="POST"
 >
+<div class="application-honeypot" aria-hidden="true">
+<label for="managerWebsite">Leave this field empty</label>
+<input id="managerWebsite" name="website" tabindex="-1" autocomplete="off">
+</div>
 
 
 <!-- FORMSUBMIT -->
@@ -1317,6 +1341,7 @@ type="submit"
 Submit Manager Application ✈
 
 </button>
+<p class="application-submit-status" data-application-status role="status" aria-live="polite"></p>
 
 </div>
 
@@ -1486,6 +1511,7 @@ function toggleMenu() {
     <script src="site-shell.js"></script>
 
     <script src="site-content.js"></script>
+<script src="application-submission.js"></script>
 
 </body>
 </html>
