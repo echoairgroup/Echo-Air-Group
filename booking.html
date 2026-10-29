@@ -1863,6 +1863,20 @@ footer {
 
 }
 
+
+/* Keep the reservation title safely below the navigation bar */
+.hero {
+    min-height: 360px;
+    align-items: flex-start;
+}
+.hero-inner {
+    padding: 100px 24px 65px;
+}
+@media (max-width: 700px) {
+    .hero { min-height: 0; }
+    .hero-inner { padding: 82px 18px 58px; }
+}
+
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
