@@ -1,0 +1,49 @@
+name: Backend health check
+
+on:
+  schedule:
+    # Avoid the top of the hour, when GitHub scheduled runs are busier.
+    - cron: "4,14,24,34,44,54 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: echo-air-group-backend-health-check
+  cancel-in-progress: false
+
+jobs:
+  health-check:
+    name: Check Render API and keep it responsive
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Request backend health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://echo-air-group-api.onrender.com/api/health"
+
+          for attempt in 1 2 3; do
+            echo "Health-check attempt ${attempt} at $(date -u +%FT%TZ)"
+            http_code="000"
+
+            if http_code="$(curl --silent --show-error --max-time 120 \
+              --output /tmp/eag-health.json --write-out '%{http_code}' "$url")"; then
+              if [ "$http_code" = "200" ] && grep -Eq '"status"[[:space:]]*:[[:space:]]*"ok"' /tmp/eag-health.json; then
+                echo "Echo Air Group API health check passed."
+                cat /tmp/eag-health.json
+                exit 0
+              fi
+            fi
+
+            echo "Attempt ${attempt} failed (HTTP ${http_code})."
+            if [ -f /tmp/eag-health.json ]; then
+              cat /tmp/eag-health.json || true
+            fi
+            if [ "$attempt" -lt 3 ]; then sleep 10; fi
+          done
+
+          echo "::error::The Render API did not return a healthy response after three attempts."
+          exit 1
