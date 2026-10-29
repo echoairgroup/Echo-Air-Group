@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#090d08">
+    <meta name="description" content="Private website content management for Echo Air Group.">
+    <title>Website Admin — Echo Air Group</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="site-shell.css">
+    <link rel="stylesheet" href="admin-panel.css">
+</head>
+<body>
+<header id="siteHeader">
+    <div class="container nav">
+
+        <a class="brand" href="index.html" aria-label="Echo Air Group home">
+            <img
+                class="brand-logo"
+                src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768"
+                alt="Echo Air Group Logo"
+            >
+            <div class="brand-text">
+                ECHO AIR GROUP
+                <small>6L · ECV · CLOVER</small>
+            </div>
+        </a>
+
+        <nav class="navlinks" aria-label="Primary navigation">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="fleet.html">Fleet</a>
+            <a href="routes.html">Routes</a>
+            <a href="team.html">Team</a>
+            <a href="index.html#news">News</a>
+            <a href="join.html">Join Us</a>
+            <a href="manual.html">Pilot Manual</a>
+            <a href="contact.html">Contact Us</a>
+            <a href="ranking.html">Ranking</a>
+            <a href="booking.html">Book a flight</a>
+        </nav>
+
+        <a class="register" href="join.html">REGISTER</a>
+
+        <button
+            class="menu"
+            id="menuButton"
+            onclick="toggleMenu()"
+            type="button"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="mobileNav"
+        >☰</button>
+
+    </div>
+
+    <div id="mobileNav" class="mobileNav">
+        <div class="container">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="fleet.html">Fleet</a>
+            <a href="routes.html">Routes</a>
+            <a href="team.html">Team</a>
+            <a href="index.html#news">News</a>
+            <a href="join.html">Join Us</a>
+            <a href="manual.html">Pilot Manual</a>
+            <a href="contact.html">Contact Us</a>
+            <a href="ranking.html">Ranking</a>
+            <a href="booking.html">Book a flight</a>
+            <a href="join.html">Register</a>
+        </div>
+    </div>
+</header>
+
+<main class="admin-main">
+    <div class="admin-container">
+        <div class="admin-heading">
+            <div>
+                <span class="admin-eyebrow">Private management area</span>
+                <h1>Website admin</h1>
+                <p>Manage the content visitors see across Echo Air Group, upload pictures, and update your Discord invite without editing the HTML by hand.</p>
+            </div>
+            <a class="admin-button secondary" href="index.html">← Back to website</a>
+        </div>
+
+        <section id="adminLogin" class="admin-panel admin-login-wrap">
+            <h2>Sign in to continue</h2>
+            <p class="admin-muted">Use your existing Echo Air Group website account. Only account names explicitly allowed in the backend configuration can make changes.</p>
+            <form id="loginForm" class="admin-form">
+                <div class="admin-field">
+                    <label for="loginUsername">Username</label>
+                    <input id="loginUsername" name="username" autocomplete="username" required>
+                </div>
+                <div class="admin-field">
+                    <label for="loginPassword">Password</label>
+                    <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <div id="loginStatus" class="admin-status" role="status" aria-live="polite"></div>
+                <button id="loginButton" class="admin-button primary" type="submit">Sign in securely</button>
+            </form>
+            <p class="admin-help" style="margin-top:16px">The admin access allowlist must be configured in the API environment as <code>ADMIN_USERNAMES</code>. This prevents ordinary pilot accounts from publishing or deleting content.</p>
+        </section>
+
+        <section id="adminDashboard" class="admin-dashboard" hidden>
+            <div class="admin-panel admin-topbar">
+                <div>
+                    <div class="admin-user">Signed in as <strong id="adminUsername">Admin</strong></div>
+                    <p class="admin-muted" style="margin:5px 0 0">Your changes are saved in the website database.</p>
+                </div>
+                <button id="logoutButton" class="admin-button secondary" type="button">Sign out</button>
+            </div>
+
+            <div class="admin-stats" aria-label="Website content totals">
+                <div class="admin-stat"><span>Total items</span><strong id="statTotal">0</strong></div>
+                <div class="admin-stat"><span>Published</span><strong id="statPublished">0</strong></div>
+                <div class="admin-stat"><span>Drafts</span><strong id="statDrafts">0</strong></div>
+            </div>
+
+            <nav class="admin-tabs" aria-label="Admin sections">
+                <button class="admin-tab active" type="button" data-admin-tab="overview">Overview</button>
+                <button class="admin-tab" type="button" data-admin-tab="add">Add item</button>
+                <button class="admin-tab" type="button" data-admin-tab="manage">Manage items</button>
+                <button class="admin-tab" type="button" data-admin-tab="settings">Discord settings</button>
+                <button class="admin-tab" type="button" data-admin-tab="import">Import JSON</button>
+            </nav>
+
+            <section class="admin-view" data-admin-view="overview">
+                <div class="admin-view-header">
+                    <div>
+                        <h2>Welcome to your content desk</h2>
+                        <p>Add news, announcements, aircraft highlights, routes, team posts and more. Published items appear automatically on the page you choose.</p>
+                    </div>
+                    <button id="newItemButton" class="admin-button primary" type="button">＋ Add an item</button>
+                </div>
+                <div class="admin-inline-note">
+                    Pictures uploaded here are stored with the content in the website database. You can save an item as a draft first, then publish it later. Changes may take a moment to show on pages already open in a visitor’s browser.
+                </div>
+                <div class="admin-actions" style="margin-top:22px">
+                    <button class="admin-button secondary" type="button" data-admin-tab="manage">Browse existing items</button>
+                    <button class="admin-button secondary" type="button" data-admin-tab="settings">Update Discord invite</button>
+                </div>
+            </section>
+
+            <section class="admin-view" data-admin-view="add" hidden>
+                <div class="admin-view-header">
+                    <div>
+                        <h2 id="itemFormTitle">Add a website item</h2>
+                        <p>Choose a page, add the text and optional picture, then publish or save as a draft.</p>
+                    </div>
+                </div>
+                <form id="itemForm" class="admin-form">
+                    <div class="admin-fields">
+                        <div class="admin-field">
+                            <label for="itemTitle">Title *</label>
+                            <input id="itemTitle" name="title" maxlength="120" required placeholder="e.g. New aircraft added to the fleet">
+                        </div>
+                        <div class="admin-field">
+                            <label for="itemCategory">Category</label>
+                            <select id="itemCategory" name="category">
+                                <option value="announcement">Announcement</option>
+                                <option value="news">News</option>
+                                <option value="aircraft">Aircraft</option>
+                                <option value="route">Route</option>
+                                <option value="team">Team</option>
+                                <option value="gallery">Gallery</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="admin-field">
+                            <label for="itemTargetPage">Display on</label>
+                            <select id="itemTargetPage" name="targetPage">
+                                <option value="all">All website pages</option>
+                                <option value="index.html">Home</option>
+                                <option value="about.html">About</option>
+                                <option value="fleet.html">Fleet</option>
+                                <option value="routes.html">Routes</option>
+                                <option value="team.html">Team</option>
+                                <option value="join.html">Join Us</option>
+                                <option value="manual.html">Pilot Manual</option>
+                                <option value="contact.html">Contact Us</option>
+                                <option value="booking.html">Book a flight</option>
+                                <option value="ranking.html">Ranking</option>
+                                <option value="pilot.html">Pilot ranking</option>
+                                <option value="manager.html">Manager application</option>
+                                <option value="server.html">Server</option>
+                                <option value="legal.html">Legal notice</option>
+                                <option value="privacy.html">Privacy policy</option>
+                            </select>
+                        </div>
+                        <div class="admin-field">
+                            <label for="itemLinkUrl">Optional link</label>
+                            <input id="itemLinkUrl" name="linkUrl" type="text" placeholder="https://example.com or routes.html">
+                        </div>
+                        <div class="admin-field full">
+                            <label for="itemDescription">Description</label>
+                            <textarea id="itemDescription" name="description" maxlength="2500" placeholder="Write the text you want visitors to see…"></textarea>
+                        </div>
+                        <div class="admin-field">
+                            <label for="itemImageFile">Upload picture</label>
+                            <input id="itemImageFile" name="image" type="file" accept="image/jpeg,image/png,image/webp">
+                            <span class="admin-help">JPG, PNG or WebP. Maximum 2 MB per picture.</span>
+                        </div>
+                        <div class="admin-field">
+                            <label for="itemImageUrl">Or use an image URL</label>
+                            <input id="itemImageUrl" name="imageUrl" type="url" placeholder="https://example.com/image.webp">
+                            <span class="admin-help">Leave blank when uploading a file.</span>
+                        </div>
+                        <div class="admin-field full">
+                            <img id="itemImagePreview" class="admin-preview" alt="Selected picture preview">
+                        </div>
+                    </div>
+                    <label class="admin-check" for="itemPublished">
+                        <input id="itemPublished" type="checkbox" checked>
+                        <span>Publish this item immediately. Untick to save it as a draft.</span>
+                    </label>
+                    <label class="admin-check" for="removeItemImage">
+                        <input id="removeItemImage" type="checkbox">
+                        <span>Remove the current picture when saving (only relevant when editing).</span>
+                    </label>
+                    <div id="itemStatus" class="admin-status" role="status" aria-live="polite"></div>
+                    <div class="admin-actions">
+                        <button id="itemSaveButton" class="admin-button primary" type="submit">Publish item</button>
+                        <button id="itemCancelButton" class="admin-button secondary" type="button">Cancel edit</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="admin-view" data-admin-view="manage" hidden>
+                <div class="admin-view-header">
+                    <div>
+                        <h2>Manage website items</h2>
+                        <p>Edit existing content, publish drafts, or remove items from the site.</p>
+                    </div>
+                    <button class="admin-button primary" type="button" data-admin-tab="add">＋ Add item</button>
+                </div>
+                <div id="manageStatus" class="admin-status" role="status" aria-live="polite"></div>
+                <div id="adminItemList" class="admin-item-list" style="margin-top:15px"></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="settings" hidden>
+                <div class="admin-view-header">
+                    <div>
+                        <h2>Discord invite</h2>
+                        <p>Change the invite in one place. The footer, social links and supported QR code on the website will use this address.</p>
+                    </div>
+                </div>
+                <form id="discordSettingsForm" class="admin-form">
+                    <div class="admin-field">
+                        <label for="discordInvite">Discord invite URL</label>
+                        <input id="discordInvite" name="discordInvite" type="url" required placeholder="https://discord.gg/your-invite">
+                        <span class="admin-help">Use an HTTPS invite from discord.gg or discord.com/invite.</span>
+                    </div>
+                    <div id="settingsStatus" class="admin-status" role="status" aria-live="polite"></div>
+                    <div class="admin-actions">
+                        <button id="saveSettingsButton" class="admin-button primary" type="submit">Save Discord invite</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="admin-view" data-admin-view="import" hidden>
+                <div class="admin-view-header">
+                    <div>
+                        <h2>Import items from JSON</h2>
+                        <p>Import up to 50 items at once. Use image URLs for bulk imports; upload local pictures from Add item.</p>
+                    </div>
+                </div>
+                <form id="importForm" class="admin-form">
+                    <div class="admin-field">
+                        <label for="importFile">JSON file</label>
+                        <input id="importFile" type="file" accept=".json,application/json" required>
+                    </div>
+                    <div class="admin-inline-note">The file can contain an array of items or an object with an <code>items</code> array. Each item can use <code>title</code>, <code>description</code>, <code>category</code>, <code>targetPage</code>, <code>linkUrl</code>, <code>imageUrl</code> and <code>published</code>.</div>
+                    <pre class="admin-json-sample">{
+  "items": [
+    {
+      "title": "New route announced",
+      "description": "We have added a new route to our network.",
+      "category": "route",
+      "targetPage": "routes.html",
+      "linkUrl": "routes.html",
+      "imageUrl": "https://example.com/route.webp",
+      "published": true
+    }
+  ]
+}</pre>
+                    <div id="importStatus" class="admin-status" role="status" aria-live="polite"></div>
+                    <div class="admin-actions">
+                        <button id="importButton" class="admin-button primary" type="submit">Import items</button>
+                    </div>
+                </form>
+            </section>
+        </section>
+    </div>
+</main>
+
+<footer>
+
+    <div class="container">
+
+        <div class="foot-top">
+
+            <div>
+
+                <a class="brand" href="index.html">
+
+                    <img
+                        class="brand-logo"
+                        src="https://media.discordapp.net/attachments/1535409438683439314/1535737684818006096/Full_Logo_White_1.png?ex=6a78daac&is=6a77892c&hm=101b0167be79e5d76583ad0d1ed08fb313fc8bef82d875871fa81643e0f811fc&=&format=webp&quality=lossless&width=768&height=768"
+                        alt="Echo Air Group Logo"
+                    >
+
+                    <div class="brand-text">
+                        ECHO AIR GROUP
+                        <small>6L · ECV · CLOVER</small>
+                    </div>
+
+                </a>
+
+                <p style="max-width:450px">
+                    Virtual aviation. Real passion.
+                    A community built for pilots who love
+                    the world of flight simulation.
+                </p>
+
+                <div class="footer-social">
+
+                    <a
+                        href="https://discord.gg/e7ePxYA24"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Discord"
+                    >
+                        <img
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL3851zWBAakGfTIxIoavLpD9xempKolcjVkbw-HmqvrpX_orWo4J7FMgr84kloUD2WyNy33gU7V6uQoLq3_g3esyH0N_u-oEsU5-w8CCR&s=10"
+                            alt="Discord"
+                        >
+                    </a>
+
+                    <a
+                        href="https://www.tiktok.com/@echoairgroup"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="TikTok"
+                    >
+                        <img
+                            src="https://sf-static.tiktokcdn.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png"
+                            alt="TikTok"
+                        >
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="foot-links">
+
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="fleet.html">Fleet</a>
+                <a href="routes.html">Routes</a>
+                <a href="team.html">Team</a>
+                <a href="index.html#news">News</a>
+                <a href="join.html">Join Us</a>
+                <a href="manual.html">Pilot Manual</a>
+                <a href="contact.html">Contact Us</a>
+                <a href="ranking.html">Ranking</a>
+                <a href="booking.html">Book a flight</a>
+                <a href="join.html">Register</a>
+                <a href="index.html#operations">Operations</a>
+                <a href="index.html#faq">FAQ</a>
+
+            </div>
+
+        </div>
+
+        <div class="copy">
+            <span>© 2026 Echo Air Group. Virtual airline.</span>
+            <span>Not affiliated with any real-world airline.</span>
+        </div>
+
+    </div>
+
+</footer>
+
+<script src="site-shell.js"></script>
+<script src="site-content.js"></script>
+<script src="admin-panel.js"></script>
+</body>
+</html>
