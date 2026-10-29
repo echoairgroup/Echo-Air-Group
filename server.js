@@ -3373,6 +3373,10 @@ async function getAllNewSkyFlights() {
     let rangeNumber =
         0;
 
+    // Count requests, not returned flights: empty date windows still consume
+    // NewSky rate-limit budget and must not cause rapid-fire follow-up calls.
+    let requestCount = 0;
+
     if (
         rangeStart >
         today
@@ -3448,19 +3452,13 @@ async function getAllNewSkyFlights() {
             page++;
 
             /*
-             * Respect the NewSky rate limit between requests.
-             *
-             * We intentionally wait before every request after
-             * the first request of the entire sync.
+             * Respect the NewSky rate limit between every request in the
+             * whole sync, including ranges that return zero flights.
              */
-            if (
-                allFlights.length > 0
-            ) {
-
-                await sleep(
-                    NEWSKY_RATE_LIMIT_DELAY
-                );
+            if (requestCount > 0) {
+                await sleep(NEWSKY_RATE_LIMIT_DELAY);
             }
+            requestCount++;
 
             console.log(
                 `Fetching page ${page} | skip=${skip} | count=${NEWSKY_PAGE_SIZE}`
