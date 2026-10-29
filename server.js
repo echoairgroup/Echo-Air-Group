@@ -232,6 +232,27 @@ async function initializeDatabase() {
         "UPDATE site_items SET target_page = 'index.html', updated_at = CURRENT_TIMESTAMP WHERE LOWER(category) = 'news' AND target_page <> 'index.html'"
     );
 
+    // APPLICATION MANAGEMENT: captures new pilot and manager applications
+    // while the public forms continue to submit to FormSubmit for email delivery.
+    await query(`
+        CREATE TABLE IF NOT EXISTS applications (
+            id BIGSERIAL PRIMARY KEY,
+            application_type TEXT NOT NULL CHECK (application_type IN ('pilot', 'manager')),
+            full_name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            discord_username TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'new'
+                CHECK (status IN ('new', 'reviewing', 'shortlisted', 'accepted', 'rejected')),
+            answers JSONB NOT NULL DEFAULT '{}'::jsonb,
+            admin_notes TEXT NOT NULL DEFAULT '',
+            submitted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    await query("CREATE INDEX IF NOT EXISTS applications_submitted_at_idx ON applications (submitted_at DESC)");
+    await query("CREATE INDEX IF NOT EXISTS applications_status_idx ON applications (status, application_type)");
+
+
     console.log(
         "PostgreSQL / Neon database ready."
     );
@@ -5073,6 +5094,186 @@ app.delete("/api/admin/site/items/:id", authenticateAdmin, async (req, res) => {
     }
 });
 
+
+// ============================================================
+// APPLICATIONS (FormSubmit email + private admin tracker)
+// ============================================================
+
+const applicationSubmissionAttempts = new Map();
+const APPLICATION_STATUSES = new Set([
+    "new", "reviewing", "shortlisted", "accepted", "rejected"
+]);
+
+function normalizeApplicationAnswers(input) {
+    if (!input || typeof input !== "object" || Array.isArray(input)) {
+        throw siteInputError("Application answers are missing.");
+    }
+
+    const entries = Object.entries(input);
+    if (!entries.length || entries.length > 50) {
+        throw siteInputError("The application contains an invalid number of fields.");
+    }
+
+    const answers = {};
+    let totalChars = 0;
+
+    for (const [rawKey, rawValue] of entries) {
+        const key = String(rawKey || "").trim().slice(0, 120);
+        if (!key || key.startsWith("_") || key.toLowerCase() === "website") continue;
+        if (rawValue === null || rawValue === undefined) continue;
+        if (typeof rawValue !== "string" && typeof rawValue !== "number" && typeof rawValue !== "boolean") {
+            continue;
+        }
+
+        const value = String(rawValue).replace(/\u0000/g, "").trim().slice(0, 4000);
+        totalChars += key.length + value.length;
+        if (totalChars > 40000) throw siteInputError("The application is too large. Shorten the answers and try again.");
+        answers[key] = value;
+    }
+
+    return answers;
+}
+
+function getApplicationAnswer(answers, matcher) {
+    const entry = Object.entries(answers).find(([key, value]) =>
+        matcher(key.toLowerCase()) && String(value || "").trim()
+    );
+    return entry ? String(entry[1]).trim() : "";
+}
+
+app.post("/api/applications", async (req, res) => {
+    try {
+        // Silent honeypot response for simple automated spam.
+        if (String(req.body && req.body.website || "").trim()) {
+            return res.status(202).json({ received: true });
+        }
+
+        const now = Date.now();
+        const key = String(req.ip || req.socket?.remoteAddress || "unknown");
+        const windowMs = 30 * 60 * 1000;
+        const attempts = (applicationSubmissionAttempts.get(key) || []).filter(time => now - time < windowMs);
+        if (attempts.length >= 5) {
+            return res.status(429).json({
+                error: "Too many applications were submitted from this connection. Please try again later."
+            });
+        }
+        attempts.push(now);
+        applicationSubmissionAttempts.set(key, attempts);
+        if (applicationSubmissionAttempts.size > 1500) {
+            for (const [ip, times] of applicationSubmissionAttempts) {
+                if (!times.length || now - times[times.length - 1] >= windowMs) applicationSubmissionAttempts.delete(ip);
+            }
+        }
+
+        const applicationType = String(req.body && req.body.applicationType || "").trim().toLowerCase();
+        if (!["pilot", "manager"].includes(applicationType)) {
+            throw siteInputError("Choose a valid application type.");
+        }
+
+        const answers = normalizeApplicationAnswers(req.body && req.body.answers);
+        const firstName = getApplicationAnswer(answers, key => key === "first name");
+        const lastName = getApplicationAnswer(answers, key => key === "last name");
+        const fullName = [firstName, lastName].filter(Boolean).join(" ").slice(0, 240);
+        const email = getApplicationAnswer(answers, key => key === "email" || key.includes("email"));
+        const discordUsername = getApplicationAnswer(answers, key => key.includes("discord"));
+
+        if (!fullName || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            throw siteInputError("Please provide a first name, last name and valid email address.");
+        }
+
+        const result = await query(
+            "INSERT INTO applications (application_type, full_name, email, discord_username, answers) " +
+            "VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING id, submitted_at",
+            [applicationType, fullName, email.slice(0, 320), discordUsername.slice(0, 160), JSON.stringify(answers)]
+        );
+
+        return res.status(201).json({
+            received: true,
+            id: result.rows[0].id,
+            submittedAt: result.rows[0].submitted_at
+        });
+    } catch (error) {
+        console.error("Application intake error:", error.message);
+        return res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to save the application copy."
+        });
+    }
+});
+
+app.get("/api/admin/applications", authenticateAdmin, async (req, res) => {
+    try {
+        const result = await query(
+            "SELECT id, application_type, full_name, email, discord_username, status, answers, " +
+            "admin_notes, submitted_at, updated_at FROM applications ORDER BY submitted_at DESC, id DESC"
+        );
+        const stats = await query(
+            "SELECT COUNT(*)::INTEGER AS total, " +
+            "COUNT(*) FILTER (WHERE status = 'new')::INTEGER AS new, " +
+            "COUNT(*) FILTER (WHERE status IN ('reviewing', 'shortlisted'))::INTEGER AS in_progress, " +
+            "COUNT(*) FILTER (WHERE status = 'accepted')::INTEGER AS accepted, " +
+            "COUNT(*) FILTER (WHERE status = 'rejected')::INTEGER AS rejected " +
+            "FROM applications"
+        );
+        res.set("Cache-Control", "no-store");
+        return res.json({ applications: result.rows, stats: stats.rows[0] || {} });
+    } catch (error) {
+        console.error("Admin applications list error:", error);
+        return res.status(500).json({ error: "Unable to load applications." });
+    }
+});
+
+app.patch("/api/admin/applications/:id", authenticateAdmin, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        if (!Number.isSafeInteger(id) || id < 1) throw siteInputError("Invalid application ID.");
+
+        let status = null;
+        if (req.body && req.body.status !== undefined) {
+            status = String(req.body.status).trim().toLowerCase();
+            if (!APPLICATION_STATUSES.has(status)) throw siteInputError("Choose a valid application status.");
+        }
+
+        let adminNotes = null;
+        if (req.body && req.body.adminNotes !== undefined) {
+            adminNotes = String(req.body.adminNotes || "").replace(/\u0000/g, "").slice(0, 5000);
+        }
+
+        if (status === null && adminNotes === null) {
+            throw siteInputError("There are no application changes to save.");
+        }
+
+        const result = await query(
+            "UPDATE applications SET status = COALESCE($1, status), " +
+            "admin_notes = COALESCE($2, admin_notes), updated_at = CURRENT_TIMESTAMP " +
+            "WHERE id = $3 RETURNING id, application_type, full_name, email, discord_username, status, " +
+            "answers, admin_notes, submitted_at, updated_at",
+            [status, adminNotes, id]
+        );
+
+        if (!result.rows.length) return res.status(404).json({ error: "Application not found." });
+        return res.json({ application: result.rows[0] });
+    } catch (error) {
+        console.error("Admin application update error:", error);
+        return res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to update the application."
+        });
+    }
+});
+
+app.delete("/api/admin/applications/:id", authenticateAdmin, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        if (!Number.isSafeInteger(id) || id < 1) throw siteInputError("Invalid application ID.");
+        const result = await query("DELETE FROM applications WHERE id = $1 RETURNING id", [id]);
+        if (!result.rows.length) return res.status(404).json({ error: "Application not found." });
+        return res.json({ deleted: true, id: result.rows[0].id });
+    } catch (error) {
+        console.error("Admin application delete error:", error);
+        return res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to delete the application."
+        });
+    }
+});
 
 // ============================================================
 // 404
