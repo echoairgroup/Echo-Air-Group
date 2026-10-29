@@ -19,7 +19,7 @@ const app = express();
 // ============================================================
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "4mb" }));
 
 const PORT =
     process.env.PORT || 3000;
@@ -218,6 +218,15 @@ async function initializeDatabase() {
         ADD COLUMN IF NOT EXISTS synced_at TIMESTAMPTZ
         DEFAULT CURRENT_TIMESTAMP;
     `);
+
+
+    // WEBSITE CONTENT TABLES
+    await query("CREATE TABLE IF NOT EXISTS site_items (id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'announcement', target_page TEXT NOT NULL DEFAULT 'all', link_url TEXT, image_data BYTEA, image_mime TEXT, image_url TEXT, published BOOLEAN NOT NULL DEFAULT TRUE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    await query("CREATE TABLE IF NOT EXISTS site_settings (setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)");
+    await query(
+        "INSERT INTO site_settings (setting_key, setting_value) VALUES ('discord_invite', $1) ON CONFLICT (setting_key) DO NOTHING",
+        [process.env.DISCORD_INVITE_URL || "https://discord.gg/e7ePxYA24"]
+    );
 
     console.log(
         "PostgreSQL / Neon database ready."
@@ -1375,6 +1384,37 @@ async function authenticate(
         });
     }
 }
+
+
+
+// WEBSITE ADMIN ACCESS
+function authenticateAdmin(req, res, next) {
+    const allowedUsernames = String(process.env.ADMIN_USERNAMES || "")
+        .split(",")
+        .map(value => value.trim().toLowerCase())
+        .filter(Boolean);
+
+    if (!allowedUsernames.length) {
+        return res.status(503).json({
+            error: "Website admin access is not configured yet. Set ADMIN_USERNAMES in the backend environment to the permitted website username(s)."
+        });
+    }
+
+    return authenticate(req, res, () => {
+        const username = String(req.user && req.user.username || "")
+            .trim()
+            .toLowerCase();
+
+        if (!allowedUsernames.includes(username)) {
+            return res.status(403).json({
+                error: "This account is not authorized to manage website content."
+            });
+        }
+
+        return next();
+    });
+}
+
 
 // ============================================================
 // DISCORD BOT
@@ -4655,6 +4695,379 @@ app.get(
         }
     }
 );
+
+
+// ============================================================
+// WEBSITE CONTENT MANAGEMENT API
+// ============================================================
+
+const SITE_ITEM_CATEGORIES = new Set([
+    "news", "aircraft", "route", "team", "announcement", "gallery", "other"
+]);
+const SITE_ITEM_PAGES = new Set([
+    "all", "index.html", "about.html", "fleet.html", "routes.html",
+    "team.html", "join.html", "manual.html", "contact.html", "booking.html",
+    "ranking.html", "pilot.html", "manager.html", "server.html",
+    "legal.html", "privacy.html"
+]);
+const SITE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+
+function siteInputError(message) {
+    const error = new Error(message);
+    error.statusCode = 400;
+    return error;
+}
+
+function normalizeSiteUrl(value, fieldName, allowRelative = false) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+
+    if (
+        allowRelative &&
+        !/^[a-z][a-z0-9+.-]*:/i.test(raw) &&
+        !raw.startsWith("//")
+    ) return raw;
+
+    let parsed;
+    try {
+        parsed = new URL(raw);
+    } catch {
+        throw siteInputError(fieldName + " must be a valid URL.");
+    }
+
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+        throw siteInputError(fieldName + " must use HTTP or HTTPS.");
+    }
+
+    return parsed.toString();
+}
+
+function normalizeDiscordInvite(value) {
+    const raw = String(value || "").trim();
+    let parsed;
+    try {
+        parsed = new URL(raw);
+    } catch {
+        throw siteInputError("Enter a valid Discord invite URL.");
+    }
+
+    const host = parsed.hostname.toLowerCase();
+    const validHost = [
+        "discord.gg", "www.discord.gg", "discord.com", "www.discord.com"
+    ].includes(host);
+
+    if (parsed.protocol !== "https:" || !validHost) {
+        throw siteInputError("Use an HTTPS invite from discord.gg or discord.com/invite.");
+    }
+
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (!parts.length || (host.includes("discord.com") && parts[0] !== "invite")) {
+        throw siteInputError("The Discord invite URL appears incomplete.");
+    }
+
+    return parsed.toString();
+}
+
+function parseSiteImageDataUrl(value) {
+    if (!value) return null;
+
+    const match = String(value).match(
+        /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=\r\n]+)$/i
+    );
+
+    if (!match) {
+        throw siteInputError("Images must be uploaded as JPG, PNG, or WebP.");
+    }
+
+    const buffer = Buffer.from(match[2], "base64");
+    if (!buffer.length) throw siteInputError("The selected image is empty or invalid.");
+
+    if (buffer.length > SITE_IMAGE_MAX_BYTES) {
+        throw siteInputError("Images must be 2 MB or smaller. Resize the image and try again.");
+    }
+
+    return { buffer, mime: match[1].toLowerCase() };
+}
+
+function normalizeSiteItem(body = {}) {
+    const title = String(body.title || "").trim();
+    const description = String(body.description || "").trim();
+    const category = String(body.category || "announcement").trim().toLowerCase();
+    const targetPage = String(body.targetPage || body.target_page || "all").trim().toLowerCase();
+
+    if (!title || title.length > 120) {
+        throw siteInputError("Title is required and must be 120 characters or fewer.");
+    }
+    if (description.length > 2500) {
+        throw siteInputError("Description must be 2,500 characters or fewer.");
+    }
+    if (!SITE_ITEM_CATEGORIES.has(category)) throw siteInputError("Choose a valid item category.");
+    if (!SITE_ITEM_PAGES.has(targetPage)) throw siteInputError("Choose a valid website page.");
+
+    const image = parseSiteImageDataUrl(body.imageDataUrl);
+    const imageUrl = normalizeSiteUrl(body.imageUrl, "Image URL");
+    if (image && imageUrl) {
+        throw siteInputError("Choose an uploaded image or an image URL, not both.");
+    }
+
+    return {
+        title,
+        description,
+        category,
+        targetPage,
+        linkUrl: normalizeSiteUrl(body.linkUrl || body.link_url, "Link URL", true),
+        imageBuffer: image ? image.buffer : null,
+        imageMime: image ? image.mime : null,
+        imageUrl,
+        published: body.published === undefined
+            ? true
+            : (body.published === true || String(body.published).toLowerCase() === "true")
+    };
+}
+
+function siteItemSelectSql(whereClause = "") {
+    return "SELECT id, title, description, category, target_page, link_url, " +
+        "CASE WHEN image_url IS NOT NULL THEN image_url " +
+        "WHEN image_data IS NOT NULL THEN '/api/site/items/' || id::text || '/image' " +
+        "ELSE NULL END AS image_url, published, created_at, updated_at " +
+        "FROM site_items " + whereClause;
+}
+
+app.get("/api/site/settings", async (req, res) => {
+    try {
+        const result = await query(
+            "SELECT setting_value FROM site_settings WHERE setting_key = 'discord_invite'"
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({
+            discordInvite: result.rows[0] && result.rows[0].setting_value
+                ? result.rows[0].setting_value
+                : (process.env.DISCORD_INVITE_URL || "https://discord.gg/e7ePxYA24")
+        });
+    } catch (error) {
+        console.error("Public site settings error:", error);
+        res.status(500).json({ error: "Unable to load website settings." });
+    }
+});
+
+app.get("/api/site/items", async (req, res) => {
+    try {
+        const requestedPage = String(req.query.page || "index.html").trim().toLowerCase();
+        const page = SITE_ITEM_PAGES.has(requestedPage) ? requestedPage : "index.html";
+        const result = await query(
+            siteItemSelectSql(
+                "WHERE published = TRUE AND (target_page = $1 OR target_page = 'all') ORDER BY created_at DESC, id DESC"
+            ),
+            [page]
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({ items: result.rows });
+    } catch (error) {
+        console.error("Public site items error:", error);
+        res.status(500).json({ error: "Unable to load website items." });
+    }
+});
+
+app.get("/api/site/items/:id/image", async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        if (!Number.isInteger(id) || id < 1) return res.status(400).send("Invalid image ID.");
+
+        const result = await query(
+            "SELECT image_data, image_mime FROM site_items WHERE id = $1",
+            [id]
+        );
+        const item = result.rows[0];
+
+        if (!item || !item.image_data || !item.image_mime) {
+            return res.status(404).send("Image not found.");
+        }
+
+        res.set("Content-Type", item.image_mime);
+        res.set("X-Content-Type-Options", "nosniff");
+        res.set("Cache-Control", "public, max-age=86400");
+        return res.send(item.image_data);
+    } catch (error) {
+        console.error("Site item image error:", error);
+        return res.status(500).send("Unable to load image.");
+    }
+});
+
+app.get("/api/admin/site/session", authenticateAdmin, (req, res) => {
+    res.json({ authorized: true, username: req.user.username });
+});
+
+app.get("/api/admin/site/settings", authenticateAdmin, async (req, res) => {
+    try {
+        const result = await query(
+            "SELECT setting_value, updated_at FROM site_settings WHERE setting_key = 'discord_invite'"
+        );
+        res.json({
+            discordInvite: result.rows[0] && result.rows[0].setting_value
+                ? result.rows[0].setting_value
+                : (process.env.DISCORD_INVITE_URL || "https://discord.gg/e7ePxYA24"),
+            updatedAt: result.rows[0] ? result.rows[0].updated_at : null
+        });
+    } catch (error) {
+        console.error("Admin site settings error:", error);
+        res.status(500).json({ error: "Unable to load website settings." });
+    }
+});
+
+app.put("/api/admin/site/settings", authenticateAdmin, async (req, res) => {
+    try {
+        const invite = normalizeDiscordInvite(req.body.discordInvite);
+        const result = await query(
+            "INSERT INTO site_settings (setting_key, setting_value, updated_at) " +
+            "VALUES ('discord_invite', $1, CURRENT_TIMESTAMP) " +
+            "ON CONFLICT (setting_key) DO UPDATE SET " +
+            "setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP " +
+            "RETURNING setting_value, updated_at",
+            [invite]
+        );
+        res.json({
+            message: "Discord invite updated.",
+            discordInvite: result.rows[0].setting_value,
+            updatedAt: result.rows[0].updated_at
+        });
+    } catch (error) {
+        console.error("Update Discord invite error:", error);
+        res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to update the Discord invite."
+        });
+    }
+});
+
+app.get("/api/admin/site/items", authenticateAdmin, async (req, res) => {
+    try {
+        const result = await query(siteItemSelectSql("ORDER BY updated_at DESC, id DESC"));
+        const stats = await query(
+            "SELECT COUNT(*)::INTEGER AS total, " +
+            "COUNT(*) FILTER (WHERE published = TRUE)::INTEGER AS published, " +
+            "COUNT(*) FILTER (WHERE published = FALSE)::INTEGER AS drafts " +
+            "FROM site_items"
+        );
+        res.json({
+            items: result.rows,
+            stats: stats.rows[0] || { total: 0, published: 0, drafts: 0 }
+        });
+    } catch (error) {
+        console.error("Admin site items error:", error);
+        res.status(500).json({ error: "Unable to load website items." });
+    }
+});
+
+app.post("/api/admin/site/items", authenticateAdmin, async (req, res) => {
+    try {
+        const item = normalizeSiteItem(req.body);
+        const result = await query(
+            "INSERT INTO site_items (title, description, category, target_page, link_url, " +
+            "image_data, image_mime, image_url, published, created_by) " +
+            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+            [
+                item.title, item.description, item.category, item.targetPage, item.linkUrl,
+                item.imageBuffer, item.imageMime, item.imageUrl, item.published, req.user.id
+            ]
+        );
+        const created = await query(siteItemSelectSql("WHERE id = $1"), [result.rows[0].id]);
+        res.status(201).json({ message: "Website item created.", item: created.rows[0] });
+    } catch (error) {
+        console.error("Create site item error:", error);
+        res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to create website item."
+        });
+    }
+});
+
+app.post("/api/admin/site/items/import", authenticateAdmin, async (req, res) => {
+    try {
+        const sourceItems = req.body && req.body.items;
+        if (!Array.isArray(sourceItems) || sourceItems.length < 1 || sourceItems.length > 50) {
+            throw siteInputError("Import a JSON object with an items array containing 1 to 50 items.");
+        }
+
+        const items = sourceItems.map(item => {
+            if (item && item.imageDataUrl) {
+                throw siteInputError("Bulk JSON imports use imageUrl fields; upload local pictures through Add item.");
+            }
+            return normalizeSiteItem(item);
+        });
+
+        const insertedIds = [];
+        for (const item of items) {
+            const result = await query(
+                "INSERT INTO site_items (title, description, category, target_page, link_url, image_url, published, created_by) " +
+                "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+                [
+                    item.title, item.description, item.category, item.targetPage,
+                    item.linkUrl, item.imageUrl, item.published, req.user.id
+                ]
+            );
+            insertedIds.push(result.rows[0].id);
+        }
+
+        res.status(201).json({
+            message: "Imported " + insertedIds.length + " website item(s).",
+            ids: insertedIds
+        });
+    } catch (error) {
+        console.error("Import site items error:", error);
+        res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to import website items."
+        });
+    }
+});
+
+app.put("/api/admin/site/items/:id", authenticateAdmin, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        if (!Number.isInteger(id) || id < 1) throw siteInputError("Invalid item ID.");
+
+        const item = normalizeSiteItem(req.body);
+        const current = await query("SELECT id FROM site_items WHERE id = $1", [id]);
+        if (!current.rows.length) return res.status(404).json({ error: "Website item not found." });
+
+        const removeImage = req.body.removeImage === true;
+        const result = await query(
+            "UPDATE site_items SET " +
+            "title = $1, description = $2, category = $3, target_page = $4, link_url = $5, " +
+            "image_data = CASE WHEN $9 = TRUE THEN NULL WHEN $6::BYTEA IS NOT NULL THEN $6::BYTEA WHEN $8::TEXT IS NOT NULL THEN NULL ELSE image_data END, " +
+            "image_mime = CASE WHEN $9 = TRUE THEN NULL WHEN $7::TEXT IS NOT NULL THEN $7::TEXT WHEN $8::TEXT IS NOT NULL THEN NULL ELSE image_mime END, " +
+            "image_url = CASE WHEN $9 = TRUE THEN NULL WHEN $8::TEXT IS NOT NULL THEN $8::TEXT WHEN $6::BYTEA IS NOT NULL THEN NULL ELSE image_url END, " +
+            "published = $10, updated_at = CURRENT_TIMESTAMP WHERE id = $11 RETURNING id",
+            [
+                item.title, item.description, item.category, item.targetPage, item.linkUrl,
+                item.imageBuffer, item.imageMime, item.imageUrl, removeImage, item.published, id
+            ]
+        );
+
+        const updated = await query(siteItemSelectSql("WHERE id = $1"), [result.rows[0].id]);
+        res.json({ message: "Website item updated.", item: updated.rows[0] });
+    } catch (error) {
+        console.error("Update site item error:", error);
+        res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to update website item."
+        });
+    }
+});
+
+app.delete("/api/admin/site/items/:id", authenticateAdmin, async (req, res) => {
+    try {
+        const id = Number.parseInt(req.params.id, 10);
+        if (!Number.isInteger(id) || id < 1) throw siteInputError("Invalid item ID.");
+
+        const result = await query("DELETE FROM site_items WHERE id = $1 RETURNING id", [id]);
+        if (!result.rows.length) return res.status(404).json({ error: "Website item not found." });
+
+        res.json({ message: "Website item deleted.", id });
+    } catch (error) {
+        console.error("Delete site item error:", error);
+        res.status(error.statusCode || 500).json({
+            error: error.statusCode ? error.message : "Unable to delete website item."
+        });
+    }
+});
+
 
 // ============================================================
 // 404
