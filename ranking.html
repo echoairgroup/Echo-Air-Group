@@ -9,10 +9,10 @@
 <meta name="theme-color" content="#101410">
 <meta
     name="description"
-    content="Echo Air Group — pilot ranking and statistics."
+    content="Your Echo Air Group Pilot Dashboard: real NewSky flight statistics, rank progress, achievements and the pilot leaderboard."
 >
 
-<title>Ranking — Echo Air Group</title>
+<title>Pilot Dashboard — Echo Air Group</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1772,6 +1772,92 @@ footer p {
 
 }
 
+
+/* Pilot Dashboard visual refresh */
+.pagehero {
+    position: relative;
+    overflow: hidden;
+    padding: 170px 0 100px;
+    background:
+        radial-gradient(circle at 83% 24%, rgba(172,227,54,.19), transparent 23%),
+        linear-gradient(125deg, #080d08 0%, #151e12 58%, #0a1009 100%);
+    color: #fff;
+}
+.pagehero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .14;
+    background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, #000, transparent);
+}
+.pagehero .container { position: relative; z-index: 1; }
+.pagehero .pill { background: rgba(172,227,54,.12); border-color: rgba(172,227,54,.35); }
+.pagehero h1 { max-width: 900px; font-size: clamp(42px, 6vw, 74px); letter-spacing: -.055em; }
+.pagehero p { max-width: 720px; color: #c2cbbb; line-height: 1.8; }
+.ranking-wrap { padding-top: 48px; padding-bottom: 90px; }
+.ranking-layout { gap: 26px; align-items: start; }
+.rank-card, .ranking-wrap .panel, .pilot-sidebar {
+    border: 1px solid #e0e6dc;
+    border-radius: 20px;
+    box-shadow: 0 18px 48px rgba(16,26,12,.07);
+}
+.rank-card { padding: clamp(20px, 3vw, 34px); }
+.rank-card h2, .ranking-wrap .panel h3 { letter-spacing: -.035em; }
+.rank-number { border-radius: 12px; }
+.progress { height: 10px; border-radius: 999px; overflow: hidden; background: #e7eddf; }
+#progressBar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #8ebd25, #c9f36c); box-shadow: 0 0 18px rgba(172,227,54,.24); transition: width .55s ease; }
+.stat-grid { gap: 10px; }
+.stat-grid .stat { border: 1px solid #e5eadd; border-radius: 13px; background: #f9fbf6; padding: 15px; }
+.stat-grid .stat small { color: #788272; }
+.stat-grid .stat b { color: #26331d; font-size: clamp(15px, 1.6vw, 21px); overflow-wrap: anywhere; }
+.stat-note { margin-top: 15px; padding: 11px 13px; border-left: 3px solid #ace336; border-radius: 0 9px 9px 0; background: #f7faef; color: #66715d; font-size: 11px; line-height: 1.65; }
+.ranking-wrap .panel { overflow: hidden; padding: 24px; }
+.ranking-wrap .panel h3 { font-size: 23px; }
+.table-wrap { max-width: 100%; overflow: auto; border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th { background: #f5f8f0; color: #65705a; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+th, td { padding: 13px 12px; border-bottom: 1px solid #e9eee4; text-align: left; }
+tbody tr:hover { background: #fbfcf8; }
+td { font-size: 12px; white-space: nowrap; }
+.badge { display: inline-flex; padding: 5px 8px; border-radius: 999px; background: #eef6df; color: #53751d; font-size: 10px; font-weight: 900; }
+.pilot-sidebar { padding: 22px; background: #fff; }
+.pilot-sidebar-header { margin-bottom: 14px; }
+.pilot-sidebar-header h3 { margin: 0 0 6px; font-size: 20px; }
+.pilot-sidebar-header p { margin: 0; color: #75806d; font-size: 12px; line-height: 1.6; }
+.pilot-item { border-radius: 12px; }
+.pilot-item:hover { background: #f5f9ed; }
+.achievement-card { grid-column: 1 / -1; }
+.achievement-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:18px; }
+.achievement-heading h3 { margin: 0 0 5px; font-size:22px; letter-spacing:-.03em; }
+.achievement-heading p { margin:0; color:#77816f; font-size:12px; line-height:1.6; }
+.achievement-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.achievement-tile { display:flex; gap:11px; align-items:flex-start; min-width:0; padding:14px; border:1px solid #e1e7db; border-radius:13px; background:#f7f9f4; }
+.achievement-tile.unlocked { border-color:rgba(110,156,30,.42); background:linear-gradient(135deg,#f5fae9,#fff); }
+.achievement-icon { display:flex; align-items:center; justify-content:center; width:37px; height:37px; flex:0 0 auto; border-radius:11px; background:#e9efe0; font-size:19px; }
+.achievement-tile.unlocked .achievement-icon { background:#e4f4c8; }
+.achievement-tile h4 { margin:0 0 4px; color:#26321f; font-size:12px; }
+.achievement-tile p { margin:0; color:#788272; font-size:11px; line-height:1.55; }
+.achievement-state { display:inline-block; margin-top:7px; color:#86907f; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+.achievement-tile.unlocked .achievement-state { color:#5b8120; }
+#dashboard .ranking-hero { gap:18px; }
+#dashboard .rank-card { min-width:0; }
+#dashboard .actions { gap:9px; flex-wrap:wrap; }
+#dashboard .actions .btn { flex:0 1 auto; }
+#loggedOut .ranking-hero { gap:18px; }
+#loggedOut .rank-card { background:#fff; }
+@media (max-width: 1000px) {
+    .achievement-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 650px) {
+    .pagehero { padding:135px 0 65px; }
+    .ranking-wrap { padding-top:24px; }
+    .achievement-grid { grid-template-columns:1fr; }
+    .ranking-wrap .panel { padding:16px; }
+}
+
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
@@ -1860,17 +1946,16 @@ footer p {
 <div class="container">
 
     <span class="pill">
-        Echo Air Group Ranking
+        Pilot Dashboard
     </span>
 
     <h1>
-        Fly. Earn <span>Stars.</span>
+        Your flight career. <span>In one place.</span>
     </h1>
 
     <p>
-        Track your flights, real NewSky statistics,
-        rank progress and position on the Echo Air Group
-        leaderboard.
+        Follow your real flight history, see progress toward your next rank,
+        unlock achievements and compare your statistics with the Echo pilot community.
     </p>
 
 </div>
@@ -1904,18 +1989,17 @@ footer p {
 <div class="rank-card">
 
     <span class="eyebrow">
-        Pilot Ranking
+        Pilot Dashboard
     </span>
 
     <h2>
-        Build your Echo profile
+        Welcome to your flight deck
     </h2>
 
     <p class="muted">
 
-        Create an account or sign in to view your pilot
-        profile, link your NewSky account and synchronize
-        your flights.
+        Sign in to view your real flight data, synchronize NewSky flights,
+        track your career progress and connect your Discord account.
 
     </p>
 
@@ -1925,7 +2009,7 @@ footer p {
             class="btn btn-primary"
             href="#account"
         >
-            Create / Sign in
+            Open your dashboard
         </a>
 
     </div>
@@ -2171,6 +2255,16 @@ footer p {
 
         </div>
 
+        <div class="stat">
+            <small>Distance Flown</small>
+            <b id="totalDistance">—</b>
+        </div>
+
+        <div class="stat">
+            <small>Latest Flight</small>
+            <b id="lastFlightDate">—</b>
+        </div>
+
 
         <div class="stat">
 
@@ -2258,9 +2352,7 @@ footer p {
 
     <p class="muted">
 
-        Enter the
-        <strong>NewSky Pilot ID</strong>
-        exactly as it appears in your NewSky profile. go to https://newsky.app in your browser. Sign in and go to your profile. You can now see you Pilot ID in your search bar (something like: 664b4e4c13e9f913ec89a2e7), copy this and paste it into the website.
+        Enter the <strong>NewSky Pilot ID</strong> exactly as it appears in your NewSky profile. Sign in at <a href="https://newsky.app" target="_blank" rel="noopener noreferrer">NewSky</a>, open your profile and copy the ID from the profile URL.
 
     </p>
 
@@ -2313,12 +2405,27 @@ footer p {
         account. After linking, use
         <strong>Sync flights</strong>
         to retrieve your latest flights.
-        <strong>This may take mutliple minutes</strong>
+        <strong>The first full-history sync can take several minutes.</strong>
 
     </p>
 
 </div>
 
+<div class="rank-card achievement-card">
+    <div class="achievement-heading">
+        <div>
+            <span class="eyebrow">Career milestones</span>
+            <h3>Achievements</h3>
+            <p>Milestones unlock automatically from your saved flight statistics.</p>
+        </div>
+    </div>
+    <div id="achievementGrid" class="achievement-grid">
+        <div class="achievement-tile">
+            <div class="achievement-icon">✈</div>
+            <div><h4>Your milestones</h4><p>Sync your flight history to see earned achievements.</p></div>
+        </div>
+    </div>
+</div>
 
 </div>
 
@@ -2444,6 +2551,9 @@ footer p {
         Stars
     </th>
 
+    <th>Duration</th>
+    <th>Distance (km)</th>
+
 </tr>
 
 </thead>
@@ -2508,6 +2618,10 @@ footer p {
     <th>
         Flights
     </th>
+    <th>Hours</th>
+    <th>Distance (km)</th>
+    <th>Avg rating</th>
+    <th>Last flight</th>
 
 </tr>
 
@@ -2519,7 +2633,7 @@ footer p {
 <tr>
 
 <td
-    colspan="5"
+    colspan="9"
     class="muted"
 >
     Loading…
