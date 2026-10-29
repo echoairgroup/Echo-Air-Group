@@ -1863,6 +1863,7 @@ td { font-size: 12px; white-space: nowrap; }
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
+    <link rel="stylesheet" href="ranking-fixes.css">
 
 </head>
 
@@ -2304,7 +2305,7 @@ td { font-size: 12px; white-space: nowrap; }
             id="syncBtn"
             type="button"
         >
-            Sync flights
+            Sync now (optional)
         </button>
 
 
@@ -3986,6 +3987,46 @@ function getFlightDurationMinutes(
    CALCULATE REAL FLIGHT STATISTICS
    ============================================================ */
 
+function getFlightDistanceKm(flight) {
+    if (!flight || typeof flight !== 'object') return null;
+    const containers = [
+        flight, flight.statistics, flight.stats, flight.flightStats,
+        flight.flightDetails, flight.details, flight.report, flight.route, flight.flight
+    ].filter(value => value && typeof value === 'object');
+    const fields = [
+        { keys: ['distanceKm', 'distance_km', 'distanceInKm', 'routeDistanceKm', 'actualDistanceKm', 'flightDistanceKm'], factor: 1 },
+        { keys: ['distanceNm', 'distanceNmi', 'distanceNauticalMiles', 'nauticalMiles', 'routeDistanceNm'], factor: 1.852 },
+        { keys: ['distanceMiles', 'distanceMi', 'distanceInMiles'], factor: 1.609344 },
+        { keys: ['distance', 'routeDistance', 'distanceFlown', 'distanceTravelled', 'distanceTraveled'], factor: 1 }
+    ];
+    for (const group of fields) {
+        for (const container of containers) {
+            for (const key of group.keys) {
+                const raw = container[key];
+                let value = raw;
+                let factor = group.factor;
+                if (raw && typeof raw === 'object') {
+                    value = raw.value ?? raw.amount ?? raw.distance ?? raw.total ?? raw.km ?? raw.nm ?? raw.miles;
+                    const unit = String(raw.unit ?? raw.units ?? '').toLowerCase();
+                    if (/\b(?:nm|nmi|nautical)\b/.test(unit)) factor = 1.852;
+                    else if (/\b(?:mi|mile|miles)\b/.test(unit)) factor = 1.609344;
+                    else if (/\b(?:km|kilomet)\b/.test(unit)) factor = 1;
+                } else if (typeof raw === 'string') {
+                    const match = raw.trim().replace(/,/g, '').match(/^(\d+(?:\.\d+)?)\s*(km|kilomet(?:er|re)s?|nm|nmi|nautical miles?|mi|miles?)?$/i);
+                    if (!match) continue;
+                    value = Number(match[1]);
+                    const suffix = String(match[2] || '').toLowerCase();
+                    if (/\b(?:nm|nmi|nautical)/.test(suffix)) factor = 1.852;
+                    else if (/\b(?:mi|mile)/.test(suffix)) factor = 1.609344;
+                }
+                const numeric = Number(value);
+                if (Number.isFinite(numeric) && numeric > 0) return numeric * factor;
+            }
+        }
+    }
+    return null;
+}
+
 function calculateFlightStatistics(
     flights
 ) {
@@ -4147,16 +4188,8 @@ function calculateFlightStatistics(
 
         }
 
-        const rawDistance = getFlightValue(
-            flight,
-            'distance',
-            'distanceKm',
-            'distance_km',
-            'routeDistance',
-            'distanceFlown'
-        );
-        const flightDistance = Number(rawDistance);
-        if (rawDistance !== null && Number.isFinite(flightDistance) && flightDistance > 0) {
+        const flightDistance = getFlightDistanceKm(flight);
+        if (flightDistance !== null && Number.isFinite(flightDistance) && flightDistance > 0) {
             totalDistance += flightDistance;
             distanceCount++;
         }
@@ -4348,9 +4381,8 @@ function renderFlights(
                 const durationLabel = roundedMinutes === null
                     ? '—'
                     : (Math.floor(roundedMinutes / 60) + 'h ' + (roundedMinutes % 60) + 'm');
-                const rawDistance = getFlightValue(flight, 'distance', 'distanceKm', 'distance_km');
-                const numericDistance = Number(rawDistance);
-                const distanceLabel = rawDistance !== null && Number.isFinite(numericDistance)
+                const numericDistance = getFlightDistanceKm(flight);
+                const distanceLabel = numericDistance !== null && Number.isFinite(numericDistance) && numericDistance > 0
                     ? Math.round(numericDistance).toLocaleString('en-GB')
                     : '—';
 
@@ -4814,7 +4846,13 @@ function renderDashboard(
 
     const lastFlightElement = document.getElementById('lastFlightDate');
     if (lastFlightElement) {
-        const lastDatedFlight = flights.find(flight => getFlightValue(flight, 'depTime', 'dep_time', 'depTimeAct', 'departureTime', 'date', 'flightDate'));
+        const datedFlights = flights.filter(flight => getFlightValue(flight, 'depTime', 'dep_time', 'depTimeAct', 'departureTime', 'date', 'flightDate'));
+        datedFlights.sort((a, b) => {
+            const dateA = new Date(getFlightValue(a, 'depTime', 'dep_time', 'depTimeAct', 'departureTime', 'date', 'flightDate')).getTime();
+            const dateB = new Date(getFlightValue(b, 'depTime', 'dep_time', 'depTimeAct', 'departureTime', 'date', 'flightDate')).getTime();
+            return (Number.isFinite(dateB) ? dateB : 0) - (Number.isFinite(dateA) ? dateA : 0);
+        });
+        const lastDatedFlight = datedFlights[0] || null;
         lastFlightElement.textContent = lastDatedFlight ? getFlightDate(lastDatedFlight) : '—';
     }
 
@@ -5219,7 +5257,7 @@ async function loadLeaderboard() {
                     .toLowerCase();
 
 
-                const currentPilot =
+                let currentPilot =
 
                     rankings.find(
                         pilot => {
@@ -5295,6 +5333,14 @@ async function loadLeaderboard() {
                         }
                     );
 
+                if (!currentPilot && currentUsername) {
+                    currentPilot = rankings.find(pilot =>
+                        String(pilot.username || pilot.name || pilot.displayName || '').trim().toLowerCase() === currentUsername
+                    ) || null;
+                }
+                if (!currentPilot) {
+                    document.getElementById('leaderboardPosition').textContent = 'Unranked';
+                }
 
                 if(
                     currentPilot
@@ -5432,7 +5478,7 @@ async function loadLeaderboard() {
 
 
                             <td>${pilot.flightHours !== null && pilot.flightHours !== undefined && Number.isFinite(Number(pilot.flightHours)) ? Number(pilot.flightHours).toFixed(1) : '—'}</td>
-                            <td>${pilot.distance !== null && pilot.distance !== undefined && Number.isFinite(Number(pilot.distance)) ? Math.round(Number(pilot.distance)).toLocaleString('en-GB') : '—'}</td>
+                            <td>${pilot.distance !== null && pilot.distance !== undefined && Number.isFinite(Number(pilot.distance)) && Number(pilot.distance) > 0 ? Math.round(Number(pilot.distance)).toLocaleString('en-GB') : '—'}</td>
                             <td>${pilot.averageRating !== null && pilot.averageRating !== undefined && Number.isFinite(Number(pilot.averageRating)) ? Number(pilot.averageRating).toFixed(2) : '—'}</td>
                             <td>${pilot.lastFlight ? getFlightDate({ depTime: pilot.lastFlight }) : '—'}</td>
                         </tr>
