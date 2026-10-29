@@ -1,1064 +1,143 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<meta name="theme-color" content="#101410">
-
-<title>Pilot Ranking — Echo Air Group</title>
-
-<link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
->
-
-<link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
-    crossorigin
->
-
-<link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-    rel="stylesheet"
->
-
-<style>
-
-/* ============================================================
-   ROOT
-   ============================================================ */
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b1009">
+    <meta name="description" content="Pilot profile, flight history and career statistics for Echo Air Group pilots.">
+    <title>Pilot Profile — Echo Air Group</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="site-shell.css">
+    <style>
 
 :root {
-
-    --green:#ace336;
-    --green-dark:#6e9c1e;
-
-    --black:#090d08;
-    --dark:#101410;
-    --dark-2:#151b13;
-
-    --white:#fff;
-    --light:#f5f7f3;
-
-    --text:#273025;
-    --muted:#687267;
-
-    --line:#dfe5dc;
-
+  --pilot-green: #ace336;
+  --pilot-ink: #243020;
+  --pilot-muted: #75806d;
+  --pilot-line: #e2e8dc;
+  --pilot-surface: #fff;
+  --pilot-bg: #f5f8f2;
 }
-
-
-/* ============================================================
-   RESET
-   ============================================================ */
-
-* {
-
-    box-sizing:border-box;
-
+body { background: var(--pilot-bg); color: var(--pilot-ink); }
+.profile-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 160px 0 65px;
+  background:
+    radial-gradient(circle at 82% 20%, rgba(172,227,54,.18), transparent 23%),
+    linear-gradient(125deg, #080d08 0%, #151f12 55%, #0c120a 100%);
+  color: white;
 }
-
-
-body {
-
-    margin:0;
-
-    font-family:
-        Inter,
-        Arial,
-        sans-serif;
-
-    color:var(--text);
-
-    background:#f7f9f5;
-
+.profile-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .14;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, #000, transparent);
 }
-
-
-a {
-
-    color:inherit;
-
+.profile-hero .container { position: relative; z-index: 1; }
+.profile-kicker {
+  display: inline-flex;
+  padding: 8px 12px;
+  border: 1px solid rgba(172,227,54,.32);
+  border-radius: 999px;
+  background: rgba(172,227,54,.1);
+  color: #c6f17a;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .13em;
+  text-transform: uppercase;
 }
-
-
-/* ============================================================
-   CONTAINER
-   ============================================================ */
-
-.container {
-
-    width:
-        min(
-            1180px,
-            calc(100% - 50px)
-        );
-
-    margin:0 auto;
-
+.profile-hero h1 { margin: 19px 0 8px; color: #fff; font-size: clamp(38px, 6vw, 64px); letter-spacing: -.055em; line-height: 1.03; overflow-wrap: anywhere; }
+.profile-hero p { max-width: 700px; margin: 0; color: #c1cbbb; font-size: 14px; line-height: 1.8; }
+.profile-meta { display:flex; flex-wrap:wrap; gap:9px; margin-top:20px; }
+.profile-meta span { display:inline-flex; align-items:center; gap:7px; padding:8px 11px; border:1px solid rgba(255,255,255,.11); border-radius:10px; background:rgba(255,255,255,.05); color:#e1e8db; font-size:11px; font-weight:800; }
+.profile-meta strong { color:var(--pilot-green); }
+.profile-main { padding: 32px 0 85px; }
+.profile-layout { display:grid; grid-template-columns:minmax(0,1fr) 310px; align-items:start; gap:22px; }
+.profile-primary, .profile-sidebar { display:grid; gap:20px; min-width:0; }
+.profile-card { min-width:0; overflow:hidden; border:1px solid var(--pilot-line); border-radius:19px; background:var(--pilot-surface); box-shadow:0 14px 40px rgba(14,26,10,.055); }
+.profile-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:15px; padding:22px 24px 0; }
+.profile-card-header h2 { margin:0 0 6px; color:var(--pilot-ink); font-size:20px; letter-spacing:-.035em; }
+.profile-card-header p { margin:0; color:var(--pilot-muted); font-size:12px; line-height:1.65; }
+.profile-card-body { padding:20px 24px 24px; }
+.pilot-identity { display:flex; align-items:center; gap:16px; }
+.pilot-avatar-large { display:flex; flex:0 0 70px; width:70px; height:70px; align-items:center; justify-content:center; border:1px solid #d1e4b1; border-radius:20px; background:linear-gradient(145deg,#eef8dc,#dff0bd); color:#53791a; font-size:24px; font-weight:900; box-shadow:inset 0 1px 0 rgba(255,255,255,.8); }
+.pilot-identity-copy { min-width:0; }
+.pilot-identity-copy h2 { margin:0 0 6px; color:var(--pilot-ink); font-size:clamp(21px,2.8vw,30px); line-height:1.12; letter-spacing:-.04em; overflow-wrap:anywhere; }
+.pilot-identity-copy p { margin:0; color:var(--pilot-muted); font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
+.rank-pill { display:inline-flex; margin-top:9px; padding:6px 9px; border-radius:999px; background:#eff7e3; color:#577a20; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
+.profile-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.profile-stat { min-width:0; padding:14px; border:1px solid #e6ebe0; border-radius:13px; background:#f9fbf6; }
+.profile-stat span { display:block; margin-bottom:8px; color:#788372; font-size:10px; line-height:1.4; font-weight:900; letter-spacing:.055em; text-transform:uppercase; }
+.profile-stat strong { display:block; min-width:0; color:#2b3923; font-size:clamp(15px,1.7vw,21px); line-height:1.35; font-weight:900; overflow-wrap:anywhere; word-break:break-word; }
+.profile-stat small { display:block; margin-top:5px; color:#7a8572; font-size:10px; line-height:1.5; }
+.rank-progress { padding:17px 18px; border:1px solid #e4ebd9; border-radius:14px; background:linear-gradient(135deg,#f7fbee,#fff); }
+.rank-progress-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:11px; }
+.rank-progress-top strong { color:#334529; font-size:12px; }
+.rank-progress-top span { color:#718064; font-size:11px; text-align:right; }
+.rank-progress-track { height:9px; overflow:hidden; border-radius:999px; background:#e7eddf; }
+.rank-progress-fill { width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#82b51f,#c6ef68); transition:width .5s ease; }
+.rank-progress-note { margin:10px 0 0; color:#788372; font-size:10px; line-height:1.6; }
+.profile-sidebar-card { padding:21px; }
+.profile-sidebar-card h2 { margin:0 0 15px; color:var(--pilot-ink); font-size:17px; letter-spacing:-.025em; }
+.side-stat-list { display:grid; gap:0; }
+.side-stat-row { display:flex; align-items:baseline; justify-content:space-between; gap:15px; padding:11px 0; border-bottom:1px solid #edf0e9; }
+.side-stat-row:last-child { border-bottom:0; }
+.side-stat-row span { color:#75806d; font-size:11px; }
+.side-stat-row strong { color:#293722; font-size:12px; text-align:right; overflow-wrap:anywhere; }
+.profile-callout { padding:14px; border:1px solid #e5eadf; border-radius:12px; background:#f7f9f4; color:#6e7965; font-size:11px; line-height:1.7; }
+.profile-callout strong { color:#3a4d2d; }
+.profile-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:20px 22px 0; }
+.profile-toolbar h2 { margin:0 0 4px; color:var(--pilot-ink); font-size:20px; letter-spacing:-.035em; }
+.profile-toolbar p { margin:0; color:var(--pilot-muted); font-size:11px; }
+.flight-search { width:min(260px,100%); min-height:42px; padding:10px 12px; border:1px solid #dfe6d8; border-radius:10px; background:#fff; color:var(--pilot-ink); font:inherit; font-size:12px; }
+.flight-search:focus { outline:3px solid rgba(172,227,54,.27); border-color:#9abe4e; }
+.flight-table-wrap { margin-top:18px; overflow:auto; }
+.flight-table { width:100%; border-collapse:collapse; }
+.flight-table th { padding:12px 15px; border-top:1px solid #edf0e9; border-bottom:1px solid #e5eade; background:#f7f9f4; color:#73806b; text-align:left; white-space:nowrap; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+.flight-table td { padding:14px 15px; border-bottom:1px solid #edf0e9; color:#475342; white-space:nowrap; font-size:11px; }
+.flight-table tr:last-child td { border-bottom:0; }
+.flight-table tbody tr:hover { background:#fbfdf8; }
+.route-main { color:#263522; font-weight:900; }
+.route-sub { margin-top:4px; color:#8a9383; font-size:9px; }
+.rating-value { display:inline-flex; padding:5px 7px; border-radius:7px; background:#eff7e3; color:#55781b; font-weight:900; }
+.flight-stars { color:#546f20; font-weight:900; }
+.profile-empty { padding:30px 22px; color:#798372; font-size:12px; text-align:center; line-height:1.7; }
+.profile-error { padding:44px 25px; border:1px solid #eed9d4; border-radius:18px; background:#fff; color:#6f524b; text-align:center; line-height:1.8; }
+.profile-error h2 { margin:0 0 9px; color:#5b3029; }
+.profile-error a { color:#54791d; font-weight:900; }
+.profile-skeleton { padding:28px; color:#75806d; text-align:center; font-size:12px; }
+.profile-crumb { display:inline-flex; margin-bottom:14px; color:#c3d0bb; font-size:11px; font-weight:800; text-decoration:none; }
+.profile-crumb:hover { color:var(--pilot-green); }
+.profile-footer-note { padding:0 22px 18px; color:#879080; font-size:10px; line-height:1.6; }
+@media (max-width: 1050px) {
+  .profile-layout { grid-template-columns:minmax(0,1fr) 270px; }
+  .profile-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
-
-
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-header {
-
-    position:fixed;
-
-    top:0;
-    left:0;
-    right:0;
-
-    z-index:1000;
-
-    background:
-        rgba(9,13,8,.96);
-
-    border-bottom:
-        1px solid
-        rgba(255,255,255,.07);
-
+@media (max-width: 800px) {
+  .profile-hero { padding:135px 0 48px; }
+  .profile-main { padding:22px 0 60px; }
+  .profile-layout { grid-template-columns:1fr; }
+  .profile-sidebar { grid-row:auto; }
 }
-
-
-.nav {
-
-    min-height:100px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:space-between;
-
+@media (max-width: 540px) {
+  .container { width:calc(100% - 28px); }
+  .profile-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .profile-stat { padding:12px; }
+  .profile-card-header,.profile-card-body { padding-left:16px; padding-right:16px; }
+  .profile-toolbar { padding-left:16px; padding-right:16px; }
+  .pilot-avatar-large { flex-basis:56px; width:56px; height:56px; border-radius:16px; }
+  .flight-table th,.flight-table td { padding-left:11px; padding-right:11px; }
 }
-
-
-.brand {
-
-    display:flex;
-
-    align-items:center;
-
-    color:white;
-
-    text-decoration:none;
-
-}
-
-
-.brand-logo {
-
-    width:58px;
-    height:58px;
-
-    border-radius:12px;
-
-    object-fit:contain;
-
-}
-
-
-.brand-text {
-
-    margin-left:12px;
-
-    font-size:14px;
-
-    font-weight:900;
-
-    color:white;
-
-}
-
-
-.brand-text small {
-
-    display:block;
-
-    margin-top:4px;
-
-    color:var(--green);
-
-    font-size:9px;
-
-    letter-spacing:.1em;
-
-}
-
-
-.navlinks {
-
-    display:flex;
-
-    gap:20px;
-
-}
-
-
-.navlinks a {
-
-    color:
-        rgba(255,255,255,.9);
-
-    text-decoration:none;
-
-    font-size:13px;
-
-    font-weight:700;
-
-}
-
-
-.navlinks a:hover {
-
-    color:var(--green);
-
-}
-
-
-/* ============================================================
-   HERO
-   ============================================================ */
-
-.hero {
-
-    padding:
-        160px
-        0
-        70px;
-
-    background:
-
-        radial-gradient(
-            circle at 80% 20%,
-            rgba(172,227,54,.15),
-            transparent 30%
-        ),
-
-        linear-gradient(
-            135deg,
-            #10150f,
-            #172016,
-            #0d110c
-        );
-
-    color:white;
-
-}
-
-
-.hero h1 {
-
-    margin:0;
-
-    font-size:
-        clamp(
-            42px,
-            7vw,
-            72px
-        );
-
-    letter-spacing:-.055em;
-
-}
-
-
-.hero p {
-
-    max-width:650px;
-
-    margin:
-        18px
-        0
-        0;
-
-    color:#aeb7aa;
-
-    font-size:14px;
-
-    line-height:1.8;
-
-}
-
-
-/* ============================================================
-   MAIN
-   ============================================================ */
-
-main {
-
-    padding:
-        45px
-        0
-        90px;
-
-}
-
-
-/* ============================================================
-   LAYOUT
-   ============================================================ */
-
-.ranking-layout {
-
-    display:grid;
-
-    grid-template-columns:
-        1fr
-        330px;
-
-    gap:25px;
-
-}
-
-
-/* ============================================================
-   CARD
-   ============================================================ */
-
-.card {
-
-    background:white;
-
-    border:
-        1px solid
-        var(--line);
-
-    border-radius:20px;
-
-    padding:28px;
-
-    box-shadow:
-        0 12px 35px
-        rgba(0,0,0,.06);
-
-}
-
-
-/* ============================================================
-   RANKING HEADER
-   ============================================================ */
-
-.ranking-header {
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:space-between;
-
-    gap:20px;
-
-    margin-bottom:20px;
-
-}
-
-
-.ranking-header h2 {
-
-    margin:0;
-
-    font-size:22px;
-
-}
-
-
-.ranking-count {
-
-    padding:
-        7px
-        11px;
-
-    border-radius:999px;
-
-    background:#edf4e4;
-
-    color:#58751f;
-
-    font-size:11px;
-
-    font-weight:800;
-
-}
-
-
-/* ============================================================
-   RANKING LIST
-   ============================================================ */
-
-.ranking-list {
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:10px;
-
-}
-
-
-.ranking-item {
-
-    display:grid;
-
-    grid-template-columns:
-        45px
-        50px
-        1fr
-        auto;
-
-    align-items:center;
-
-    gap:15px;
-
-    padding:15px;
-
-    border:
-        1px solid
-        #e6ebe3;
-
-    border-radius:15px;
-
-    background:#fbfcfa;
-
-    text-decoration:none;
-
-    transition:
-        transform .18s ease,
-        border-color .18s ease,
-        box-shadow .18s ease,
-        background .18s ease;
-
-}
-
-
-.ranking-item:hover {
-
-    transform:
-        translateY(-2px);
-
-    border-color:
-        rgba(172,227,54,.7);
-
-    background:#ffffff;
-
-    box-shadow:
-        0 8px 22px
-        rgba(0,0,0,.07);
-
-}
-
-
-/* ============================================================
-   POSITION
-   ============================================================ */
-
-.ranking-position {
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    color:#7a8378;
-
-    font-size:13px;
-
-    font-weight:900;
-
-}
-
-
-.ranking-item:nth-child(1)
-.ranking-position {
-
-    color:#c49a25;
-
-}
-
-
-.ranking-item:nth-child(2)
-.ranking-position {
-
-    color:#8a9490;
-
-}
-
-
-.ranking-item:nth-child(3)
-.ranking-position {
-
-    color:#9c6c48;
-
-}
-
-
-/* ============================================================
-   AVATAR
-   ============================================================ */
-
-.ranking-avatar {
-
-    width:50px;
-    height:50px;
-
-    display:flex;
-
-    align-items:center;
-    justify-content:center;
-
-    border-radius:14px;
-
-    background:
-        rgba(172,227,54,.13);
-
-    border:
-        1px solid
-        rgba(172,227,54,.3);
-
-    color:
-        #6e941e;
-
-    font-size:17px;
-
-    font-weight:900;
-
-}
-
-
-/* ============================================================
-   PILOT INFO
-   ============================================================ */
-
-.ranking-info {
-
-    min-width:0;
-
-}
-
-
-.ranking-name {
-
-    display:block;
-
-    overflow:hidden;
-
-    color:var(--text);
-
-    font-size:14px;
-
-    font-weight:900;
-
-    text-overflow:ellipsis;
-
-    white-space:nowrap;
-
-}
-
-
-.ranking-rank {
-
-    display:inline-block;
-
-    margin-top:5px;
-
-    padding:
-        4px
-        8px;
-
-    border-radius:999px;
-
-    background:#edf4e4;
-
-    color:#607b28;
-
-    font-size:9px;
-
-    font-weight:800;
-
-}
-
-
-/* ============================================================
-   STARS
-   ============================================================ */
-
-.ranking-stars {
-
-    text-align:right;
-
-}
-
-
-.ranking-stars-value {
-
-    display:block;
-
-    color:var(--text);
-
-    font-size:18px;
-
-    font-weight:900;
-
-}
-
-
-.ranking-stars-label {
-
-    display:block;
-
-    margin-top:3px;
-
-    color:var(--muted);
-
-    font-size:9px;
-
-    font-weight:700;
-
-}
-
-
-/* ============================================================
-   SIDEBAR
-   ============================================================ */
-
-.sidebar {
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:20px;
-
-}
-
-
-.sidebar-card {
-
-    background:white;
-
-    border:
-        1px solid
-        var(--line);
-
-    border-radius:20px;
-
-    padding:22px;
-
-    box-shadow:
-        0 12px 35px
-        rgba(0,0,0,.06);
-
-}
-
-
-.sidebar-card h2 {
-
-    margin:
-        0
-        0
-        17px;
-
-    font-size:17px;
-
-}
-
-
-/* ============================================================
-   SIDEBAR PILOT LIST
-   ============================================================ */
-
-.pilot-list {
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:7px;
-
-}
-
-
-.pilot-item {
-
-    display:grid;
-
-    grid-template-columns:
-        25px
-        36px
-        1fr;
-
-    align-items:center;
-
-    gap:9px;
-
-    padding:9px;
-
-    border-radius:12px;
-
-    text-decoration:none;
-
-    transition:
-        background .15s ease;
-
-}
-
-
-.pilot-item:hover {
-
-    background:#f1f5ed;
-
-}
-
-
-.pilot-position {
-
-    text-align:center;
-
-    color:#7d857b;
-
-    font-size:10px;
-
-    font-weight:900;
-
-}
-
-
-.pilot-avatar {
-
-    width:36px;
-    height:36px;
-
-    display:flex;
-
-    align-items:center;
-    justify-content:center;
-
-    border-radius:10px;
-
-    background:#edf4e4;
-
-    color:#668421;
-
-    font-size:11px;
-
-    font-weight:900;
-
-}
-
-
-.pilot-info {
-
-    min-width:0;
-
-}
-
-
-.pilot-name {
-
-    display:block;
-
-    overflow:hidden;
-
-    color:var(--text);
-
-    font-size:11px;
-
-    font-weight:800;
-
-    text-overflow:ellipsis;
-
-    white-space:nowrap;
-
-}
-
-
-.pilot-rank {
-
-    display:block;
-
-    margin-top:2px;
-
-    overflow:hidden;
-
-    color:var(--muted);
-
-    font-size:9px;
-
-    text-overflow:ellipsis;
-
-    white-space:nowrap;
-
-}
-
-
-/* ============================================================
-   SIDEBAR STATES
-   ============================================================ */
-
-.pilot-sidebar-empty,
-.pilot-sidebar-error {
-
-    padding:15px;
-
-    border-radius:12px;
-
-    background:#f5f7f3;
-
-    color:var(--muted);
-
-    font-size:11px;
-
-    line-height:1.6;
-
-}
-
-
-/* ============================================================
-   RANK GUIDE
-   ============================================================ */
-
-.rank-guide {
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:8px;
-
-}
-
-
-.rank-guide-item {
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:space-between;
-
-    gap:15px;
-
-    padding:
-        10px
-        12px;
-
-    border-radius:10px;
-
-    background:#f5f7f3;
-
-}
-
-
-.rank-guide-name {
-
-    font-size:10px;
-
-    font-weight:800;
-
-}
-
-
-.rank-guide-stars {
-
-    color:var(--muted);
-
-    font-size:10px;
-
-    font-weight:700;
-
-}
-
-
-/* ============================================================
-   LOADING
-   ============================================================ */
-
-.loading {
-
-    padding:35px;
-
-    text-align:center;
-
-    color:var(--muted);
-
-    font-size:12px;
-
-}
-
-
-/* ============================================================
-   FOOTER
-   ============================================================ */
-
-footer {
-
-    padding:
-        50px
-        0
-        25px;
-
-    background:var(--black);
-
-    color:white;
-
-}
-
-
-footer p {
-
-    color:#8f988c;
-
-}
-
-
-.copy {
-
-    margin-top:35px;
-
-    padding-top:20px;
-
-    border-top:
-        1px solid
-        rgba(255,255,255,.08);
-
-    color:#687267;
-
-    font-size:10px;
-
-}
-
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
-@media(max-width:950px) {
-
-    .navlinks {
-
-        display:none;
-
-    }
-
-
-    .ranking-layout {
-
-        grid-template-columns:1fr;
-
-    }
-
-
-    .sidebar {
-
-        display:grid;
-
-        grid-template-columns:
-            1fr
-            1fr;
-
-    }
-
-}
-
-
-@media(max-width:600px) {
-
-    .container {
-
-        width:
-            calc(100% - 28px);
-
-    }
-
-
-    .hero {
-
-        padding:
-            140px
-            0
-            50px;
-
-    }
-
-
-    main {
-
-        padding:
-            30px
-            0
-            60px;
-
-    }
-
-
-    .sidebar {
-
-        display:flex;
-
-    }
-
-
-    .ranking-item {
-
-        grid-template-columns:
-            35px
-            42px
-            1fr
-            auto;
-
-        gap:10px;
-
-        padding:11px;
-
-    }
-
-
-    .ranking-avatar {
-
-        width:42px;
-        height:42px;
-
-    }
-
-
-    .ranking-stars-value {
-
-        font-size:15px;
-
-    }
-
-
-    .card {
-
-        padding:20px;
-
-    }
-
-}
-
-</style>
-
-    <link rel="stylesheet" href="site-shell.css">
-
+    </style>
 </head>
-
-
 <body>
-
-
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
-
 <header id="siteHeader">
     <div class="container nav">
 
@@ -1120,218 +199,118 @@ footer p {
     </div>
 </header>
 
-
-<!-- ============================================================
-     HERO
-     ============================================================ -->
-
-<section class="hero">
-
-<div class="container">
-
-<h1>
-Pilot Ranking
-</h1>
-
-<p>
-See how Echo Air Group pilots are performing.
-Earn Echo Stars through completed flights, climb the ranks,
-and compete with the rest of the fleet.
-</p>
-
-</div>
-
+<section class="profile-hero">
+    <div class="container">
+        <a class="profile-crumb" href="ranking.html">← Back to Pilot Dashboard</a>
+        <div class="profile-kicker">Echo Air Group · Pilot Profile</div>
+        <h1 id="heroPilotName">Pilot profile</h1>
+        <p id="heroPilotText">Flight history, real stored statistics and career progress.</p>
+        <div class="profile-meta">
+            <span>Leaderboard <strong id="heroPosition">—</strong></span>
+            <span>Rank <strong id="heroRank">—</strong></span>
+            <span>Flights <strong id="heroFlights">—</strong></span>
+        </div>
+    </div>
 </section>
 
-
-<!-- ============================================================
-     MAIN
-     ============================================================ -->
-
-<main>
-
-<div class="container">
-
-
-<div class="ranking-layout">
-
-
-<!-- ==========================================================
-     MAIN RANKING
-     ========================================================== -->
-
-<div class="card">
-
-
-<div class="ranking-header">
-
-<h2>
-Echo Pilot Ranking
-</h2>
-
-
-<span
-    class="ranking-count"
-    id="rankingCount"
->
-Loading...
-</span>
-
-</div>
-
-
-<div
-    class="ranking-list"
-    id="rankingList"
->
-
-<div class="loading">
-Loading pilot ranking...
-</div>
-
-</div>
-
-</div>
-
-
-<!-- ==========================================================
-     SIDEBAR
-     ========================================================== -->
-
-<aside class="sidebar">
-
-
-<!-- PILOT SIDEBAR -->
-
-<div class="sidebar-card">
-
-<h2>
-Pilots
-</h2>
-
-
-<div
-    class="pilot-list"
-    id="pilotList"
->
-
-<div class="loading">
-Loading pilots...
-</div>
-
-</div>
-
-</div>
-
-
-<!-- RANK GUIDE -->
-
-<div class="sidebar-card">
-
-<h2>
-Rank System
-</h2>
-
-
-<div class="rank-guide">
-
-
-<div class="rank-guide-item">
-
-<span class="rank-guide-name">
-Cadet
-</span>
-
-<span class="rank-guide-stars">
-0 ⭐
-</span>
-
-</div>
-
-
-<div class="rank-guide-item">
-
-<span class="rank-guide-name">
-First Officer
-</span>
-
-<span class="rank-guide-stars">
-1,000 ⭐
-</span>
-
-</div>
-
-
-<div class="rank-guide-item">
-
-<span class="rank-guide-name">
-Senior First Officer
-</span>
-
-<span class="rank-guide-stars">
-2,500 ⭐
-</span>
-
-</div>
-
-
-<div class="rank-guide-item">
-
-<span class="rank-guide-name">
-Captain
-</span>
-
-<span class="rank-guide-stars">
-5,000 ⭐
-</span>
-
-</div>
-
-
-<div class="rank-guide-item">
-
-<span class="rank-guide-name">
-Senior Captain
-</span>
-
-<span class="rank-guide-stars">
-7,500 ⭐
-</span>
-
-</div>
-
-
-<div class="rank-guide-item">
-
-<span class="rank-guide-name">
-Commander
-</span>
-
-<span class="rank-guide-stars">
-10,000 ⭐
-</span>
-
-</div>
-
-
-</div>
-
-</div>
-
-
-</aside>
-
-
-</div>
-
-</div>
-
+<main class="profile-main">
+    <div class="container">
+        <div id="profileLoading" class="profile-card profile-skeleton">Loading pilot profile and flight history…</div>
+        <div id="profileError" class="profile-error" hidden>
+            <h2>Pilot profile unavailable</h2>
+            <p id="profileErrorText">We could not load this pilot profile.</p>
+            <a href="ranking.html">Return to Pilot Dashboard</a>
+        </div>
+
+        <div id="profileContent" class="profile-layout" hidden>
+            <div class="profile-primary">
+                <section class="profile-card">
+                    <div class="profile-card-body">
+                        <div class="pilot-identity">
+                            <div id="pilotAvatar" class="pilot-avatar-large">P</div>
+                            <div class="pilot-identity-copy">
+                                <h2 id="pilotDisplayName">Pilot</h2>
+                                <p id="pilotMemberSince">Echo Air Group pilot</p>
+                                <span id="pilotRankPill" class="rank-pill">Cadet</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-card-header">
+                        <div>
+                            <h2>Career statistics</h2>
+                            <p>Calculated from the flights saved in Echo Air Group.</p>
+                        </div>
+                    </div>
+                    <div class="profile-card-body">
+                        <div class="profile-stats">
+                            <div class="profile-stat"><span>Total Echo Stars</span><strong id="statStars">—</strong><small>Used for rank progression</small></div>
+                            <div class="profile-stat"><span>Completed flights</span><strong id="statFlights">—</strong><small>Flights in the database</small></div>
+                            <div class="profile-stat"><span>Flight hours</span><strong id="statHours">—</strong><small>From recorded duration</small></div>
+                            <div class="profile-stat"><span>Distance flown</span><strong id="statDistance">—</strong><small>Only when distance data is available</small></div>
+                            <div class="profile-stat"><span>Average rating</span><strong id="statAvgRating">—</strong><small>Across rated flights</small></div>
+                            <div class="profile-stat"><span>Best rating</span><strong id="statBestRating">—</strong><small>Highest recorded rating</small></div>
+                            <div class="profile-stat"><span>Aircraft types</span><strong id="statAircraft">—</strong><small>Unique aircraft names</small></div>
+                            <div class="profile-stat"><span>Routes flown</span><strong id="statRoutes">—</strong><small>Unique airport pairs</small></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-card">
+                    <div class="profile-card-header">
+                        <div>
+                            <h2>Rank progression</h2>
+                            <p>Current standing based on the Echo Air Group star system.</p>
+                        </div>
+                        <span id="rankProgressPercent" class="rank-pill">—</span>
+                    </div>
+                    <div class="profile-card-body">
+                        <div class="rank-progress">
+                            <div class="rank-progress-top"><strong id="rankProgressTitle">Loading rank progress…</strong><span id="rankProgressValue">—</span></div>
+                            <div class="rank-progress-track"><div id="rankProgressFill" class="rank-progress-fill"></div></div>
+                            <p id="rankProgressNote" class="rank-progress-note">Your next rank will be shown when the profile loads.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-card">
+                    <div class="profile-toolbar">
+                        <div>
+                            <h2>Flight history</h2>
+                            <p id="flightHistoryCount">All recorded flights</p>
+                        </div>
+                        <input id="flightSearch" class="flight-search" type="search" placeholder="Search route or aircraft…" autocomplete="off" aria-label="Search flight history">
+                    </div>
+                    <div class="flight-table-wrap">
+                        <table class="flight-table">
+                            <thead><tr><th>Date</th><th>Route</th><th>Aircraft</th><th>Duration</th><th>Rating</th><th>Distance</th><th>Stars</th></tr></thead>
+                            <tbody id="pilotFlightRows"><tr><td colspan="7">Loading flights…</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div id="flightHistoryFooter" class="profile-footer-note">Times and metrics reflect the data currently stored by Echo Air Group.</div>
+                </section>
+            </div>
+
+            <aside class="profile-sidebar">
+                <section class="profile-card profile-sidebar-card">
+                    <h2>Pilot overview</h2>
+                    <div class="side-stat-list">
+                        <div class="side-stat-row"><span>Leaderboard position</span><strong id="sidePosition">—</strong></div>
+                        <div class="side-stat-row"><span>Current rank</span><strong id="sideRank">—</strong></div>
+                        <div class="side-stat-row"><span>Average stars / flight</span><strong id="sideAvgStars">—</strong></div>
+                        <div class="side-stat-row"><span>Latest flight</span><strong id="sideLatestFlight">—</strong></div>
+                        <div class="side-stat-row"><span>Member since</span><strong id="sideMemberSince">—</strong></div>
+                    </div>
+                </section>
+                <section class="profile-card profile-sidebar-card">
+                    <h2>Recent activity</h2>
+                    <div id="recentActivity" class="side-stat-list"><div class="profile-empty">Loading recent activity…</div></div>
+                </section>
+                <div class="profile-callout"><strong>About these numbers</strong><br>Statistics are calculated from the stored flight history. Missing distance or rating data is shown as unavailable rather than guessed.</div>
+                <a href="ranking.html" class="profile-card profile-sidebar-card" style="display:block;text-decoration:none;color:#54781d;font-size:12px;font-weight:900">← View all pilots and rankings</a>
+            </aside>
+        </div>
+    </div>
 </main>
-
-
-<!-- ============================================================
-     FOOTER
-     ============================================================ -->
 
 <footer>
 
@@ -1422,779 +401,8 @@ Commander
 
 </footer>
 
-
-<script>
-
-/* ============================================================
-   API
-   ============================================================ */
-
-const API =
-    (window.ECHO_API_URL || '').replace(/\/$/,'')
-    || 'https://echo-air-group-api.onrender.com/api';
-
-
-/* ============================================================
-   API REQUEST
-   ============================================================ */
-
-async function api(path) {
-
-    const response =
-        await fetch(
-            API + path
-        );
-
-
-    if(!response.ok) {
-
-        throw new Error(
-            `API request failed: ${response.status}`
-        );
-
-    }
-
-
-    return response.json();
-
-}
-
-
-/* ============================================================
-   NUMBER HELPER
-   ============================================================ */
-
-function number(value) {
-
-    const result =
-        Number(value);
-
-    return Number.isFinite(result)
-        ? result
-        : 0;
-
-}
-
-
-/* ============================================================
-   ESCAPE HTML
-   ============================================================ */
-
-function escapeHtml(value) {
-
-    return String(value)
-
-        .replace(
-            /&/g,
-            '&amp;'
-        )
-
-        .replace(
-            /</g,
-            '&lt;'
-        )
-
-        .replace(
-            />/g,
-            '&gt;'
-        )
-
-        .replace(
-            /"/g,
-            '&quot;'
-        )
-
-        .replace(
-            /'/g,
-            '&#039;'
-        );
-
-}
-
-
-/* ============================================================
-   INITIALS
-   ============================================================ */
-
-function initials(name) {
-
-    if(!name) {
-
-        return 'P';
-
-    }
-
-
-    return String(name)
-
-        .trim()
-
-        .split(/\s+/)
-
-        .filter(Boolean)
-
-        .slice(0,2)
-
-        .map(
-            word =>
-                word
-                    .charAt(0)
-                    .toUpperCase()
-        )
-
-        .join('') || 'P';
-
-}
-
-
-/* ============================================================
-   RANKS
-   IMPORTANT:
-   These values MUST match pilot.html
-   ============================================================ */
-
-const ranks = [
-
-    {
-        name:'Cadet',
-        stars:0
-    },
-
-    {
-        name:'First Officer',
-        stars:1000
-    },
-
-    {
-        name:'Senior First Officer',
-        stars:2500
-    },
-
-    {
-        name:'Captain',
-        stars:5000
-    },
-
-    {
-        name:'Senior Captain',
-        stars:7500
-    },
-
-    {
-        name:'Commander',
-        stars:10000
-    }
-
-];
-
-
-/* ============================================================
-   CALCULATE RANK
-   ============================================================ */
-
-function calculateRank(stars) {
-
-    stars =
-        number(stars);
-
-
-    let current =
-        ranks[0];
-
-    let next =
-        null;
-
-
-    for(const rank of ranks) {
-
-        if(stars >= rank.stars) {
-
-            current =
-                rank;
-
-        } else {
-
-            next =
-                rank;
-
-            break;
-
-        }
-
-    }
-
-
-    return {
-
-        current,
-        next
-
-    };
-
-}
-
-
-/* ============================================================
-   GET PILOT ID
-   ============================================================ */
-
-function getPilotId(pilot) {
-
-    /*
-     * Different API versions may use different
-     * names for the ID.
-     *
-     * We check them in order.
-     */
-
-    return (
-
-        pilot.id ??
-
-        pilot.userId ??
-
-        pilot.user_id ??
-
-        pilot.pilotId ??
-
-        pilot.pilot_id ??
-
-        pilot._id
-
-    );
-
-}
-
-
-/* ============================================================
-   GET PILOT NAME
-   ============================================================ */
-
-function getPilotName(pilot) {
-
-    return (
-
-        pilot.displayName ||
-
-        pilot.name ||
-
-        pilot.username ||
-
-        pilot.user?.displayName ||
-
-        pilot.user?.name ||
-
-        pilot.user?.username ||
-
-        'Pilot'
-
-    );
-
-}
-
-
-/* ============================================================
-   GET PILOT STARS
-   ============================================================ */
-
-function getPilotStars(pilot) {
-
-    /*
-     * Support both:
-     *
-     * pilot.stars
-     *
-     * pilot.stats.stars
-     */
-
-    return number(
-
-        pilot.stars ??
-
-        pilot.echoStars ??
-
-        pilot.stats?.stars ??
-
-        0
-
-    );
-
-}
-
-
-/* ============================================================
-   LOAD RANKING
-   ============================================================ */
-
-async function loadRanking() {
-
-    const rankingList =
-        document.getElementById(
-            'rankingList'
-        );
-
-
-    const pilotList =
-        document.getElementById(
-            'pilotList'
-        );
-
-
-    const rankingCount =
-        document.getElementById(
-            'rankingCount'
-        );
-
-
-    try {
-
-        const data =
-            await api('/ranking');
-
-
-        /*
-         * Your API returns:
-         *
-         * {
-         *     rankings: [...]
-         * }
-         */
-
-        let rankings =
-            data.rankings || [];
-
-
-        /*
-         * Make sure we always have an array.
-         */
-
-        if(!Array.isArray(rankings)) {
-
-            rankings = [];
-
-        }
-
-
-        /*
-         * Sort by Echo Stars.
-         *
-         * Highest amount of stars first.
-         *
-         * Decimal values are preserved.
-         */
-
-        rankings.sort(
-            (a,b) =>
-                getPilotStars(b) -
-                getPilotStars(a)
-        );
-
-
-        rankingCount.textContent =
-            `${rankings.length} pilot${
-                rankings.length === 1
-                    ? ''
-                    : 's'
-            }`;
-
-
-        if(!rankings.length) {
-
-            rankingList.innerHTML = `
-
-                <div class="loading">
-
-                    No pilots found.
-
-                </div>
-
-            `;
-
-
-            pilotList.innerHTML = `
-
-                <div class="pilot-sidebar-empty">
-
-                    No pilots found.
-
-                </div>
-
-            `;
-
-
-            return;
-
-        }
-
-
-        /* =====================================================
-           MAIN RANKING
-           ===================================================== */
-
-        rankingList.innerHTML =
-
-            rankings.map(
-                (pilot,index) => {
-
-                    const id =
-                        getPilotId(pilot);
-
-
-                    const name =
-                        getPilotName(pilot);
-
-
-                    const stars =
-                        getPilotStars(pilot);
-
-
-                    const calculated =
-                        calculateRank(stars);
-
-
-                    /*
-                     * If the API itself gives a rank,
-                     * use it. Otherwise calculate it.
-                     */
-
-                    const rank =
-                        pilot.rank ||
-                        pilot.stats?.rank ||
-                        calculated.current.name;
-
-
-                    /*
-                     * Profile URL.
-                     */
-
-                    const profileUrl =
-
-                        id !== undefined &&
-                        id !== null &&
-                        id !== ''
-
-                            ? `pilot.html?id=${
-                                encodeURIComponent(id)
-                              }`
-
-                            : '#';
-
-
-                    return `
-
-                        <a
-
-                            class="ranking-item"
-
-                            href="${profileUrl}"
-
-                            ${
-                                profileUrl === '#'
-                                    ? 'aria-disabled="true"'
-                                    : ''
-                            }
-
-                        >
-
-                            <span
-                                class="ranking-position"
-                            >
-                                ${index + 1}
-                            </span>
-
-
-                            <span
-                                class="ranking-avatar"
-                            >
-                                ${escapeHtml(
-                                    initials(name)
-                                )}
-                            </span>
-
-
-                            <span
-                                class="ranking-info"
-                            >
-
-                                <span
-                                    class="ranking-name"
-                                >
-                                    ${escapeHtml(name)}
-                                </span>
-
-
-                                <span
-                                    class="ranking-rank"
-                                >
-                                    ${escapeHtml(rank)}
-                                </span>
-
-                            </span>
-
-
-                            <span
-                                class="ranking-stars"
-                            >
-
-                                <span
-                                    class="ranking-stars-value"
-                                >
-                                    ${stars.toFixed(2)}
-                                </span>
-
-
-                                <span
-                                    class="ranking-stars-label"
-                                >
-                                    Echo Stars
-                                </span>
-
-                            </span>
-
-                        </a>
-
-                    `;
-
-                }
-
-            ).join('');
-
-
-        /* =====================================================
-           SIDEBAR
-           ===================================================== */
-
-        pilotList.innerHTML =
-
-            rankings.map(
-                (pilot,index) => {
-
-                    const id =
-                        getPilotId(pilot);
-
-
-                    const name =
-                        getPilotName(pilot);
-
-
-                    const stars =
-                        getPilotStars(pilot);
-
-
-                    const calculated =
-                        calculateRank(stars);
-
-
-                    const rank =
-                        pilot.rank ||
-                        pilot.stats?.rank ||
-                        calculated.current.name;
-
-
-                    /*
-                     * IMPORTANT:
-                     *
-                     * This is what makes the sidebar
-                     * pilots clickable.
-                     */
-
-                    if(
-                        id !== undefined &&
-                        id !== null &&
-                        id !== ''
-                    ) {
-
-                        return `
-
-                            <a
-
-                                class="pilot-item"
-
-                                href="pilot.html?id=${
-                                    encodeURIComponent(id)
-                                }"
-
-                            >
-
-                                <span
-                                    class="pilot-position"
-                                >
-                                    ${index + 1}
-                                </span>
-
-
-                                <span
-                                    class="pilot-avatar"
-                                >
-                                    ${escapeHtml(
-                                        initials(name)
-                                    )}
-                                </span>
-
-
-                                <span
-                                    class="pilot-info"
-                                >
-
-                                    <span
-                                        class="pilot-name"
-                                    >
-                                        ${escapeHtml(name)}
-                                    </span>
-
-
-                                    <span
-                                        class="pilot-rank"
-                                    >
-                                        ${escapeHtml(rank)}
-                                    </span>
-
-                                </span>
-
-                            </a>
-
-                        `;
-
-                    }
-
-
-                    /*
-                     * No ID = no clickable link.
-                     * This prevents broken:
-                     *
-                     * pilot.html?id=undefined
-                     */
-
-                    return `
-
-                        <div
-                            class="pilot-item"
-                            style="cursor:default;"
-                        >
-
-                            <span
-                                class="pilot-position"
-                            >
-                                ${index + 1}
-                            </span>
-
-
-                            <span
-                                class="pilot-avatar"
-                            >
-                                ${escapeHtml(
-                                    initials(name)
-                                )}
-                            </span>
-
-
-                            <span
-                                class="pilot-info"
-                            >
-
-                                <span
-                                    class="pilot-name"
-                                >
-                                    ${escapeHtml(name)}
-                                </span>
-
-
-                                <span
-                                    class="pilot-rank"
-                                >
-                                    ${escapeHtml(rank)}
-                                </span>
-
-                            </span>
-
-                        </div>
-
-                    `;
-
-                }
-
-            ).join('');
-
-
-        /*
-         * Debug information.
-         *
-         * This is useful if a pilot still doesn't open.
-         */
-
-        console.log(
-            'Loaded ranking:',
-            rankings
-        );
-
-
-        console.log(
-            'Pilot IDs:',
-            rankings.map(
-                pilot => ({
-                    name:getPilotName(pilot),
-                    id:getPilotId(pilot)
-                })
-            )
-        );
-
-
-    } catch(error) {
-
-        console.error(
-            'Ranking loading failed:',
-            error
-        );
-
-
-        rankingCount.textContent =
-            'Error';
-
-
-        rankingList.innerHTML = `
-
-            <div class="loading">
-
-                Could not load pilot ranking.
-
-                <br>
-
-                <small>
-                    Please try again later.
-                </small>
-
-            </div>
-
-        `;
-
-
-        pilotList.innerHTML = `
-
-            <div class="pilot-sidebar-error">
-
-                Unable to load pilots.
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-/* ============================================================
-   START
-   ============================================================ */
-
-loadRanking();
-
-</script>
-
-    <script src="site-shell.js"></script>
-
-    <script src="site-content.js"></script>
-
+<script src="site-shell.js"></script>
+<script src="site-content.js"></script>
+<script src="pilot-profile.js"></script>
 </body>
-
 </html>
