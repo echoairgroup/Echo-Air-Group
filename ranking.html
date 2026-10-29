@@ -1813,6 +1813,7 @@ footer p {
 .stat-grid .stat { min-width: 0; border: 1px solid #e5eadd; border-radius: 13px; background: #f9fbf6; padding: 15px; }
 .stat-grid .stat small { color: #788272; }
 .stat-grid .stat b { display: block; min-width: 0; color: #26331d; font-size: clamp(13px, 1.35vw, 18px); line-height: 1.35; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.sync-status-note { background: #f4f8ec; border-left-color: #91bb30; }
 .stat-note { margin-top: 15px; padding: 11px 13px; border-left: 3px solid #ace336; border-radius: 0 9px 9px 0; background: #f7faef; color: #66715d; font-size: 11px; line-height: 1.65; }
 .ranking-wrap .panel { overflow: hidden; padding: 24px; }
 .ranking-wrap .panel h3 { font-size: 23px; }
@@ -2289,6 +2290,10 @@ td { font-size: 12px; white-space: nowrap; }
         returned by the Echo Air Group API. If NewSky does
         not provide a value, it is shown as unavailable.
 
+    </p>
+
+    <p class="stat-note sync-status-note" id="syncStatusNote" role="status" aria-live="polite">
+        Automatic NewSky sync status will appear here.
     </p>
 
 
@@ -4536,6 +4541,50 @@ function renderAchievements(achievements) {
     });
 }
 
+
+async function loadSyncStatus() {
+    const node = document.getElementById("syncStatusNote");
+    if (!node) return;
+
+    try {
+        const data = await api("/sync/status");
+        const last = data && data.lastSync;
+
+        if (data && data.inProgress) {
+            node.textContent = "NewSky flights are being synchronized in the background. Your dashboard will use the latest saved data available.";
+            return;
+        }
+
+        if (!last) {
+            node.textContent = "Automatic NewSky sync is enabled. The first full flight-history import will start when at least one pilot has linked NewSky.";
+            return;
+        }
+
+        if (last.status === "error") {
+            node.textContent = "The latest background sync encountered an issue. The backend will retry automatically; see server logs if the problem continues.";
+            return;
+        }
+
+        if (last.status === "idle" && !last.fullHistoryCompletedAt) {
+            node.textContent = "The first full-history sync is pending. It will start automatically after a pilot links a NewSky account.";
+            return;
+        }
+
+        const completedAt = last.completedAt
+            ? new Date(last.completedAt).toLocaleString("en-GB")
+            : "not yet completed";
+        const fullAt = last.fullHistoryCompletedAt
+            ? new Date(last.fullHistoryCompletedAt).toLocaleString("en-GB")
+            : "pending";
+
+        node.textContent = "Last background update: " + completedAt +
+            ". Full-history import: " + fullAt +
+            ". Recent flights refresh every 15 minutes while the backend is awake.";
+    } catch (error) {
+        node.textContent = "Automatic sync runs in the background; its latest status is temporarily unavailable.";
+    }
+}
+
 function renderDashboard(
     data
 ) {
@@ -4770,6 +4819,7 @@ function renderDashboard(
     }
 
     renderAchievements(data.achievements);
+    void loadSyncStatus();
 
     // loadLeaderboard() writes the real position asynchronously.
     // Do not reset it here: dashboard rendering can finish afterwards.
@@ -5861,6 +5911,7 @@ document
                 await loadMe();
 
                 await loadLeaderboard();
+                void loadSyncStatus();
 
                 await loadPilotSidebar();
 
@@ -6452,7 +6503,7 @@ document
 
                 'dashboardMsg',
 
-                'Synchronizing your NewSky flights… (this may take multiple minutes)'
+                'Checking recent NewSky flights…'
 
             );
 
