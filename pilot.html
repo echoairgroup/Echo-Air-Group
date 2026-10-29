@@ -4,157 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b1009">
-    <meta name="description" content="Pilot profile, flight history and career statistics for Echo Air Group pilots.">
+    <meta name="description" content="Pilot statistics, rank progression and flight history for Echo Air Group pilots.">
     <title>Pilot Profile — Echo Air Group</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="site-shell.css">
-    <style>
-
-:root {
-  --pilot-green: #ace336;
-  --pilot-ink: #243020;
-  --pilot-muted: #75806d;
-  --pilot-line: #e2e8dc;
-  --pilot-surface: #fff;
-  --pilot-bg: #f5f8f2;
-}
-body { background: var(--pilot-bg); color: var(--pilot-ink); }
-.profile-hero {
-  position: relative;
-  overflow: hidden;
-  padding: 160px 0 65px;
-  background:
-    radial-gradient(circle at 82% 20%, rgba(172,227,54,.18), transparent 23%),
-    linear-gradient(125deg, #080d08 0%, #151f12 55%, #0c120a 100%);
-  color: white;
-}
-.profile-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: .14;
-  pointer-events: none;
-  background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, #000, transparent);
-}
-.profile-hero .container { position: relative; z-index: 1; }
-.profile-kicker {
-  display: inline-flex;
-  padding: 8px 12px;
-  border: 1px solid rgba(172,227,54,.32);
-  border-radius: 999px;
-  background: rgba(172,227,54,.1);
-  color: #c6f17a;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: .13em;
-  text-transform: uppercase;
-}
-.profile-hero h1 { margin: 19px 0 8px; color: #fff; font-size: clamp(38px, 6vw, 64px); letter-spacing: -.055em; line-height: 1.03; overflow-wrap: anywhere; }
-.profile-hero p { max-width: 700px; margin: 0; color: #c1cbbb; font-size: 14px; line-height: 1.8; }
-.profile-meta { display:flex; flex-wrap:wrap; gap:9px; margin-top:20px; }
-.profile-meta span { display:inline-flex; align-items:center; gap:7px; padding:8px 11px; border:1px solid rgba(255,255,255,.11); border-radius:10px; background:rgba(255,255,255,.05); color:#e1e8db; font-size:11px; font-weight:800; }
-.profile-meta strong { color:var(--pilot-green); }
-.profile-main { padding: 32px 0 85px; }
-.profile-layout { display:grid; grid-template-columns:minmax(0,1fr) 310px; align-items:start; gap:22px; }
-.profile-primary, .profile-sidebar { display:grid; gap:20px; min-width:0; }
-.profile-card { min-width:0; overflow:hidden; border:1px solid var(--pilot-line); border-radius:19px; background:var(--pilot-surface); box-shadow:0 14px 40px rgba(14,26,10,.055); }
-.profile-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:15px; padding:22px 24px 0; }
-.profile-card-header h2 { margin:0 0 6px; color:var(--pilot-ink); font-size:20px; letter-spacing:-.035em; }
-.profile-card-header p { margin:0; color:var(--pilot-muted); font-size:12px; line-height:1.65; }
-.profile-card-body { padding:20px 24px 24px; }
-.pilot-identity { display:flex; align-items:center; gap:16px; }
-.pilot-avatar-large { display:flex; flex:0 0 70px; width:70px; height:70px; align-items:center; justify-content:center; border:1px solid #d1e4b1; border-radius:20px; background:linear-gradient(145deg,#eef8dc,#dff0bd); color:#53791a; font-size:24px; font-weight:900; box-shadow:inset 0 1px 0 rgba(255,255,255,.8); }
-.pilot-identity-copy { min-width:0; }
-.pilot-identity-copy h2 { margin:0 0 6px; color:var(--pilot-ink); font-size:clamp(21px,2.8vw,30px); line-height:1.12; letter-spacing:-.04em; overflow-wrap:anywhere; }
-.pilot-identity-copy p { margin:0; color:var(--pilot-muted); font-size:12px; line-height:1.6; overflow-wrap:anywhere; }
-.rank-pill { display:inline-flex; margin-top:9px; padding:6px 9px; border-radius:999px; background:#eff7e3; color:#577a20; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
-.profile-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
-.profile-stat { min-width:0; padding:14px; border:1px solid #e6ebe0; border-radius:13px; background:#f9fbf6; }
-.profile-stat span { display:block; margin-bottom:8px; color:#788372; font-size:10px; line-height:1.4; font-weight:900; letter-spacing:.055em; text-transform:uppercase; }
-.profile-stat strong { display:block; min-width:0; color:#2b3923; font-size:clamp(15px,1.7vw,21px); line-height:1.35; font-weight:900; overflow-wrap:anywhere; word-break:break-word; }
-.profile-stat small { display:block; margin-top:5px; color:#7a8572; font-size:10px; line-height:1.5; }
-.rank-progress { padding:17px 18px; border:1px solid #e4ebd9; border-radius:14px; background:linear-gradient(135deg,#f7fbee,#fff); }
-.rank-progress-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:11px; }
-.rank-progress-top strong { color:#334529; font-size:12px; }
-.rank-progress-top span { color:#718064; font-size:11px; text-align:right; }
-.rank-progress-track { height:9px; overflow:hidden; border-radius:999px; background:#e7eddf; }
-.rank-progress-fill { width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#82b51f,#c6ef68); transition:width .5s ease; }
-.rank-progress-note { margin:10px 0 0; color:#788372; font-size:10px; line-height:1.6; }
-.profile-sidebar-card { padding:21px; }
-.profile-sidebar-card h2 { margin:0 0 15px; color:var(--pilot-ink); font-size:17px; letter-spacing:-.025em; }
-.side-stat-list { display:grid; gap:0; }
-.side-stat-row { display:flex; align-items:baseline; justify-content:space-between; gap:15px; padding:11px 0; border-bottom:1px solid #edf0e9; }
-.side-stat-row:last-child { border-bottom:0; }
-.side-stat-row span { color:#75806d; font-size:11px; }
-.side-stat-row strong { color:#293722; font-size:12px; text-align:right; overflow-wrap:anywhere; }
-.profile-callout { padding:14px; border:1px solid #e5eadf; border-radius:12px; background:#f7f9f4; color:#6e7965; font-size:11px; line-height:1.7; }
-.profile-callout strong { color:#3a4d2d; }
-.profile-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; padding:20px 22px 0; }
-.profile-toolbar h2 { margin:0 0 4px; color:var(--pilot-ink); font-size:20px; letter-spacing:-.035em; }
-.profile-toolbar p { margin:0; color:var(--pilot-muted); font-size:11px; }
-.flight-search { width:min(260px,100%); min-height:42px; padding:10px 12px; border:1px solid #dfe6d8; border-radius:10px; background:#fff; color:var(--pilot-ink); font:inherit; font-size:12px; }
-.flight-search:focus { outline:3px solid rgba(172,227,54,.27); border-color:#9abe4e; }
-.flight-table-wrap { margin-top:18px; overflow:auto; }
-.flight-table { width:100%; border-collapse:collapse; }
-.flight-table th { padding:12px 15px; border-top:1px solid #edf0e9; border-bottom:1px solid #e5eade; background:#f7f9f4; color:#73806b; text-align:left; white-space:nowrap; font-size:9px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
-.flight-table td { padding:14px 15px; border-bottom:1px solid #edf0e9; color:#475342; white-space:nowrap; font-size:11px; }
-.flight-table tr:last-child td { border-bottom:0; }
-.flight-table tbody tr:hover { background:#fbfdf8; }
-.route-main { color:#263522; font-weight:900; }
-.route-sub { margin-top:4px; color:#8a9383; font-size:9px; }
-.rating-value { display:inline-flex; padding:5px 7px; border-radius:7px; background:#eff7e3; color:#55781b; font-weight:900; }
-.flight-stars { color:#546f20; font-weight:900; }
-.profile-empty { padding:30px 22px; color:#798372; font-size:12px; text-align:center; line-height:1.7; }
-.profile-error { padding:44px 25px; border:1px solid #eed9d4; border-radius:18px; background:#fff; color:#6f524b; text-align:center; line-height:1.8; }
-.profile-error h2 { margin:0 0 9px; color:#5b3029; }
-.profile-error a { color:#54791d; font-weight:900; }
-.profile-skeleton { padding:28px; color:#75806d; text-align:center; font-size:12px; }
-.profile-crumb { display:inline-flex; margin-bottom:14px; color:#c3d0bb; font-size:11px; font-weight:800; text-decoration:none; }
-.profile-crumb:hover { color:var(--pilot-green); }
-.profile-show-all { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:10px 14px; border:1px solid #d8e3cb; border-radius:10px; background:#f4f8eb; color:#4f701c; font:inherit; font-size:11px; font-weight:900; cursor:pointer; transition:transform .2s ease,background .2s ease; }
-.profile-show-all:hover { transform:translateY(-1px); background:#ebf5d9; }
-.profile-footer-note { padding:0 22px 18px; color:#879080; font-size:10px; line-height:1.6; }
-@media (max-width: 1050px) {
-  .profile-layout { grid-template-columns:minmax(0,1fr) 270px; }
-  .profile-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
-}
-@media (max-width: 800px) {
-  .profile-hero { padding:135px 0 48px; }
-  .profile-main { padding:22px 0 60px; }
-  .profile-layout { grid-template-columns:1fr; }
-  .profile-sidebar { grid-row:auto; }
-}
-@media (max-width: 540px) {
-  .container { width:calc(100% - 28px); }
-  .profile-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-  .profile-stat { padding:12px; }
-  .profile-card-header,.profile-card-body { padding-left:16px; padding-right:16px; }
-  .profile-toolbar { padding-left:16px; padding-right:16px; }
-  .pilot-avatar-large { flex-basis:56px; width:56px; height:56px; border-radius:16px; }
-  .flight-table th,.flight-table td { padding-left:11px; padding-right:11px; }
-}
-    </style>
+    <link rel="stylesheet" href="pilot-profile.css">
 </head>
-<body>
+<body class="pilot-profile-page">
 <header id="siteHeader">
     <div class="container nav">
-
         <a class="brand" href="index.html" aria-label="Echo Air Group home">
-            <img
-                class="brand-logo"
-                src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768"
-                alt="Echo Air Group Logo"
-            >
-            <div class="brand-text">
-                ECHO AIR GROUP
-                <small>6L · ECV · CLOVER</small>
-            </div>
+            <img class="brand-logo" src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768" alt="Echo Air Group Logo">
+            <div class="brand-text">ECHO AIR GROUP<small>6L · ECV · CLOVER</small></div>
         </a>
-
         <nav class="navlinks" aria-label="Primary navigation">
             <a href="index.html">Home</a>
             <a href="about.html">About</a>
@@ -165,244 +29,171 @@ body { background: var(--pilot-bg); color: var(--pilot-ink); }
             <a href="join.html">Join Us</a>
             <a href="manual.html">Pilot Manual</a>
             <a href="contact.html">Contact Us</a>
-            <a class="active" href="ranking.html">Ranking</a>
+            <a href="ranking.html">Pilot Dashboard</a>
             <a href="booking.html">Book a flight</a>
         </nav>
-
         <a class="register" href="join.html">REGISTER</a>
-
-        <button
-            class="menu"
-            id="menuButton"
-            onclick="toggleMenu()"
-            type="button"
-            aria-label="Open navigation menu"
-            aria-expanded="false"
-            aria-controls="mobileNav"
-        >☰</button>
-
+        <button class="menu" id="menuButton" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNav" onclick="toggleMenu()">☰</button>
     </div>
-
-    <div id="mobileNav" class="mobileNav">
+    <nav id="mobileNav" aria-label="Mobile navigation">
         <div class="container">
-            <a href="index.html">Home</a>
-            <a href="about.html">About</a>
-            <a href="fleet.html">Fleet</a>
-            <a href="routes.html">Routes</a>
-            <a href="team.html">Team</a>
-            <a href="index.html#news">News</a>
-            <a href="join.html">Join Us</a>
-            <a href="manual.html">Pilot Manual</a>
-            <a href="contact.html">Contact Us</a>
-            <a href="ranking.html">Ranking</a>
-            <a href="booking.html">Book a flight</a>
-            <a href="join.html">Register</a>
+            <a href="index.html">Home</a><a href="about.html">About</a><a href="fleet.html">Fleet</a>
+            <a href="routes.html">Routes</a><a href="team.html">Team</a><a href="index.html#news">News</a>
+            <a href="join.html">Join Us</a><a href="manual.html">Pilot Manual</a><a href="contact.html">Contact Us</a>
+            <a href="ranking.html">Pilot Dashboard</a><a href="booking.html">Book a flight</a>
         </div>
-    </div>
+    </nav>
 </header>
-
-<section class="profile-hero">
-    <div class="container">
-        <a class="profile-crumb" href="ranking.html">← Back to Pilot Dashboard</a>
-        <div class="profile-kicker">Echo Air Group · Pilot Profile</div>
-        <h1 id="heroPilotName">Pilot profile</h1>
-        <p id="heroPilotText">Flight history, real stored statistics and career progress.</p>
-        <div class="profile-meta">
-            <span>Leaderboard <strong id="heroPosition">—</strong></span>
-            <span>Rank <strong id="heroRank">—</strong></span>
-            <span>Flights <strong id="heroFlights">—</strong></span>
+<main>
+    <section class="profile-hero">
+        <div class="container">
+            <span class="profile-kicker">Echo Air Group · Pilot profile</span>
+            <h1 id="heroPilotName">Pilot profile</h1>
+            <p id="heroPilotText">Loading this pilot’s saved flight statistics and career history.</p>
+            <div class="profile-meta">
+                <span>Leaderboard <strong id="heroPosition">—</strong></span>
+                <span>Current rank <strong id="heroRank">—</strong></span>
+                <span>Flights <strong id="heroFlights">—</strong></span>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<main class="profile-main">
-    <div class="container">
-        <div id="profileLoading" class="profile-card profile-skeleton">Loading pilot profile and flight history…</div>
-        <div id="profileError" class="profile-error" hidden>
-            <h2>Pilot profile unavailable</h2>
-            <p id="profileErrorText">We could not load this pilot profile.</p>
-            <a href="ranking.html">Return to Pilot Dashboard</a>
-        </div>
-
-        <div id="profileContent" class="profile-layout" hidden>
-            <div class="profile-primary">
-                <section class="profile-card">
-                    <div class="profile-card-body">
-                        <div class="pilot-identity">
-                            <div id="pilotAvatar" class="pilot-avatar-large">P</div>
-                            <div class="pilot-identity-copy">
-                                <h2 id="pilotDisplayName">Pilot</h2>
-                                <p id="pilotMemberSince">Echo Air Group pilot</p>
-                                <span id="pilotRankPill" class="rank-pill">Cadet</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="profile-card-header">
-                        <div>
-                            <h2>Career statistics</h2>
-                            <p>Calculated from the flights saved in Echo Air Group.</p>
-                        </div>
-                    </div>
-                    <div class="profile-card-body">
-                        <div class="profile-stats">
-                            <div class="profile-stat"><span>Total Echo Stars</span><strong id="statStars">—</strong><small>Used for rank progression</small></div>
-                            <div class="profile-stat"><span>Completed flights</span><strong id="statFlights">—</strong><small>Flights in the database</small></div>
-                            <div class="profile-stat"><span>Flight hours</span><strong id="statHours">—</strong><small>From recorded duration</small></div>
-                            <div class="profile-stat"><span>Distance flown</span><strong id="statDistance">—</strong><small>Only when distance data is available</small></div>
-                            <div class="profile-stat"><span>Average rating</span><strong id="statAvgRating">—</strong><small>Across rated flights</small></div>
-                            <div class="profile-stat"><span>Best rating</span><strong id="statBestRating">—</strong><small>Highest recorded rating</small></div>
-                            <div class="profile-stat"><span>Aircraft types</span><strong id="statAircraft">—</strong><small>Unique aircraft names</small></div>
-                            <div class="profile-stat"><span>Routes flown</span><strong id="statRoutes">—</strong><small>Unique airport pairs</small></div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="profile-card">
-                    <div class="profile-card-header">
-                        <div>
-                            <h2>Rank progression</h2>
-                            <p>Current standing based on the Echo Air Group star system.</p>
-                        </div>
-                        <span id="rankProgressPercent" class="rank-pill">—</span>
-                    </div>
-                    <div class="profile-card-body">
-                        <div class="rank-progress">
-                            <div class="rank-progress-top"><strong id="rankProgressTitle">Loading rank progress…</strong><span id="rankProgressValue">—</span></div>
-                            <div class="rank-progress-track"><div id="rankProgressFill" class="rank-progress-fill"></div></div>
-                            <p id="rankProgressNote" class="rank-progress-note">Your next rank will be shown when the profile loads.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="profile-card">
-                    <div class="profile-toolbar">
-                        <div>
-                            <h2>Flight history</h2>
-                            <p id="flightHistoryCount">All recorded flights</p>
-                        </div>
-                        <input id="flightSearch" class="flight-search" type="search" placeholder="Search route or aircraft…" autocomplete="off" aria-label="Search flight history">
-                    </div>
-                    <div class="flight-table-wrap">
-                        <table class="flight-table">
-                            <thead><tr><th>Date</th><th>Route</th><th>Aircraft</th><th>Duration</th><th>Rating</th><th>Distance</th><th>Stars</th></tr></thead>
-                            <tbody id="pilotFlightRows"><tr><td colspan="7">Loading flights…</td></tr></tbody>
-                        </table>
-                    </div>
-                    <div id="flightHistoryFooter" class="profile-footer-note">Times and metrics reflect the data currently stored by Echo Air Group.</div>
-                </section>
+    <section class="profile-main">
+        <div class="container">
+            <div id="profileLoading" class="profile-loading" role="status" aria-live="polite">
+                <strong>Loading pilot records…</strong>
+                <div>Retrieving saved statistics and flight history from Echo Air Group.</div>
             </div>
 
-            <aside class="profile-sidebar">
-                <section class="profile-card profile-sidebar-card">
-                    <h2>Pilot overview</h2>
-                    <div class="side-stat-list">
-                        <div class="side-stat-row"><span>Leaderboard position</span><strong id="sidePosition">—</strong></div>
-                        <div class="side-stat-row"><span>Current rank</span><strong id="sideRank">—</strong></div>
-                        <div class="side-stat-row"><span>Average stars / flight</span><strong id="sideAvgStars">—</strong></div>
-                        <div class="side-stat-row"><span>Latest flight</span><strong id="sideLatestFlight">—</strong></div>
-                        <div class="side-stat-row"><span>Member since</span><strong id="sideMemberSince">—</strong></div>
-                    </div>
-                </section>
-                <section class="profile-card profile-sidebar-card">
-                    <h2>Recent activity</h2>
-                    <div id="recentActivity" class="side-stat-list"><div class="profile-empty">Loading recent activity…</div></div>
-                </section>
-                <div class="profile-callout"><strong>About these numbers</strong><br>Statistics are calculated from the stored flight history. Missing distance or rating data is shown as unavailable rather than guessed.</div>
-                <a href="ranking.html" class="profile-card profile-sidebar-card" style="display:block;text-decoration:none;color:#54781d;font-size:12px;font-weight:900">← View all pilots and rankings</a>
-            </aside>
-        </div>
-    </div>
-</main>
+            <div id="profileError" class="profile-error" role="alert" hidden>
+                <strong>This pilot profile could not be loaded.</strong>
+                <p id="profileErrorText">Check the profile link and try again.</p>
+                <a href="ranking.html">Return to the Pilot Dashboard →</a>
+            </div>
 
-<footer>
-
-    <div class="container">
-
-        <div class="foot-top">
-
-            <div>
-
-                <a class="brand" href="index.html">
-
-                    <img
-                        class="brand-logo"
-                        src="https://media.discordapp.net/attachments/1535409438683439314/1535737684818006096/Full_Logo_White_1.png?ex=6a78daac&is=6a77892c&hm=101b0167be79e5d76583ad0d1ed08fb313fc8bef82d875871fa81643e0f811fc&=&format=webp&quality=lossless&width=768&height=768"
-                        alt="Echo Air Group Logo"
-                    >
-
-                    <div class="brand-text">
-                        ECHO AIR GROUP
-                        <small>6L · ECV · CLOVER</small>
-                    </div>
-
-                </a>
-
-                <p style="max-width:450px">
-                    Virtual aviation. Real passion.
-                    A community built for pilots who love
-                    the world of flight simulation.
-                </p>
-
-                <div class="footer-social">
-
-                    <a
-                        href="https://discord.gg/e7ePxYA24"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Discord"
-                    >
-                        <img
-                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL3851zWBAakGfTIxIoavLpD9xempKolcjVkbw-HmqvrpX_orWo4J7FMgr84kloUD2WyNy33gU7V6uQoLq3_g3esyH0N_u-oEsU5-w8CCR&s=10"
-                            alt="Discord"
-                        >
-                    </a>
-
-                    <a
-                        href="https://www.tiktok.com/@echoairgroup"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="TikTok"
-                    >
-                        <img
-                            src="https://sf-static.tiktokcdn.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png"
-                            alt="TikTok"
-                        >
-                    </a>
-
+            <div id="profileContent" hidden>
+                <p class="profile-section-label">Career at a glance</p>
+                <div class="profile-stats">
+                    <article class="profile-stat"><span>Total stars</span><strong id="statStars">—</strong><small>Saved Echo flight score</small></article>
+                    <article class="profile-stat"><span>Completed flights</span><strong id="statFlights">—</strong><small>Flight records on the dashboard</small></article>
+                    <article class="profile-stat"><span>Flight hours</span><strong id="statHours">—</strong><small>Calculated from recorded durations</small></article>
+                    <article class="profile-stat"><span>Distance flown</span><strong id="statDistance">—</strong><small>Only when distance data is available</small></article>
+                    <article class="profile-stat"><span>Average rating</span><strong id="statAvgRating">—</strong><small>Across flights with a rating</small></article>
+                    <article class="profile-stat"><span>Best rating</span><strong id="statBestRating">—</strong><small>Highest saved flight rating</small></article>
+                    <article class="profile-stat"><span>Aircraft types</span><strong id="statAircraft">—</strong><small>Unique aircraft recorded</small></article>
+                    <article class="profile-stat"><span>Routes flown</span><strong id="statRoutes">—</strong><small>Unique airport pairs recorded</small></article>
                 </div>
 
-            </div>
+                <div class="profile-layout">
+                    <div class="profile-main-column">
+                        <section class="profile-card">
+                            <div class="profile-card-header">
+                                <div class="pilot-avatar-large" id="pilotAvatar" aria-hidden="true">P</div>
+                                <div style="min-width:0;flex:1">
+                                    <h2 id="pilotDisplayName">Pilot</h2>
+                                    <p id="pilotMemberSince">Echo Air Group pilot</p>
+                                    <span class="profile-rank-pill" id="pilotRankPill">Pilot rank</span>
+                                </div>
+                            </div>
+                            <div class="profile-card-body">
+                                <p class="profile-section-label">Rank progression</p>
+                                <div class="rank-progress">
+                                    <div class="rank-progress-top">
+                                        <strong id="rankProgressTitle">Current rank → Next rank</strong>
+                                        <span id="rankProgressPercent">—</span>
+                                    </div>
+                                    <div class="rank-progress-track" role="progressbar" aria-label="Progress to next pilot rank" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="rank-progress-fill" id="rankProgressFill"></div>
+                                    </div>
+                                    <p class="rank-progress-top" style="margin:12px 0 0"><strong id="rankProgressValue">—</strong></p>
+                                    <p class="rank-progress-note" id="rankProgressNote">Loading rank progress…</p>
+                                </div>
+                            </div>
+                        </section>
 
+                        <section class="profile-card">
+                            <div class="flight-history-heading">
+                                <div>
+                                    <h2>Flight history</h2>
+                                    <p>Recorded routes, aircraft, durations, ratings and stars.</p>
+                                </div>
+                                <strong id="flightHistoryCount">—</strong>
+                            </div>
+                            <div class="profile-toolbar">
+                                <div>
+                                    <label for="flightSearch">Search flight records</label>
+                                    <input id="flightSearch" type="search" placeholder="Search route, aircraft or date…" autocomplete="off">
+                                </div>
+                                <div class="profile-empty" style="padding:0!important;text-align:left!important">Flight history is read-only and comes from saved NewSky records.</div>
+                            </div>
+                            <div class="profile-table-wrap">
+                                <table class="flight-table">
+                                    <thead><tr>
+                                        <th>Date</th><th>Route</th><th>Aircraft</th><th>Duration</th>
+                                        <th>Rating</th><th>Distance</th><th>Stars</th>
+                                    </tr></thead>
+                                    <tbody id="pilotFlightRows">
+                                        <tr><td colspan="7" class="profile-empty">Loading flights…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="flightHistoryFooter" class="profile-card-footer">
+                                Flight information is displayed as recorded. Missing fields are shown as unavailable rather than guessed.
+                            </div>
+                        </section>
+                    </div>
+
+                    <aside class="profile-sidebar">
+                        <section class="profile-card profile-sidebar-card">
+                            <h2>Pilot overview</h2>
+                            <div class="side-stat-list">
+                                <div class="side-stat-row"><span>Leaderboard position</span><strong id="sidePosition">—</strong></div>
+                                <div class="side-stat-row"><span>Current rank</span><strong id="sideRank">—</strong></div>
+                                <div class="side-stat-row"><span>Average stars / flight</span><strong id="sideAvgStars">—</strong></div>
+                                <div class="side-stat-row"><span>Latest flight</span><strong id="sideLatestFlight">—</strong></div>
+                                <div class="side-stat-row"><span>Member since</span><strong id="sideMemberSince">—</strong></div>
+                            </div>
+                        </section>
+                        <section class="profile-card profile-sidebar-card">
+                            <h2>Recent activity</h2>
+                            <div id="recentActivity" class="recent-activity-list">
+                                <div class="profile-empty">Loading recent activity…</div>
+                            </div>
+                        </section>
+                        <section class="profile-sidebar-card">
+                            <h2>Explore Echo</h2>
+                            <div class="side-stat-list">
+                                <div class="side-stat-row"><span>Compare pilot rankings</span><strong><a href="ranking.html">Pilot Dashboard ↗</a></strong></div>
+                                <div class="side-stat-row"><span>Explore our aircraft</span><strong><a href="fleet.html">Fleet Center ↗</a></strong></div>
+                                <div class="side-stat-row"><span>Plan a route</span><strong><a href="booking.html">Book a flight ↗</a></strong></div>
+                            </div>
+                        </section>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+<footer>
+    <div class="container">
+        <div class="foot-top">
+            <div>
+                <a class="brand" href="index.html">
+                    <img class="brand-logo" src="https://media.discordapp.net/attachments/1535409438683439314/1535737684818006096/Full_Logo_White_1.png?ex=6a78daac&is=6a77892c&hm=101b0167be79e5d76583ad0d1ed08fb313fc8bef82d875871fa81643e0f811fc&=&format=webp&quality=lossless&width=768&height=768" alt="Echo Air Group Logo">
+                    <div class="brand-text">ECHO AIR GROUP<small>6L · ECV · CLOVER</small></div>
+                </a>
+                <p style="max-width:450px">Virtual aviation. Real passion. A community built for pilots who love the world of flight simulation.</p>
+            </div>
             <div class="foot-links">
-
-                <a href="index.html">Home</a>
-                <a href="about.html">About</a>
-                <a href="fleet.html">Fleet</a>
-                <a href="routes.html">Routes</a>
-                <a href="team.html">Team</a>
-                <a href="index.html#news">News</a>
-                <a href="join.html">Join Us</a>
-                <a href="manual.html">Pilot Manual</a>
-                <a href="contact.html">Contact Us</a>
-                <a href="ranking.html">Ranking</a>
-                <a href="booking.html">Book a flight</a>
-                <a href="join.html">Register</a>
-                <a href="index.html#operations">Operations</a>
-                <a href="index.html#faq">FAQ</a>
-
+                <a href="index.html">Home</a><a href="about.html">About</a><a href="fleet.html">Fleet</a>
+                <a href="routes.html">Routes</a><a href="team.html">Team</a><a href="index.html#news">News</a>
+                <a href="join.html">Join Us</a><a href="manual.html">Pilot Manual</a><a href="contact.html">Contact Us</a>
+                <a href="ranking.html">Pilot Dashboard</a><a href="booking.html">Book a flight</a>
             </div>
-
         </div>
-
-        <div class="copy">
-            <span>© 2026 Echo Air Group. Virtual airline.</span>
-            <span>Not affiliated with any real-world airline.</span>
-        </div>
-
+        <div class="copy"><span>© 2026 Echo Air Group. Virtual airline.</span><span>Not affiliated with any real-world airline.</span></div>
     </div>
-
 </footer>
-
 <script src="site-shell.js"></script>
 <script src="site-content.js"></script>
 <script src="pilot-profile.js"></script>
