@@ -107,6 +107,11 @@
         const card = document.createElement("article");
         card.className = "news-card";
 
+        const createdAt = item.created_at ? new Date(item.created_at) : null;
+        if (createdAt && !Number.isNaN(createdAt.getTime())) {
+            card.dataset.createdAt = createdAt.toISOString();
+        }
+
         const imageWrap = document.createElement("div");
         imageWrap.className = "news-image";
 
@@ -133,7 +138,6 @@
 
         const date = document.createElement("div");
         date.className = "news-date";
-        const createdAt = item.created_at ? new Date(item.created_at) : null;
         date.textContent = createdAt && !Number.isNaN(createdAt.getTime())
             ? createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
             : "Latest News";
@@ -167,6 +171,29 @@
         return card;
     }
 
+    function newsCardTimestamp(card) {
+        const storedDate = card.dataset.createdAt;
+        if (storedDate) {
+            const timestamp = Date.parse(storedDate);
+            if (Number.isFinite(timestamp)) return timestamp;
+        }
+
+        const visibleDate = card.querySelector(".news-date")?.textContent?.trim();
+        const timestamp = visibleDate ? Date.parse(visibleDate) : NaN;
+        return Number.isFinite(timestamp) ? timestamp : 0;
+    }
+
+    function sortAndLimitNewsGrid(grid, maxItems = 3) {
+        const cards = Array.from(grid.querySelectorAll(":scope > .news-card"));
+
+        // Sort the combined managed and built-in news cards, newest first.
+        cards.sort((a, b) => newsCardTimestamp(b) - newsCardTimestamp(a));
+        cards.forEach((card) => grid.appendChild(card));
+
+        // Keep only the three latest items visible on the homepage.
+        cards.slice(maxItems).forEach((card) => card.remove());
+    }
+
     async function loadPublicSettings() {
         try {
             const response = await fetch(API_BASE + "/site/settings", { cache: "no-store" });
@@ -198,11 +225,12 @@
                 String(item.category || "").toLowerCase() !== "news"
             );
 
-            // News belongs in the homepage's existing News tab/section, never in the generic bottom section.
-            if (pageName === "index.html" && newsItems.length) {
+            // News belongs in the homepage's existing News section, sorted newest first, with a maximum of three cards.
+            if (pageName === "index.html") {
                 const newsGrid = document.querySelector("#news .news-grid");
                 if (newsGrid) {
                     newsItems.forEach((item) => newsGrid.appendChild(makeNewsCard(item)));
+                    sortAndLimitNewsGrid(newsGrid, 3);
                 }
             }
 
