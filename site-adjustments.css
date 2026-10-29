@@ -1,0 +1,30 @@
+/* Small page-specific layout corrections */
+.join-page #siteHeader,
+.join-page #siteHeader.scrolled {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}
+.join-page main {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.join-page .pagehero {
+    margin-top: 0 !important;
+    border-top: 0 !important;
+}
+/* The shared header is fixed at 100px on desktop; start the reservation
+   copy clearly below it instead of allowing the title to sit behind it. */
+.booking-page .hero {
+    min-height: 390px !important;
+    align-items: flex-start !important;
+}
+.booking-page .hero-inner {
+    padding: 132px 24px 65px !important;
+}
+@media (max-width: 850px) {
+    .booking-page .hero-inner { padding: 112px 20px 58px !important; }
+}
+@media (max-width: 700px) {
+    .booking-page .hero { min-height: 0 !important; }
+    .booking-page .hero-inner { padding: 101px 18px 52px !important; }
+}
