@@ -585,6 +585,24 @@ footer .copy {
     }
 }
 
+
+.application-honeypot {
+    position: absolute !important;
+    left: -10000px !important;
+    top: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+}
+.application-submit-status {
+    margin: 12px 0 0;
+    color: #687267;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.application-submit-status:empty { display: none; }
+button[type="submit"]:disabled { opacity: .65; cursor: wait; }
+
 </style>
 
     <link rel="stylesheet" href="site-shell.css">
@@ -803,10 +821,16 @@ footer .copy {
         ================================================= -->
 
         <form
+            id="pilotApplicationForm"
             class="form-card"
+            data-application-type="pilot"
             action="https://formsubmit.co/echoairgrouptiktok@gmail.com"
             method="POST"
         >
+            <div class="application-honeypot" aria-hidden="true">
+                <label for="pilotWebsite">Leave this field empty</label>
+                <input id="pilotWebsite" name="website" tabindex="-1" autocomplete="off">
+            </div>
 
             <!-- FORMSUBMIT SETTINGS -->
 
@@ -1267,6 +1291,7 @@ footer .copy {
                     >
                         Submit Pilot Application ✈
                     </button>
+                    <p class="application-submit-status" data-application-status role="status" aria-live="polite"></p>
 
                 </div>
 
@@ -1443,6 +1468,7 @@ function toggleMenu() {
     <script src="site-shell.js"></script>
 
     <script src="site-content.js"></script>
+<script src="application-submission.js"></script>
 
 </body>
 </html>
