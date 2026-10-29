@@ -15,6 +15,9 @@ dotenv.config();
 
 const app = express();
 
+let databaseReady = false;
+let databaseInitError = null;
+
 // Render runs behind a reverse proxy; trust one hop so per-IP application limits use the visitor address.
 app.set("trust proxy", 1);
 
@@ -24,6 +27,19 @@ app.set("trust proxy", 1);
 
 app.use(cors());
 app.use(express.json({ limit: "4mb" }));
+
+// Keep the HTTP listener available even while Neon is warming up. API routes
+// return a fast 503 until the schema has been initialized instead of causing
+// Render to time out while waiting for an open port.
+app.use((req, res, next) => {
+    if (req.path === "/api/health" || req.path === "/") return next();
+    if (databaseReady) return next();
+
+    return res.status(503).json({
+        error: "Echo Air Group backend is starting. Please retry shortly.",
+        database: "initializing"
+    });
+});
 
 const PORT =
     process.env.PORT || 3000;
@@ -1899,55 +1915,36 @@ app.get(
 app.get(
     "/api/health",
     async (req, res) => {
+        if (!databaseReady) {
+            return res.status(503).json({
+                status: "starting",
+                database: "initializing",
+                discordBot: discordReady ? "connected" : "not connected",
+                retrying: Boolean(databaseInitError),
+                time: new Date().toISOString()
+            });
+        }
 
         try {
-
-            await query(
-                "SELECT 1"
-            );
-
-            res.json({
-
-                status:
-                    "ok",
-
-                database:
-                    "connected",
-
-                discordBot:
-                    discordReady
-                        ? "connected"
-                        : "not connected",
-
-                time:
-                    new Date().toISOString()
+            await query("SELECT 1");
+            return res.json({
+                status: "ok",
+                database: "connected",
+                discordBot: discordReady ? "connected" : "not connected",
+                automaticFlightSync: true,
+                time: new Date().toISOString()
             });
-
         } catch (error) {
-
-            res.status(500).json({
-
-                status:
-                    "error",
-
-                database:
-                    "disconnected",
-
-                discordBot:
-                    discordReady
-                        ? "connected"
-                        : "not connected",
-
-                error:
-                    error.message
+            console.error("Health check database query failed:", error.message);
+            return res.status(503).json({
+                status: "degraded",
+                database: "disconnected",
+                discordBot: discordReady ? "connected" : "not connected",
+                time: new Date().toISOString()
             });
         }
     }
 );
-
-// ============================================================
-// REGISTER
-// ============================================================
 
 app.post(
     "/api/auth/register",
@@ -5643,38 +5640,37 @@ function escapeHtml(value) {
 // START SERVER
 // ============================================================
 
-async function startServer() {
+async function initializeBackend() {
+    while (!databaseReady) {
+        try {
+            databaseInitError = null;
+            console.log("Initializing PostgreSQL / Neon database...");
+            await initializeDatabase();
+            databaseReady = true;
+            databaseInitError = null;
 
-    try {
-
-        await initializeDatabase();
-
-        app.listen(
-            PORT,
-            async () => {
-
-                console.log(
-                    `Echo Air Group backend running on port ${PORT}`
-                );
-
-                console.log(
-                    "Database: Neon PostgreSQL"
-                );
-
-                await startDiscordBot();
-                await startAutomaticFlightSync();
-            }
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Failed to start Echo Air Group backend:",
-            error
-        );
-
-        process.exit(1);
+            console.log("Database initialization completed; API routes are ready.");
+            await startDiscordBot();
+            await startAutomaticFlightSync();
+            return;
+        } catch (error) {
+            databaseInitError = String(error && error.message || "Unknown database initialization error");
+            console.error("Backend database initialization failed; retrying in 15 seconds:", databaseInitError);
+            await sleep(15000);
+        }
     }
+}
+
+async function startServer() {
+    const server = app.listen(PORT, () => {
+        console.log(`Echo Air Group backend listening on port ${PORT}`);
+        void initializeBackend();
+    });
+
+    server.on("error", error => {
+        console.error("Echo Air Group HTTP listener error:", error);
+        process.exit(1);
+    });
 }
 
 startServer();
