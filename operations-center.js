@@ -184,13 +184,12 @@
         }
         flights.forEach((flight) => {
             const card = node("article", "ops-actual-item");
-            const hours = Number(flight.durationHours || 0);
-            const hoursText = hours > 0 ? (Math.round(hours * 100) / 100) + " h" : "Duration not supplied";
+            const durationText = Number(flight.durationMinutes || 0) > 0 ? duration(flight.durationMinutes) : "Duration not supplied";
             const distanceText = Number(flight.distanceNm || 0) > 0 ? " · " + Math.round(flight.distanceNm).toLocaleString("en-GB") + " nm" : "";
             card.append(
                 node("strong", "", (flight.departure || "----") + " → " + (flight.arrival || "----")),
                 node("small", "", (flight.pilotName || "Echo pilot") + " · " + (flight.aircraft || "Aircraft not supplied")),
-                node("small", "", dateTime(flight.departureTime) + " · " + hoursText + distanceText)
+                node("small", "", dateTime(flight.departureTime) + " · " + durationText + distanceText)
             );
             root.appendChild(card);
         });
