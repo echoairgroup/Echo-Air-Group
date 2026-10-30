@@ -661,7 +661,7 @@ function registerOperationsRoutes(app, dependencies) {
                 await client.query("ROLLBACK");
                 return res.status(404).json({ error: "Event not found." });
             }
-            if (new Date(event.starts_at).getTime() < Date.now() - 3600000) {
+            if (new Date(event.starts_at).getTime() <= Date.now()) {
                 await client.query("ROLLBACK");
                 return res.status(409).json({ error: "Registration for this event is closed." });
             }
@@ -736,20 +736,37 @@ function registerOperationsRoutes(app, dependencies) {
     app.patch("/api/platform/admin/community/events/:id", requirePermission("events.manage"), async (req, res) => {
         const id = Number.parseInt(req.params.id, 10);
         if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: "Invalid event ID." });
+        const client = await pool.connect();
         try {
-            const currentResult = await query("SELECT * FROM community_events WHERE id=$1", [id]);
+            await client.query("BEGIN");
+            const currentResult = await client.query("SELECT * FROM community_events WHERE id=$1 FOR UPDATE", [id]);
             const current = currentResult.rows[0];
-            if (!current) return res.status(404).json({ error: "Event not found." });
+            if (!current) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ error: "Event not found." });
+            }
             const event = normalizeEvent(req.body, current);
-            await query(
+            const attendance = await client.query(
+                "SELECT COUNT(*)::INTEGER AS count FROM community_event_rsvps WHERE event_id=$1 AND status='attending'",
+                [id]
+            );
+            if (event.capacity !== null && Number(attendance.rows[0].count || 0) > event.capacity) {
+                await client.query("ROLLBACK");
+                return res.status(409).json({ error: "Event capacity cannot be reduced below the number of pilots already attending." });
+            }
+            await client.query(
                 "UPDATE community_events SET title=$1,description=$2,event_type=$3,location=$4,starts_at=$5,ends_at=$6,capacity=$7,published=$8,updated_at=CURRENT_TIMESTAMP WHERE id=$9",
                 [event.title,event.description,event.eventType,event.location,event.startsAt,event.endsAt,event.capacity,event.published,id]
             );
-            await writeAudit(req, "community.event.update", "community_event", id, { title: event.title, published: event.published });
+            await client.query("COMMIT");
+            await writeAudit(req, "community.event.update", "community_event", id, { title: event.title, published: event.published, capacity: event.capacity });
             return res.json({ message: "Community event updated.", id });
         } catch (error) {
+            await client.query("ROLLBACK").catch(() => {});
             const clientError = /Enter|Choose|valid|before|Capacity/.test(error.message || "");
             return res.status(clientError ? 400 : 500).json({ error: clientError ? error.message : "Unable to update community event." });
+        } finally {
+            client.release();
         }
     });
 
