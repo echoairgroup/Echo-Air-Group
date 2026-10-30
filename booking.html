@@ -10,7 +10,7 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Book a Flight — Echo Air Group</title>
+<title>Demo Flight Booking — Echo Air Group</title>
 
 <style>
 
@@ -1297,7 +1297,7 @@ header {
 
 
 /* =========================================================
-   BOARDING PASS
+   DEMO PASS
 ========================================================= */
 
 .boarding-pass {
@@ -1918,7 +1918,7 @@ footer {
             <a href="manual.html">Pilot Manual</a>
             <a href="contact.html">Contact Us</a>
             <a href="ranking.html">Ranking</a>
-            <a class="active" href="booking.html">Book a flight</a>
+            <a class="active" href="booking.html">Demo booking</a>
         </nav>
 
         <a class="register" href="join.html">REGISTER</a>
@@ -1947,7 +1947,7 @@ footer {
             <a href="manual.html">Pilot Manual</a>
             <a href="contact.html">Contact Us</a>
             <a href="ranking.html">Ranking</a>
-            <a href="booking.html">Book a flight</a>
+            <a href="booking.html">Demo booking</a>
             <a href="join.html">Register</a>
         </div>
     </div>
@@ -2859,135 +2859,29 @@ Continue to payment →
 </section>
 
 
-<!-- =====================================================
-     STEP 5
-===================================================== -->
-
-<section
-    class="panel"
-    id="panel5"
->
-
-<h3>
-Payment
-</h3>
-
-<p class="panel-subtitle">
-This is a virtual airline demonstration booking.
-No real payment will be processed.
-</p>
-
-
-<div class="payment-box">
-
-
-<div class="payment-methods">
-
-<button
-    class="payment-method selected"
->
-💳 Card
-</button>
-
-<button
-    class="payment-method"
->
- Apple Pay
-</button>
-
-<button
-    class="payment-method"
->
-PayPal
-</button>
-
-</div>
-
-
-<div class="card-fields">
-
-
-<div class="field full">
-
-<label>
-Cardholder name
-</label>
-
-<input
-    id="cardName"
-    placeholder="CARDHOLDER NAME"
->
-
-</div>
-
-
-<div class="field full">
-
-<label>
-Card number (DO NOT FILL IN YOUR REAL CARD NUMBER!)
-</label>
-
-<input
-    id="cardNumber"
-    maxlength="19"
-    placeholder="1234 5678 9012 3456"
->
-
-</div>
-
-
-<div class="field">
-
-<label>
-Expiry
-</label>
-
-<input
-    id="expiry"
-    placeholder="MM/YY"
->
-
-</div>
-
-
-<div class="field">
-
-<label>
-CVV
-</label>
-
-<input
-    id="cvv"
-    maxlength="4"
-    placeholder="123"
->
-
-</div>
-
-
-</div>
-
-</div>
-
-
-<div class="actions">
-
-<button
-    class="btn btn-secondary"
-    onclick="goStep(4)"
->
-← Back
-</button>
-
-<button
-    class="btn btn-primary"
-    onclick="completeBooking()"
->
-Complete booking ✈
-</button>
-
-</div>
-
+<!-- STEP 5: demonstration confirmation only -->
+<section class="panel" id="panel5">
+    <h3>Demo confirmation</h3>
+    <p class="panel-subtitle">
+        This is a virtual-airline demonstration only. No real flight is reserved, no ticket is issued and no payment is processed.
+        Never enter card details on this page.
+    </p>
+    <div class="payment-box" role="note" aria-label="Demo booking notice">
+        <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+            <div style="width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:12px;background:#eef6df;color:#557b1e;font-size:22px" aria-hidden="true">✈</div>
+            <div style="flex:1;min-width:220px">
+                <strong style="display:block;color:#273025;font-size:16px;margin:2px 0 7px">Create a sample boarding pass</strong>
+                <p style="margin:0;color:#687267;line-height:1.7;font-size:13px">
+                    Your selection creates a local demonstration pass for display and download. It is not connected to an airline reservation system.
+                </p>
+            </div>
+            <span style="display:inline-flex;align-items:center;padding:7px 10px;border-radius:99px;background:#fff3d8;color:#8a5a0a;font-size:10px;font-weight:900;letter-spacing:.08em">DEMO ONLY</span>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="btn btn-secondary" type="button" onclick="goStep(4)">← Back</button>
+        <button class="btn btn-primary" type="button" onclick="completeBooking()">Create demo boarding pass</button>
+    </div>
 </section>
 
 
@@ -3171,13 +3065,10 @@ Total
 ✓
 </div>
 
-<h2>
-Booking confirmed!
-</h2>
+<h2>Demo pass created</h2>
 
 <p>
-Your Echo Air Group flight has been successfully booked.
-Your digital boarding pass is ready below.
+This is a sample itinerary only. No flight reservation or ticket has been created, and no payment has been taken.
 </p>
 
 
@@ -3207,9 +3098,7 @@ ECHO AIR GROUP
 </div>
 
 
-<div class="pass-type">
-BOARDING PASS
-</div>
+<div class="pass-type">DEMO ONLY · NOT VALID FOR TRAVEL</div>
 
 </div>
 
@@ -3343,17 +3232,9 @@ EAG123ABC
 </div>
 
 
-<div class="qr-box">
-
-<img
-    id="qrCode"
-    alt="Boarding pass QR code"
->
-
-<small>
-SCAN AT BOARDING
-</small>
-
+<div class="qr-box demo-pass-notice">
+    <strong>DEMO ONLY</strong>
+    <small>NOT VALID FOR CHECK-IN OR TRAVEL</small>
 </div>
 
 
@@ -3446,7 +3327,7 @@ Zone
     style="margin-top:25px"
     onclick="newBooking()"
 >
-Book another flight
+Try another demo flight
 </button>
 
 </section>
@@ -3530,7 +3411,7 @@ Book another flight
                 <a href="manual.html">Pilot Manual</a>
                 <a href="contact.html">Contact Us</a>
                 <a href="ranking.html">Ranking</a>
-                <a href="booking.html">Book a flight</a>
+                <a href="booking.html">Demo booking</a>
                 <a href="join.html">Register</a>
                 <a href="index.html#operations">Operations</a>
                 <a href="index.html#faq">FAQ</a>
@@ -5015,111 +4896,50 @@ function updateSummary() {
    COMPLETE BOOKING
 ========================================================= */
 
-function completeBooking() {
-
-    const cardName =
-        document.getElementById(
-            "cardName"
-        ).value.trim();
-
-    const cardNumber =
-        document.getElementById(
-            "cardNumber"
-        ).value.trim();
-
-    const expiry =
-        document.getElementById(
-            "expiry"
-        ).value.trim();
-
-    const cvv =
-        document.getElementById(
-            "cvv"
-        ).value.trim();
-
-
-    if (
-        !cardName ||
-        !cardNumber ||
-        !expiry ||
-        !cvv
-    ) {
-
-        showToast(
-            "Please complete the payment fields."
-        );
-
+function createDemoBookingPass() {
+    if (!selectedFlight || !selectedSeat) {
+        showToast("Please select a flight and a seat before creating your demo pass.");
         return;
-
     }
 
+    const firstName = document.getElementById("firstName").value.trim();
+    const lastName = document.getElementById("lastName").value.trim();
+    if (!firstName || !lastName) {
+        showToast("Please complete the passenger details first.");
+        goStep(3);
+        return;
+    }
 
-    bookingReference =
-        generateBookingReference();
-
-
+    bookingReference = generateBookingReference();
     generateBoardingPass();
 
-
-    document.getElementById(
-        "bookingWorkspace"
-    ).style.display = "none";
-
-
-    document.getElementById(
-        "flightSection"
-    ).style.display = "none";
-
-
-    document.getElementById(
-        "confirmation"
-    ).classList.add("active");
-
-
-    document.getElementById(
-        "confirmation"
-    ).scrollIntoView({
-        behavior: "smooth"
+    document.getElementById("bookingWorkspace").style.display = "none";
+    document.getElementById("flightSection").style.display = "none";
+    document.getElementById("confirmation").classList.add("active");
+    document.getElementById("confirmation").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
     });
 
+    // Store only a demo reference and itinerary metadata; no payment data or passenger PII.
+    localStorage.setItem("echoAirLastBooking", JSON.stringify({
+        demo: true,
+        reference: bookingReference,
+        flightNumber: selectedFlight.number,
+        from: airports[selectedFlight.from].code,
+        to: airports[selectedFlight.to].code,
+        date: selectedFlight.date,
+        seat: selectedSeat,
+        cabin: selectedCabin
+    }));
 
-    localStorage.setItem(
-        "echoAirLastBooking",
-        JSON.stringify({
-            reference:
-                bookingReference,
-
-            flight:
-                selectedFlight,
-
-            seat:
-                selectedSeat,
-
-            cabin:
-                selectedCabin,
-
-            passenger:
-                document.getElementById(
-                    "firstName"
-                ).value +
-                " " +
-                document.getElementById(
-                    "lastName"
-                ).value
-        })
-    );
-
-
-    showToast(
-        "Booking confirmed!"
-    );
-
+    showToast("Demo pass created. No reservation or payment was made.");
 }
 
+function completeBooking() {
+    createDemoBookingPass();
+}
 
-/* =========================================================
-   BOOKING REFERENCE
-========================================================= */
 
 function generateBookingReference() {
 
@@ -5151,154 +4971,31 @@ function generateBookingReference() {
 
 
 /* =========================================================
-   BOARDING PASS
+   DEMO PASS
 ========================================================= */
 
 function generateBoardingPass() {
+    const passenger = (
+        document.getElementById("firstName").value + " " +
+        document.getElementById("lastName").value
+    ).trim();
 
-    const passenger =
-        (
-            document.getElementById(
-                "firstName"
-            ).value +
-            " " +
-            document.getElementById(
-                "lastName"
-            ).value
-        ).trim();
+    const from = airports[selectedFlight.from];
+    const to = airports[selectedFlight.to];
 
-
-    const from =
-        airports[selectedFlight.from];
-
-    const to =
-        airports[selectedFlight.to];
-
-
-    document.getElementById(
-        "passFrom"
-    ).textContent =
-        from.code;
-
-
-    document.getElementById(
-        "passFromName"
-    ).textContent =
-        from.city;
-
-
-    document.getElementById(
-        "passTo"
-    ).textContent =
-        to.code;
-
-
-    document.getElementById(
-        "passToName"
-    ).textContent =
-        to.city;
-
-
-    document.getElementById(
-        "passPassenger"
-    ).textContent =
-        passenger;
-
-
-    document.getElementById(
-        "passFlight"
-    ).textContent =
-        selectedFlight.number;
-
-
-    document.getElementById(
-        "passDate"
-    ).textContent =
-        formatDateReadable(
-            selectedFlight.date
-        );
-
-
-    document.getElementById(
-        "passDeparture"
-    ).textContent =
-        selectedFlight.departure;
-
-
-    document.getElementById(
-        "passSeat"
-    ).textContent =
-        selectedSeat;
-
-
-    document.getElementById(
-        "passCabin"
-    ).textContent =
-        selectedCabin;
-
-
-    document.getElementById(
-        "passBooking"
-    ).textContent =
-        bookingReference;
-
-
-    /*
-       Create a QR code using the free QRServer
-       API. The QR contains the booking information.
-    */
-
-    const qrData =
-        JSON.stringify({
-
-            airline:
-                "Echo Air Group",
-
-            booking:
-                bookingReference,
-
-            flight:
-                selectedFlight.number,
-
-            from:
-                from.code,
-
-            to:
-                to.code,
-
-            date:
-                selectedFlight.date,
-
-            departure:
-                selectedFlight.departure,
-
-            seat:
-                selectedSeat,
-
-            cabin:
-                selectedCabin,
-
-            passenger:
-                passenger
-
-        });
-
-
-    const qr =
-        "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://cdn.discordapp.com/attachments/1535409438683439314/1540047293410181190/https_discord_gg_e7ePxYA24-removebg-preview.png?ex=6a88884f&is=6a8736cf&hm=a22b7d85d3be83b1c5b06fb69067a6fe844151f51c66ad68729ee832ee443b5e&" +
-        encodeURIComponent(qrData);
-
-
-    document.getElementById(
-        "qrCode"
-    ).src = qr;
-
+    document.getElementById("passFrom").textContent = from.code;
+    document.getElementById("passFromName").textContent = from.city;
+    document.getElementById("passTo").textContent = to.code;
+    document.getElementById("passToName").textContent = to.city;
+    document.getElementById("passPassenger").textContent = passenger;
+    document.getElementById("passFlight").textContent = selectedFlight.number;
+    document.getElementById("passDate").textContent = formatDateReadable(selectedFlight.date);
+    document.getElementById("passDeparture").textContent = selectedFlight.departure;
+    document.getElementById("passSeat").textContent = selectedSeat;
+    document.getElementById("passCabin").textContent = selectedCabin;
+    document.getElementById("passBooking").textContent = bookingReference;
 }
 
-
-/* =========================================================
-   DOWNLOAD BOARDING PASS
-========================================================= */
 
 function downloadBoardingPass() {
 
@@ -5370,7 +5067,7 @@ h1 {
 <div class="pass">
 
 <div class="top">
-ECHO AIR GROUP · BOARDING PASS
+ECHO AIR GROUP · DEMO PASS
 </div>
 
 <div class="main">
@@ -5410,7 +5107,7 @@ ${pass.innerHTML}
     link.href = url;
 
     link.download =
-        `Echo-Air-Group-${bookingReference}.html`;
+        `Echo-Air-Group-Demo-${bookingReference}.html`;
 
     link.click();
 
