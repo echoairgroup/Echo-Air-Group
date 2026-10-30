@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="site-shell.css">
     <link rel="stylesheet" href="admin-panel.css">
+    <link rel="stylesheet" href="platform-admin.css">
 </head>
 <body>
 <header id="siteHeader">
@@ -112,6 +113,8 @@
                 <button id="logoutButton" class="admin-button secondary" type="button">Sign out</button>
             </div>
 
+            <section id="platformOverview" class="admin-panel" aria-label="Echo Air Group platform overview"></section>
+
             <div class="admin-stats" aria-label="Website content totals">
                 <div class="admin-stat"><span>Total items</span><strong id="statTotal">0</strong></div>
                 <div class="admin-stat"><span>Published</span><strong id="statPublished">0</strong></div>
@@ -125,6 +128,13 @@
                 <button class="admin-tab" type="button" data-admin-tab="applications">Applications <span id="applicationTabCount" class="admin-tab-count">0</span></button>
                 <button class="admin-tab" type="button" data-admin-tab="settings">Discord settings</button>
                 <button class="admin-tab" type="button" data-admin-tab="import">Import JSON</button>
+                <button class="admin-tab" type="button" data-admin-tab="operations">Pilot activity</button>
+                <button class="admin-tab" type="button" data-admin-tab="fleet">Fleet intelligence</button>
+                <button class="admin-tab" type="button" data-admin-tab="system">System monitoring</button>
+                <button class="admin-tab" type="button" data-admin-tab="roles">Admin roles</button>
+                <button class="admin-tab" type="button" data-admin-tab="audit">Audit log</button>
+                <button class="admin-tab" type="button" data-admin-tab="notifications">Notifications</button>
+                <button class="admin-tab" type="button" data-admin-tab="academy">Aviation Academy</button>
             </nav>
 
             <section class="admin-view" data-admin-view="overview">
@@ -245,7 +255,7 @@
                 <div class="admin-view-header">
                     <div>
                         <h2>Applications inbox</h2>
-                        <p>Review pilot and management applications, keep private notes, update each decision and export your applicant list. New forms continue to email the team through FormSubmit.</p>
+                        <p>Review pilot and management applications, keep private notes, update each decision and export your applicant list. New applications are delivered by Forminit and copied into this private inbox.</p>
                     </div>
                     <div class="admin-actions">
                         <button id="refreshApplicationsButton" class="admin-button secondary" type="button">Refresh</button>
@@ -290,7 +300,7 @@
                 <div id="adminApplicationList" class="admin-application-list" style="margin-top:15px">
                     <div class="admin-empty">Loading applications…</div>
                 </div>
-                <p class="admin-help application-privacy-note">Applications include personal information. Keep this page restricted to authorized administrators. Earlier FormSubmit emails are not imported automatically; this inbox stores new submissions made after the application tracker was enabled.</p>
+                <p class="admin-help application-privacy-note">Applications include personal information. Keep this page restricted to authorized administrators. Earlier FormSubmit emails are not imported automatically; new Forminit submissions are stored here when the API is available.</p>
             </section>
 
             <section class="admin-view" data-admin-view="settings" hidden>
@@ -344,6 +354,61 @@
                         <button id="importButton" class="admin-button primary" type="submit">Import items</button>
                     </div>
                 </form>
+            </section>
+
+            <section class="admin-view" data-admin-view="operations" hidden>
+                <div class="admin-view-header"><div><h2>Pilot activity & attendance</h2><p>Automatically matched to each Echo pilot through their linked NewSky account. Activity is based on completed flights in the last 30 days.</p></div><button class="admin-button secondary" type="button" data-platform-refresh="operations">Refresh</button></div>
+                <div id="platformOperations"><div class="admin-empty">Loading pilot activity…</div></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="fleet" hidden>
+                <div class="admin-view-header"><div><h2>Fleet intelligence</h2><p>Aircraft observed in NewSky flight history, including registrations, activity and inferred home bases.</p></div><button class="admin-button secondary" type="button" data-platform-refresh="fleet">Refresh</button></div>
+                <div id="platformFleet"><div class="admin-empty">Loading fleet data…</div></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="system" hidden>
+                <div class="admin-view-header"><div><h2>System monitoring</h2><p>Live backend, database, Discord and NewSky synchronization health.</p></div><button class="admin-button secondary" type="button" data-platform-refresh="system">Refresh</button></div>
+                <div id="platformSystem"><div class="admin-empty">Checking platform health…</div></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="roles" hidden>
+                <div class="admin-view-header"><div><h2>Administrator access</h2><p>Assign separate admin roles to existing Echo pilot accounts. Each administrator uses their own Pilot Dashboard login.</p></div></div>
+                <form id="platformRoleForm" class="platform-admin-form">
+                    <div><label for="platformRoleUsername">Existing Echo username</label><input id="platformRoleUsername" required autocomplete="off" placeholder="pilotusername"></div>
+                    <div><label for="platformNewRole">Administrator role</label><select id="platformNewRole" required><option value="">Choose role</option></select></div>
+                    <div class="full"><div id="platformRoleStatus" class="admin-status" role="status" aria-live="polite"></div><button class="admin-button primary" type="submit">Assign administrator role</button></div>
+                </form>
+                <div id="platformRoles"><div class="admin-empty">Loading admin access…</div></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="audit" hidden>
+                <div class="admin-view-header"><div><h2>Administrator activity log</h2><p>Successful admin actions are recorded with the acting account, route, target and timestamp. Form contents and passwords are not copied into the log.</p></div><button class="admin-button secondary" type="button" data-platform-refresh="audit">Refresh</button></div>
+                <div id="platformAudit"><div class="admin-empty">Loading audit history…</div></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="notifications" hidden>
+                <div class="admin-view-header"><div><h2>Platform notifications</h2><p>Create operational notices for the admin team. Notices are stored in Neon and can be reviewed here.</p></div></div>
+                <form id="platformNotificationForm" class="platform-admin-form">
+                    <div><label for="platformNotificationTitle">Title</label><input id="platformNotificationTitle" maxlength="120" required></div>
+                    <div><label for="platformNotificationLevel">Priority</label><select id="platformNotificationLevel"><option value="info">Information</option><option value="success">Success</option><option value="warning">Warning</option><option value="critical">Critical</option></select></div>
+                    <div class="full"><label for="platformNotificationMessage">Message</label><textarea id="platformNotificationMessage" maxlength="2000" required></textarea></div>
+                    <div class="full"><div id="platformNotificationStatus" class="admin-status" role="status" aria-live="polite"></div><button class="admin-button primary" type="submit">Publish notification</button></div>
+                </form>
+                <div id="platformNotifications"><div class="admin-empty">Loading notifications…</div></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="academy" hidden>
+                <div class="admin-view-header"><div><h2>Aviation Academy management</h2><p>Publish, hide and create real courses, lessons and graded quizzes. Learner progress and certificates are stored against existing Echo pilot accounts.</p></div><button class="admin-button secondary" type="button" data-platform-refresh="academy">Refresh</button></div>
+                <div id="platformAcademy"><div class="admin-empty">Loading courses…</div></div>
+                <div class="admin-panel" style="margin-top:18px">
+                    <h3>Create a course</h3>
+                    <p class="admin-help">Provide a JSON object with slug, title, description, lessons[] and quiz{title,passPercent,questions[]}. Each question needs prompt, options[], correctOption (zero-based index) and optional explanation.</p>
+                    <form id="platformCourseForm">
+                        <div class="admin-field"><label for="platformCourseJson">Course JSON</label><textarea id="platformCourseJson" rows="14" style="width:100%;font-family:monospace" required placeholder='{"slug":"new-course","title":"New course","description":"Course overview","lessons":[{"title":"Lesson 1","body":"Lesson content","minutes":10}],"quiz":{"title":"Knowledge check","passPercent":75,"questions":[{"prompt":"Question?","options":["A","B"],"correctOption":0,"explanation":"Why A is correct."}]}}'></textarea></div>
+                        <div id="platformCourseStatus" class="admin-status" role="status" aria-live="polite"></div>
+                        <button class="admin-button primary" type="submit">Create Academy course</button>
+                    </form>
+                </div>
             </section>
         </section>
     </div>
@@ -441,5 +506,6 @@
 <script src="site-shell.js"></script>
 <script src="site-content.js"></script>
 <script src="admin-panel.js"></script>
+<script src="platform-admin.js"></script>
 </body>
 </html>
