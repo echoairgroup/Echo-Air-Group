@@ -7,8 +7,7 @@ const ROLE_PERMISSIONS = {
     admin: [
         "overview.read", "system.read", "operations.read", "fleet.read",
         "audit.read", "notifications.read", "notifications.write",
-        "academy.read", "academy.write", "applications.read", "applications.write",
-        "content.read", "content.write"
+        "academy.read", "academy.write"
     ],
     operations_manager: ["overview.read", "system.read", "operations.read", "fleet.read", "audit.read"],
     academy_manager: ["overview.read", "academy.read", "academy.write"],
@@ -340,24 +339,6 @@ function registerPlatformRoutes(app, dependencies) {
             console.error("Platform audit write failed:", error.message);
         }
     }
-
-    app.use("/api", (req, res, next) => {
-        if (!req.path.startsWith("/admin/") && !req.path.startsWith("/platform/admin/")) return next();
-        if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return next();
-        res.once("finish", () => {
-            if (res.statusCode < 200 || res.statusCode >= 400) return;
-            const actor = req.user;
-            if (!actor) return;
-            const action = req.method.toLowerCase() + " " + String(req.path).slice(0, 160);
-            void query(
-                "INSERT INTO platform_audit_log (actor_id, actor_username, action, target_type, target_id, details) " +
-                "VALUES ($1,$2,$3,$4,$5,$6::jsonb)",
-                [actor.id, actor.username || "unknown", action, "admin_api", null,
-                    JSON.stringify({ method: req.method, path: req.path, status: res.statusCode })]
-            ).catch(error => console.error("Admin audit event failed:", error.message));
-        });
-        next();
-    });
 
     app.get("/api/platform/status", async (req, res) => {
         const startedAt = new Date(Date.now() - process.uptime() * 1000).toISOString();
