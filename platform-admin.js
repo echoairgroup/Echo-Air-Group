@@ -116,6 +116,47 @@
       if(!data.notifications?.length)root.appendChild(node("div","admin-empty","No active notifications."));
     }catch(error){showError(root,error);}
   }
+  async function loadRoutes(){
+    const root=$("#platformRoutes");if(!root)return;
+    try{
+      const data=await request("/platform/route-network");
+      const routes=data.routes||[];
+      table(root,["Route","Flights","Last 30 days","Pilots","Last flown","Status","Action"],routes.map(route=>[
+        route.departure+" → "+route.arrival,
+        route.totalFlights,
+        route.flights30d,
+        route.pilotCount,
+        fmtDate(route.lastFlownAt),
+        route.archived?"Archived":"Active",
+        route.archived?"Restore":"Archive"
+      ]));
+      root.querySelectorAll("tbody tr").forEach((row,index)=>{
+        const route=routes[index];if(!route)return;
+        const button=node("button","admin-button "+(route.archived?"secondary":"danger"),route.archived?"Restore route":"Archive route");
+        button.type="button";
+        button.addEventListener("click",async()=>{
+          const action=route.archived?"restore":"archive";
+          const promptText=route.archived
+            ?"Restore "+route.departure+" → "+route.arrival+" to the active route list?"
+            :"Archive "+route.departure+" → "+route.arrival+"? The completed flight history will remain available.";
+          if(!window.confirm(promptText))return;
+          button.disabled=true;
+          try{
+            await request("/platform/route-network/"+encodeURIComponent(route.departure)+"/"+encodeURIComponent(route.arrival),{
+              method:"PUT",
+              body:JSON.stringify({archived:!route.archived,reason:route.archived?"":"Archived from Admin Center"})
+            });
+            await loadRoutes();
+          }catch(error){
+            button.disabled=false;
+            window.alert(error.message);
+          }
+        });
+        row.lastElementChild.replaceChildren(button);
+      });
+      root.prepend(node("p","platform-admin-muted",(routes.length||0)+" routes found from actual NewSky-imported flights · Last sync: "+fmtDate(data.lastSyncedAt)));
+    }catch(error){showError(root,error);}
+  }
   async function loadAcademy(){
     const root=$("#platformAcademy");if(!root)return;
     try{const data=await request("/platform/admin/academy/courses");table(root,["Course","Category","Level","Lessons","Enrolled pilots","Visibility","Action"],(data.courses||[]).map(c=>[
@@ -128,13 +169,14 @@
     if(name==="overview")return loadOverview();
     if(name==="operations")return loadOperations();
     if(name==="fleet")return loadFleet();
+    if(name==="routes")return loadRoutes();
     if(name==="system")return loadSystem();
     if(name==="roles")return loadRoles();
     if(name==="audit")return loadAudit();
     if(name==="notifications")return loadNotifications();
     if(name==="academy")return loadAcademy();
   }
-  const loadable=new Set(["overview","operations","fleet","system","roles","audit","notifications","academy"]);
+  const loadable=new Set(["overview","operations","routes","fleet","system","roles","audit","notifications","academy"]);
   document.addEventListener("click",event=>{
     const refresh=event.target.closest("[data-platform-refresh]");
     if(refresh&&loadable.has(refresh.dataset.platformRefresh))loadView(refresh.dataset.platformRefresh);
