@@ -209,7 +209,7 @@ function registerOperationsRoutes(app, dependencies) {
     // Public, factual operational summary. Flight totals are derived only from NewSky-imported rows.
     app.get("/api/operations/summary", async (req, res) => {
         try {
-            const [flightStats, plans, events, sync] = await Promise.all([
+            const [flightStats, plans, events, sync, recentFlights] = await Promise.all([
                 query(
                     "SELECT COUNT(*)::INTEGER AS total_flights, " +
                     "COUNT(*) FILTER (WHERE CASE WHEN dep_time ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' " +
@@ -220,12 +220,29 @@ function registerOperationsRoutes(app, dependencies) {
                 ),
                 query("SELECT COUNT(*)::INTEGER AS count FROM operations_flight_plans WHERE published = TRUE AND status <> 'cancelled' AND scheduled_departure >= CURRENT_TIMESTAMP"),
                 query("SELECT COUNT(*)::INTEGER AS count FROM community_events WHERE published = TRUE AND starts_at >= CURRENT_TIMESTAMP"),
-                query("SELECT last_completed_at, status FROM flight_sync_state WHERE sync_key = 'global' LIMIT 1")
+                query("SELECT last_completed_at, status FROM flight_sync_state WHERE sync_key = 'global' LIMIT 1"),
+                query(
+                    "SELECT f.id, f.dep_icao, f.arr_icao, f.aircraft, f.duration, f.distance, f.dep_time, " +
+                    "COALESCE(NULLIF(BTRIM(u.display_name),''),u.username) AS pilot_name " +
+                    "FROM flights f JOIN users u ON u.id=f.user_id " +
+                    "ORDER BY CASE WHEN f.dep_time ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' THEN f.dep_time::timestamptz ELSE NULL END DESC NULLS LAST " +
+                    "LIMIT 9"
+                )
             ]);
             return res.json({
                 flights: flightStats.rows[0] || { total_flights: 0, flights_30d: 0, active_pilots_30d: 0 },
                 upcomingPlans: Number(plans.rows[0].count || 0),
                 upcomingEvents: Number(events.rows[0].count || 0),
+                recentFlights: recentFlights.rows.map(row => ({
+                    id: Number(row.id),
+                    departure: row.dep_icao || null,
+                    arrival: row.arr_icao || null,
+                    aircraft: row.aircraft || null,
+                    durationHours: Number(row.duration || 0),
+                    distanceNm: Number(row.distance || 0),
+                    departureTime: row.dep_time || null,
+                    pilotName: row.pilot_name || "Echo pilot"
+                })),
                 sync: sync.rows[0] || null,
                 liveTracking: { available: false, reason: "Live aircraft positions are not currently supplied by the connected flight-data integration." }
             });
