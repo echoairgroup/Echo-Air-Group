@@ -45,6 +45,19 @@ Fleet information is generated from aircraft actually present in imported NewSky
 
 The route map uses completed/imported flights with both departure and arrival identifiers. It is historical activity, not live aircraft tracking. All activity calculations are based on the data already synchronized into the Echo database.
 
+
+## Operations Center and Community
+
+The website now includes two linked modules, available from the shared navigation:
+
+- **Operations Center:** public counts for NewSky-imported flights, the published operations schedule, pilot self-assignment to an open plan, and staff-only schedule management.
+- **Flight planning:** authorised administrators and `operations_manager` staff can create, edit, publish and cancel planned flights. Plans remain separate from imported completed-flight records; a plan never increments a pilot's actual flight totals.
+- **Community calendar:** pilots can RSVP as attending or interested, review their own registrations and cancel an RSVP. Event capacity is enforced on the server.
+- **Event management:** administrators and `operations_manager` staff can publish, edit and delete events. Event changes are written to the platform audit log.
+- **Announcements:** the Community page combines active platform notices with published News and Announcement content items.
+
+Live aircraft positions are intentionally marked unavailable until a real telemetry provider is configured. The Operations Center does not invent coordinates or treat planned flights as active flights.
+
 ## Website content management
 
 The existing Website Content tools remain available to root administrators and delegated `admin` accounts:
