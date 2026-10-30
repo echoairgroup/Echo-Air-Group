@@ -7,11 +7,13 @@ const ROLE_PERMISSIONS = {
     admin: [
         "overview.read", "system.read", "operations.read", "routes.write", "fleet.read",
         "audit.read", "notifications.read", "notifications.write",
-        "academy.read", "academy.write", "applications.read", "applications.write",
-        "content.read", "content.write"
+        "academy.read", "academy.write", "academy.instructor", "academy.examiner",
+        "applications.read", "applications.write", "content.read", "content.write"
     ],
     operations_manager: ["overview.read", "system.read", "operations.read", "routes.write", "fleet.read", "audit.read"],
-    academy_manager: ["overview.read", "academy.read", "academy.write"],
+    academy_manager: ["overview.read", "academy.read", "academy.write", "academy.instructor", "academy.examiner"],
+    academy_instructor: ["overview.read", "academy.read", "academy.instructor"],
+    academy_examiner: ["overview.read", "academy.read", "academy.examiner"],
     analyst: ["overview.read", "system.read", "operations.read", "fleet.read", "audit.read"],
     viewer: ["overview.read", "operations.read", "fleet.read", "academy.read"]
 };
@@ -203,6 +205,110 @@ const SEED_COURSES = [
     }
 ];
 
+
+const EXTRA_ACADEMY_COURSES = [
+  {
+    slug:"advanced-atc-communications",title:"Advanced ATC Communications",subtitle:"Readbacks, phraseology and frequency discipline",
+    category:"Radio communications",level:"Intermediate",duration:55,
+    description:"Practice concise simulator radio calls, complete readbacks and workload management. Examples are for flight simulation only, not real-world clearances or operating instructions.",
+    lessons:[
+      ["Building a clear radio call",15,"A useful simulator call is concise and ordered. Identify who you are calling, your callsign, your current context and the relevant request or information. Listen before transmitting and avoid unnecessary calls when a frequency is busy.\n\nUse the phraseology and network rules published by the online ATC network you are using. Different networks may use different conventions."],
+      ["Readbacks and corrections",20,"A readback repeats the key information the controller needs the pilot to confirm. Listen for the elements that affect the next action, such as a runway, altitude, heading or route instruction. If you did not understand a transmission, ask for clarification rather than guessing.\n\nWhen a readback is corrected, acknowledge the change and repeat the amended information calmly."],
+      ["Busy frequencies and workload",20,"Prepare what you need to say before transmitting. Avoid stepping on another call, keep the microphone clear when not speaking and leave non-operational chat off a busy frequency.\n\nFor practice, listen to a busy simulator frequency and note the callsign, instruction and readback. Repeat the exercise in a quieter session."]
+    ],
+    quiz:{title:"Advanced ATC Communications Exam",pass:85,questions:[
+      ["What should a concise simulator radio call include?",["Who you are calling, your callsign and the relevant request","A long explanation of every cockpit action","Only the aircraft registration"],0,"A structured call gives the listener the context and information needed."],
+      ["What should you do if you do not understand an instruction?",["Guess what was intended","Ask for the transmission to be repeated or clarified","Continue without acknowledging it"],1,"Clarifying an unclear transmission is better than guessing."],
+      ["Why are readbacks useful?",["They confirm key information was heard correctly","They replace the need to listen","They make every transmission longer"],0,"A readback helps identify misunderstandings before the next action."],
+      ["A controller corrects your readback. What next?",["Ignore the correction","Argue over the frequency","Acknowledge and repeat the corrected information"],2,"A corrected readback closes the communication loop."],
+      ["A frequency is busy. Which action is most appropriate?",["Transmit unrelated chat","Listen first and keep calls concise","Transmit over another pilot"],1,"Listening and concise calls reduce unnecessary frequency congestion."],
+      ["Can this course be treated as a real-world clearance or authority?",["Yes, after passing the exam","No, it is simulator education only","Only at familiar airports"],1,"Echo Academy does not authorize real aircraft operation."]
+    ]}
+  },
+  {
+    slug:"instrument-flight-fundamentals",title:"Instrument Flight Fundamentals",subtitle:"IFR concepts, chart review and mode awareness",
+    category:"Instrument procedures",level:"Advanced",duration:65,
+    description:"Develop stronger knowledge of instrument-flight concepts, procedure review and simulator approach preparation. This is not a substitute for approved charts, aircraft documentation or qualified instruction.",
+    lessons:[
+      ["Instrument scan and navigation modes",20,"Learn which displays in your selected simulator aircraft show attitude, altitude, speed, vertical trend and navigation guidance. Confirm the active navigation source and mode before relying on the displayed guidance.\n\nReview your aircraft documentation and simulator navigation-data status before each practice session. A displayed route or course should not be assumed correct without checking it."],
+      ["Departure and arrival procedure review",25,"Start a procedure review by confirming the correct airport, runway and chart revision for the simulator session. Identify the route structure and relevant transition, then compare the chart with the flight plan loaded into the simulator. Resolve differences before beginning the exercise.\n\nThis course does not provide real-world minima or authorize instrument operations."],
+      ["Approach briefing and mode awareness",20,"A simulator approach briefing can cover the approach type, navigation source, missed-approach concept, configuration plan and points where you will check progress. Be explicit about which automation modes are active and what guidance they provide.\n\nPractice explaining the plan aloud before starting the approach."]
+    ],
+    quiz:{title:"Instrument Flight Theory Exam",pass:85,questions:[
+      ["What should be checked before using a simulator instrument procedure?",["Only that the name looks familiar","Airport, runway, chart revision and simulator navigation data","Only the aircraft livery"],1,"Procedure context and current simulator data should be checked together."],
+      ["Why is mode awareness important?",["It shows what guidance automation is actually providing","It removes the need to monitor instruments","It guarantees the aircraft follows every route"],0,"Pilots should understand and monitor active modes."],
+      ["What is a useful approach briefing element?",["The aircraft paint scheme","The leaderboard position","Approach type, navigation source and missed-approach concept"],2,"The briefing describes how the simulator approach will be practiced."],
+      ["What if chart information and the loaded simulator route disagree?",["Resolve the discrepancy before the exercise","Ignore the chart","Assume the simulator is always correct"],0,"Understand discrepancies before continuing."],
+      ["What does a disciplined instrument scan help monitor?",["One display only","Relevant flight indications and trends","Only the navigation route"],1,"A scan helps monitor the aircraft state represented by the instruments."],
+      ["Does this course establish real-world instrument privileges?",["Yes","No, virtual-simulation education only","Only with a 100% score"],1,"Passing an Echo Academy course is not a real-world qualification."]
+    ]}
+  },
+  {
+    slug:"aircraft-performance-and-fuel",title:"Aircraft Performance & Fuel Planning",subtitle:"Configuration, simulated fuel and post-flight review",
+    category:"Aircraft performance",level:"Intermediate",duration:60,
+    description:"Build a repeatable simulator workflow for loading, fuel awareness and performance review. Use the documentation for the selected aircraft and simulator add-on.",
+    lessons:[
+      ["Aircraft configuration and loading",20,"Review passenger, cargo and fuel values shown by your simulator aircraft before departure. Keep units consistent and confirm that the displayed configuration matches the scenario you intend to practice.\n\nThis is a simulator workflow lesson, not a source of actual aircraft loading limits."],
+      ["Fuel planning and monitoring",20,"Use the fuel-planning features and performance documentation supplied for your simulator aircraft. Compare your planned route with the expected simulated consumption, then monitor the fuel indications during the session. Record your assumptions so you can compare them with the result after landing.\n\nDo not copy figures from another aircraft or add-on; variants and simulator configurations may differ."],
+      ["Performance trends and debrief",20,"Observe how loading, weather settings, runway choice and aircraft configuration influence the performance shown in your simulator. Change one variable at a time when you are learning its effect.\n\nAfter landing, compare the plan with the simulator result and write down one success and one item to investigate."]
+    ],
+    quiz:{title:"Aircraft Performance Exam",pass:80,questions:[
+      ["Which source should be used for aircraft-specific performance values?",["A random value from another pilot","The selected aircraft documentation and tools","One generic value for every aircraft"],1,"Performance data is aircraft- and configuration-specific."],
+      ["Why should loading units be checked?",["To avoid mixing incompatible values","To increase leaderboard points","Units do not matter"],0,"Consistent units help prevent data-entry mistakes."],
+      ["What is a useful post-flight fuel review?",["Delete the plan","Compare planning assumptions with the simulator result","Assume the plan was exact"],1,"Comparing planned and recorded values can improve future simulator planning."],
+      ["How can you learn the effect of one performance variable?",["Change many settings at once","Ignore the result","Change one variable at a time and observe"],2,"A controlled comparison makes cause and effect clearer."],
+      ["Why avoid copying a fuel figure from a different aircraft?",["Variants and simulator configurations can differ","All aircraft have the same fuel flow","Fuel is unrelated to aircraft type"],0,"Aircraft and add-on differences make generic figures unreliable."],
+      ["Does this exam authorize real-world fuel planning?",["Yes","No, use approved sources and qualified training","Only on short flights"],1,"This course covers virtual simulation only."]
+    ]}
+  },
+  {
+    slug:"approach-landing-and-go-around",title:"Approach, Landing & Go-Around",subtitle:"Approach preparation, energy awareness and debrief",
+    category:"Flight handling",level:"Advanced",duration:60,
+    description:"Practice approach preparation, energy awareness and go-around scenarios in flight simulation. Real-world criteria and procedures must come from approved sources and qualified instruction.",
+    lessons:[
+      ["Approach setup and preparation",20,"Prepare the simulator approach before reaching the final phase of flight. Review the runway, approach type, weather setting, aircraft configuration and expected sequence. Keep relevant charts and aircraft documentation available.\n\nIf the simulator or aircraft behaves unexpectedly, pause and identify the cause before repeating the exercise."],
+      ["Energy awareness on final",20,"During a simulator approach, monitor how speed, descent path, configuration and automation interact. Make deliberate corrections using the controls and procedures appropriate to your add-on.\n\nDo not assume one generic speed or descent value is valid for every aircraft."],
+      ["Go-around practice and debrief",20,"Practice the go-around sequence for your selected aircraft in a controlled simulator scenario. Review how the aircraft's indications, configuration and flight path change during the exercise.\n\nReal-world go-around criteria are defined by approved operator and aircraft procedures; this course does not replace that instruction."]
+    ],
+    quiz:{title:"Approach and Landing Exam",pass:85,questions:[
+      ["What should be completed before a simulator approach?",["Approach and runway preparation, aircraft setup and chart review","Only a livery change","Nothing; preparation is unnecessary"],0,"Preparation reduces workload during an approach exercise."],
+      ["Why should approach speeds not be copied from another aircraft?",["The simulator does not model speed","Aircraft and configuration requirements differ","All approaches are identical"],1,"Use the selected aircraft's own documentation and training."],
+      ["What is a useful go-around training objective?",["Practice the aircraft-specific sequence in a controlled scenario","Avoid learning the procedure","Change unrelated cockpit settings"],0,"A planned scenario helps you understand the aircraft's sequence."],
+      ["You notice unexpected aircraft behaviour. What next?",["Ignore it","Increase workload","Pause and identify the cause before repeating"],2,"Understanding the cause is more useful than repeating an unexplained result."],
+      ["What should a post-approach debrief include?",["One success and one improvement point","Only the aircraft registration","No reflection"],0,"A short debrief creates a specific learning objective."],
+      ["Where do real-world go-around criteria come from?",["A virtual achievement","Approved procedures and qualified instruction","A simulator leaderboard"],1,"Virtual courses do not define real-world operating requirements."]
+    ]}
+  },
+  {
+    slug:"multi-crew-coordination",title:"Multi-Crew Coordination & CRM",subtitle:"Briefings, role clarity and shared awareness",
+    category:"Crew coordination",level:"Advanced",duration:55,
+    description:"Improve cooperation in shared simulator sessions with clear briefings, role-sharing, communication and constructive debriefs.",
+    lessons:[
+      ["Roles and task sharing",18,"Agree on the roles for the simulator exercise before starting. Decide who will manage the aircraft, navigation or communications and how tasks will be handed over. Exact roles depend on the aircraft add-on and training scenario.\n\nA task division should never prevent either pilot from speaking up when something is unclear."],
+      ["Briefings and shared awareness",18,"A useful briefing gives both pilots the same mental picture of the route, weather settings, expected workload and training objectives. Invite questions and confirm that both pilots understand the plan.\n\nShare relevant changes promptly rather than assuming the other pilot has seen an indication."],
+      ["Debriefing and constructive feedback",19,"Discuss the objective, what happened and what you would change next time. Give feedback about observable actions rather than personal traits. Invite the other pilot's perspective and agree on one practical improvement.\n\nThese CRM topics are simplified simulation learning and do not confer real-world crew qualifications."]
+    ],
+    quiz:{title:"Multi-Crew Coordination Exam",pass:85,questions:[
+      ["When should simulator crew roles be agreed?",["Before the exercise begins","Only after a disagreement","They never need discussion"],0,"Agreeing roles in advance makes task sharing clear."],
+      ["What is the purpose of a shared briefing?",["Make one pilot responsible for everything","Build a common understanding of the plan and objectives","Remove the need for communication"],1,"A briefing aligns the crew on the exercise and expected workload."],
+      ["What should a pilot do when something is unclear?",["Stay silent","Assume the other pilot noticed","Speak up and clarify"],2,"Open communication helps maintain shared awareness."],
+      ["Which feedback is most constructive?",["Describe observable actions and agree on an improvement","Make it personal","Avoid discussing the session"],0,"Specific feedback is easier to use and act on."],
+      ["What is a useful handover?",["Stop communicating","Explain task status and relevant changes","Change roles without telling anyone"],1,"A clear handover preserves shared understanding."],
+      ["Does this virtual CRM course provide a real-world qualification?",["Yes","Only for captains","No, simulator learning only"],2,"The Academy is a virtual-airline learning resource."]
+    ]}
+  }
+];
+for (const course of EXTRA_ACADEMY_COURSES) {
+  SEED_COURSES.push({
+    slug:course.slug,title:course.title,subtitle:course.subtitle,category:course.category,level:course.level,
+    duration:course.duration,description:course.description,
+    lessons:course.lessons.map(item=>({title:item[0],minutes:item[1],body:item[2]})),
+    quiz:{title:course.quiz.title,pass:course.quiz.pass,questions:course.quiz.questions.map(item=>({
+      prompt:item[0],options:item[1],correct:item[2],explanation:item[3]
+    }))}
+  });
+}
+
 function clamp(value, minimum, maximum) {
     const number = Number(value);
     return Number.isFinite(number) ? Math.max(minimum, Math.min(maximum, number)) : minimum;
@@ -219,7 +325,12 @@ async function initializePlatformSchema(query) {
         "ALTER TABLE flights ADD COLUMN IF NOT EXISTS aircraft_registration TEXT",
         "ALTER TABLE flights ADD COLUMN IF NOT EXISTS aircraft_type TEXT",
         "CREATE INDEX IF NOT EXISTS flights_dep_time_platform_idx ON flights (dep_time)",
-        "CREATE TABLE IF NOT EXISTS platform_admin_roles (user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK (role IN ('admin','operations_manager','academy_manager','analyst','viewer')), granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE TABLE IF NOT EXISTS platform_admin_roles (user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK (role IN ('admin','operations_manager','academy_manager','analyst','viewer','academy_instructor','academy_examiner')), granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+        "ALTER TABLE platform_admin_roles DROP CONSTRAINT IF EXISTS platform_admin_roles_role_check",
+        "ALTER TABLE platform_admin_roles ADD CONSTRAINT platform_admin_roles_role_check CHECK (role IN ('admin','operations_manager','academy_manager','analyst','viewer','academy_instructor','academy_examiner'))",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_bio TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_data BYTEA",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime TEXT",
         "CREATE TABLE IF NOT EXISTS platform_audit_log (id BIGSERIAL PRIMARY KEY, actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL, actor_username TEXT NOT NULL DEFAULT 'system', action TEXT NOT NULL, target_type TEXT NOT NULL DEFAULT 'system', target_id TEXT, details JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
         "CREATE INDEX IF NOT EXISTS platform_audit_log_created_idx ON platform_audit_log (created_at DESC)",
         "CREATE TABLE IF NOT EXISTS platform_route_overrides (departure_icao TEXT NOT NULL, arrival_icao TEXT NOT NULL, archived BOOLEAN NOT NULL DEFAULT FALSE, reason TEXT NOT NULL DEFAULT '', changed_by INTEGER REFERENCES users(id) ON DELETE SET NULL, changed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (departure_icao, arrival_icao))",
@@ -232,9 +343,17 @@ async function initializePlatformSchema(query) {
         "CREATE TABLE IF NOT EXISTS academy_enrollments (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, course_id INTEGER NOT NULL REFERENCES academy_courses(id) ON DELETE CASCADE, status TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress','completed')), progress_percent INTEGER NOT NULL DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100), enrolled_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, completed_at TIMESTAMPTZ, UNIQUE(user_id, course_id))",
         "CREATE TABLE IF NOT EXISTS academy_training_flights (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, flight_id INTEGER NOT NULL REFERENCES flights(id) ON DELETE CASCADE, course_id INTEGER REFERENCES academy_courses(id) ON DELETE SET NULL, objective TEXT NOT NULL DEFAULT '', reflection TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, flight_id))",
         "CREATE INDEX IF NOT EXISTS academy_training_flights_user_idx ON academy_training_flights (user_id, created_at DESC)",
+        "ALTER TABLE academy_training_flights ADD COLUMN IF NOT EXISTS review_status TEXT NOT NULL DEFAULT 'pending'",
+        "ALTER TABLE academy_training_flights ADD COLUMN IF NOT EXISTS review_feedback TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE academy_training_flights ADD COLUMN IF NOT EXISTS reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL",
+        "ALTER TABLE academy_training_flights ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ",
+        "ALTER TABLE academy_training_flights DROP CONSTRAINT IF EXISTS academy_training_flights_review_status_check",
+        "ALTER TABLE academy_training_flights ADD CONSTRAINT academy_training_flights_review_status_check CHECK (review_status IN ('pending','approved','needs_practice'))",
         "CREATE TABLE IF NOT EXISTS academy_lesson_progress (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, lesson_id INTEGER NOT NULL REFERENCES academy_lessons(id) ON DELETE CASCADE, completed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, lesson_id))",
         "CREATE TABLE IF NOT EXISTS academy_quiz_attempts (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, quiz_id INTEGER NOT NULL REFERENCES academy_quizzes(id) ON DELETE CASCADE, score_percent INTEGER NOT NULL, question_count INTEGER NOT NULL, correct_count INTEGER NOT NULL, passed BOOLEAN NOT NULL, answers JSONB NOT NULL DEFAULT '{}'::jsonb, attempted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
         "CREATE INDEX IF NOT EXISTS academy_quiz_attempts_lookup_idx ON academy_quiz_attempts (user_id, quiz_id, attempted_at DESC)",
+        "CREATE TABLE IF NOT EXISTS academy_examiner_reviews (id BIGSERIAL PRIMARY KEY, quiz_attempt_id BIGINT NOT NULL UNIQUE REFERENCES academy_quiz_attempts(id) ON DELETE CASCADE, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, course_id INTEGER NOT NULL REFERENCES academy_courses(id) ON DELETE CASCADE, examiner_id INTEGER REFERENCES users(id) ON DELETE SET NULL, decision TEXT NOT NULL CHECK (decision IN ('verified','retake_required')), feedback TEXT NOT NULL DEFAULT '', reviewed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+        "CREATE INDEX IF NOT EXISTS academy_examiner_reviews_user_idx ON academy_examiner_reviews (user_id, reviewed_at DESC)",
         "CREATE TABLE IF NOT EXISTS academy_certificates (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, course_id INTEGER NOT NULL REFERENCES academy_courses(id) ON DELETE CASCADE, certificate_code TEXT UNIQUE NOT NULL, issued_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, course_id))"
     ];
     for (const statement of statements) await query(statement);
@@ -343,6 +462,96 @@ function registerPlatformRoutes(app, dependencies) {
             console.error("Platform audit write failed:", error.message);
         }
     }
+
+
+    // Self-service pilot profile. Public rank and achievements remain derived from
+    // imported flight data; pilots can edit only their display name, bio and photo.
+    app.get("/api/platform/pilot/profile", authenticate, async (req, res) => {
+        try {
+            const result = await query(
+                "SELECT id, username, display_name, profile_bio, avatar_mime, (avatar_data IS NOT NULL) AS has_avatar, created_at " +
+                "FROM users WHERE id = $1",
+                [req.user.id]
+            );
+            if (!result.rows.length) return res.status(404).json({ error: "Pilot account not found." });
+            const pilot = result.rows[0];
+            return res.json({
+                pilot: {
+                    id: pilot.id,
+                    username: pilot.username,
+                    displayName: pilot.display_name || pilot.username,
+                    bio: pilot.profile_bio || "",
+                    hasAvatar: Boolean(pilot.has_avatar),
+                    avatarUrl: pilot.has_avatar ? "/pilots/" + pilot.id + "/avatar" : null,
+                    createdAt: pilot.created_at
+                }
+            });
+        } catch (error) {
+            console.error("Pilot profile settings load failed:", error.message);
+            return res.status(500).json({ error: "Unable to load your pilot profile." });
+        }
+    });
+
+    app.patch("/api/platform/pilot/profile", authenticate, async (req, res) => {
+        const body = req.body || {};
+        const displayName = body.displayName === undefined ? null : String(body.displayName || "").trim().replace(/\s+/g, " ").slice(0, 60);
+        const bio = body.bio === undefined ? null : String(body.bio || "").replace(/\u0000/g, "").trim().slice(0, 400);
+        if (displayName !== null && (displayName.length < 2 || displayName.length > 60)) {
+            return res.status(400).json({ error: "Your display name must contain 2–60 characters." });
+        }
+
+        let avatarBuffer = null;
+        let avatarMime = null;
+        if (body.avatarData !== undefined) {
+            const encoded = String(body.avatarData || "").replace(/^data:[^,]+,/, "").trim();
+            if (!encoded || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) {
+                return res.status(400).json({ error: "The selected profile image is not valid base64 data." });
+            }
+            avatarBuffer = Buffer.from(encoded, "base64");
+            if (!avatarBuffer.length || avatarBuffer.length > 1024 * 1024) {
+                return res.status(413).json({ error: "Profile photos must be smaller than 1 MB after compression." });
+            }
+            const isPng = avatarBuffer.length >= 8 && avatarBuffer.subarray(0, 8).toString("hex") === "89504e470d0a1a0a";
+            const isJpeg = avatarBuffer.length >= 3 && avatarBuffer[0] === 0xff && avatarBuffer[1] === 0xd8 && avatarBuffer[2] === 0xff;
+            const isWebp = avatarBuffer.length >= 12 && avatarBuffer.subarray(0, 4).toString("ascii") === "RIFF" && avatarBuffer.subarray(8, 12).toString("ascii") === "WEBP";
+            if (!isPng && !isJpeg && !isWebp) return res.status(400).json({ error: "Use a valid JPG, PNG or WebP image." });
+            avatarMime = isPng ? "image/png" : (isWebp ? "image/webp" : "image/jpeg");
+        }
+
+        try {
+            if (displayName !== null) await query("UPDATE users SET display_name = $1 WHERE id = $2", [displayName, req.user.id]);
+            if (bio !== null) await query("UPDATE users SET profile_bio = $1 WHERE id = $2", [bio, req.user.id]);
+            if (body.removeAvatar === true) {
+                await query("UPDATE users SET avatar_data = NULL, avatar_mime = NULL WHERE id = $1", [req.user.id]);
+            } else if (avatarBuffer) {
+                await query("UPDATE users SET avatar_data = $1, avatar_mime = $2 WHERE id = $3", [avatarBuffer, avatarMime, req.user.id]);
+            }
+            const result = await query(
+                "SELECT id, username, display_name, profile_bio, (avatar_data IS NOT NULL) AS has_avatar FROM users WHERE id = $1",
+                [req.user.id]
+            );
+            const pilot = result.rows[0];
+            await audit(req, "pilot.profile.update", "pilot", req.user.id, {
+                displayNameChanged: displayName !== null,
+                bioChanged: bio !== null,
+                photoChanged: Boolean(avatarBuffer) || body.removeAvatar === true
+            });
+            return res.json({
+                message: "Pilot profile saved.",
+                pilot: {
+                    id: pilot.id,
+                    username: pilot.username,
+                    displayName: pilot.display_name || pilot.username,
+                    bio: pilot.profile_bio || "",
+                    hasAvatar: Boolean(pilot.has_avatar),
+                    avatarUrl: pilot.has_avatar ? "/pilots/" + pilot.id + "/avatar" : null
+                }
+            });
+        } catch (error) {
+            console.error("Pilot profile settings save failed:", error.message);
+            return res.status(500).json({ error: "Unable to save your pilot profile." });
+        }
+    });
 
     app.get("/api/platform/status", async (req, res) => {
         const startedAt = new Date(Date.now() - process.uptime() * 1000).toISOString();
@@ -903,9 +1112,12 @@ function registerPlatformRoutes(app, dependencies) {
                     [req.user.id]
                 ),
                 query(
-                    "SELECT a.id, a.score_percent, a.passed, a.attempted_at, q.title AS quiz_title, c.title AS course_title " +
+                    "SELECT a.id, a.score_percent, a.passed, a.attempted_at, q.title AS quiz_title, c.title AS course_title, " +
+                    "r.decision AS examiner_decision, r.feedback AS examiner_feedback, r.reviewed_at AS examiner_reviewed_at, " +
+                    "COALESCE(ex.display_name,ex.username) AS examiner_name " +
                     "FROM academy_quiz_attempts a JOIN academy_quizzes q ON q.id = a.quiz_id " +
-                    "JOIN academy_courses c ON c.id = q.course_id WHERE a.user_id = $1 ORDER BY a.attempted_at DESC LIMIT 25",
+                    "JOIN academy_courses c ON c.id = q.course_id LEFT JOIN academy_examiner_reviews r ON r.quiz_attempt_id = a.id " +
+                    "LEFT JOIN users ex ON ex.id = r.examiner_id WHERE a.user_id = $1 ORDER BY a.attempted_at DESC LIMIT 25",
                     [req.user.id]
                 )
             ]);
@@ -921,18 +1133,19 @@ function registerPlatformRoutes(app, dependencies) {
                 query(
                     "SELECT f.id, f.newsky_id, f.dep_icao, f.arr_icao, f.aircraft, f.aircraft_registration, " +
                     "f.duration, f.distance, f.dep_time, tf.id AS training_record_id, tf.course_id, " +
-                    "tf.objective, tf.reflection, c.title AS course_title " +
+                    "tf.objective, tf.reflection, tf.review_status, tf.review_feedback, tf.reviewed_at, c.title AS course_title " +
                     "FROM flights f LEFT JOIN academy_training_flights tf ON tf.flight_id = f.id AND tf.user_id = $1 " +
                     "LEFT JOIN academy_courses c ON c.id = tf.course_id " +
                     "WHERE f.user_id = $1 ORDER BY f.dep_time DESC NULLS LAST, f.id DESC LIMIT 30",
                     [req.user.id]
                 ),
                 query(
-                    "SELECT tf.id, tf.flight_id, tf.objective, tf.reflection, tf.created_at, " +
+                    "SELECT tf.id, tf.flight_id, tf.objective, tf.reflection, tf.review_status, tf.review_feedback, tf.reviewed_at, " +
+                    "COALESCE(reviewer.display_name,reviewer.username) AS reviewer_name, tf.created_at, " +
                     "c.title AS course_title, f.dep_icao, f.arr_icao, f.aircraft, f.aircraft_registration, " +
                     "f.duration, f.distance, f.dep_time " +
                     "FROM academy_training_flights tf JOIN flights f ON f.id = tf.flight_id " +
-                    "LEFT JOIN academy_courses c ON c.id = tf.course_id " +
+                    "LEFT JOIN academy_courses c ON c.id = tf.course_id LEFT JOIN users reviewer ON reviewer.id = tf.reviewed_by " +
                     "WHERE tf.user_id = $1 ORDER BY tf.created_at DESC LIMIT 100",
                     [req.user.id]
                 )
@@ -964,8 +1177,9 @@ function registerPlatformRoutes(app, dependencies) {
             const result = await query(
                 "INSERT INTO academy_training_flights (user_id, flight_id, course_id, objective, reflection) " +
                 "VALUES ($1,$2,$3,$4,$5) ON CONFLICT (user_id, flight_id) DO UPDATE SET " +
-                "course_id = EXCLUDED.course_id, objective = EXCLUDED.objective, reflection = EXCLUDED.reflection, updated_at = CURRENT_TIMESTAMP " +
-                "RETURNING id, flight_id, course_id, objective, reflection, created_at, updated_at",
+                "course_id = EXCLUDED.course_id, objective = EXCLUDED.objective, reflection = EXCLUDED.reflection, " +
+                "review_status = 'pending', review_feedback = '', reviewed_by = NULL, reviewed_at = NULL, updated_at = CURRENT_TIMESTAMP " +
+                "RETURNING id, flight_id, course_id, objective, reflection, review_status, created_at, updated_at",
                 [req.user.id, flightId, courseId, objective, reflection]
             );
             return res.status(201).json({ trainingFlight: result.rows[0] });
@@ -990,6 +1204,100 @@ function registerPlatformRoutes(app, dependencies) {
         }
     });
 
+
+    // Instructor queue: only imported NewSky flights linked to a submitted training log
+    // can be reviewed, so the teaching team never has to trust manually-entered flight metrics.
+    app.get("/api/platform/academy/instructor/queue", requirePermission("academy.instructor"), async (req, res) => {
+        try {
+            const result = await query(
+                "SELECT tf.id AS training_id, tf.user_id, COALESCE(u.display_name,u.username) AS pilot_name, u.username, " +
+                "tf.course_id, COALESCE(c.title,'General simulator practice') AS course_title, tf.objective, tf.reflection, " +
+                "tf.review_status, tf.review_feedback, tf.created_at, f.dep_icao, f.arr_icao, f.aircraft, f.aircraft_registration, " +
+                "f.duration, f.distance, f.dep_time " +
+                "FROM academy_training_flights tf JOIN users u ON u.id = tf.user_id JOIN flights f ON f.id = tf.flight_id " +
+                "LEFT JOIN academy_courses c ON c.id = tf.course_id " +
+                "WHERE tf.review_status = 'pending' ORDER BY tf.created_at ASC LIMIT 100"
+            );
+            return res.json({ assessments: result.rows });
+        } catch (error) {
+            console.error("Academy instructor queue error:", error.message);
+            return res.status(500).json({ error: "Unable to load practical assessments." });
+        }
+    });
+
+    app.patch("/api/platform/academy/instructor/queue/:id", requirePermission("academy.instructor"), async (req, res) => {
+        const id = Number.parseInt(req.params.id, 10);
+        const status = String(req.body && req.body.status || "");
+        const feedback = String(req.body && req.body.feedback || "").replace(/\u0000/g, "").trim().slice(0, 1200);
+        if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: "Invalid practical assessment." });
+        if (!["approved", "needs_practice"].includes(status)) return res.status(400).json({ error: "Choose an approval or more-practice result." });
+        try {
+            const result = await query(
+                "UPDATE academy_training_flights SET review_status = $1, review_feedback = $2, reviewed_by = $3, reviewed_at = CURRENT_TIMESTAMP " +
+                "WHERE id = $4 RETURNING id, review_status, review_feedback, reviewed_at",
+                [status, feedback, req.user.id, id]
+            );
+            if (!result.rows.length) return res.status(404).json({ error: "Practical training record not found." });
+            await audit(req, "academy.practical.review", "academy_training_flight", id, { status });
+            return res.json({ assessment: result.rows[0] });
+        } catch (error) {
+            console.error("Academy practical review error:", error.message);
+            return res.status(500).json({ error: "Unable to save the practical assessment." });
+        }
+    });
+
+    // Examiners independently verify theory attempts and can ask a pilot to retake an exam.
+    app.get("/api/platform/academy/examiner/queue", requirePermission("academy.examiner"), async (req, res) => {
+        try {
+            const result = await query(
+                "SELECT a.id AS attempt_id, a.user_id, COALESCE(u.display_name,u.username) AS pilot_name, u.username, " +
+                "c.id AS course_id, c.title AS course_title, q.title AS quiz_title, a.score_percent, a.question_count, " +
+                "a.correct_count, a.passed, a.attempted_at, r.decision, r.feedback, r.reviewed_at " +
+                "FROM academy_quiz_attempts a JOIN academy_quizzes q ON q.id = a.quiz_id " +
+                "JOIN academy_courses c ON c.id = q.course_id JOIN users u ON u.id = a.user_id " +
+                "LEFT JOIN academy_examiner_reviews r ON r.quiz_attempt_id = a.id " +
+                "WHERE a.attempted_at > CURRENT_TIMESTAMP - INTERVAL '120 days' " +
+                "ORDER BY a.attempted_at DESC LIMIT 100"
+            );
+            return res.json({ attempts: result.rows });
+        } catch (error) {
+            console.error("Academy examiner queue error:", error.message);
+            return res.status(500).json({ error: "Unable to load theory exam attempts." });
+        }
+    });
+
+    app.patch("/api/platform/academy/examiner/queue/:attemptId", requirePermission("academy.examiner"), async (req, res) => {
+        const attemptId = Number.parseInt(req.params.attemptId, 10);
+        const decision = String(req.body && req.body.decision || "");
+        const feedback = String(req.body && req.body.feedback || "").replace(/\u0000/g, "").trim().slice(0, 1200);
+        if (!Number.isSafeInteger(attemptId) || attemptId < 1) return res.status(400).json({ error: "Invalid exam attempt." });
+        if (!["verified", "retake_required"].includes(decision)) return res.status(400).json({ error: "Choose a verification or retake decision." });
+        try {
+            const attempt = await query(
+                "SELECT a.id, a.user_id, a.passed, q.course_id FROM academy_quiz_attempts a JOIN academy_quizzes q ON q.id = a.quiz_id WHERE a.id = $1",
+                [attemptId]
+            );
+            if (!attempt.rows.length) return res.status(404).json({ error: "Exam attempt not found." });
+            const row = attempt.rows[0];
+            if (decision === "verified" && !row.passed) {
+                return res.status(400).json({ error: "This theory attempt did not reach the course pass mark and cannot be verified." });
+            }
+            const result = await query(
+                "INSERT INTO academy_examiner_reviews (quiz_attempt_id,user_id,course_id,examiner_id,decision,feedback,reviewed_at) " +
+                "VALUES ($1,$2,$3,$4,$5,$6,CURRENT_TIMESTAMP) ON CONFLICT (quiz_attempt_id) DO UPDATE SET " +
+                "examiner_id = EXCLUDED.examiner_id, decision = EXCLUDED.decision, feedback = EXCLUDED.feedback, reviewed_at = CURRENT_TIMESTAMP " +
+                "RETURNING quiz_attempt_id, decision, feedback, reviewed_at",
+                [attemptId, row.user_id, row.course_id, req.user.id, decision, feedback]
+            );
+            const progress = await refreshCourseProgress(row.user_id, row.course_id);
+            await audit(req, "academy.examiner.review", "academy_quiz_attempt", attemptId, { decision });
+            return res.json({ review: result.rows[0], progress });
+        } catch (error) {
+            console.error("Academy examiner review error:", error.message);
+            return res.status(500).json({ error: "Unable to save the examiner decision." });
+        }
+    });
+
     app.get("/api/platform/academy/courses/:slug", authenticate, async (req, res) => {
         try {
             const courseResult = await query(
@@ -1003,7 +1311,11 @@ function registerPlatformRoutes(app, dependencies) {
                 query("SELECT id, title, lesson_body, sort_order, estimated_minutes FROM academy_lessons WHERE course_id = $1 ORDER BY sort_order", [course.id]),
                 query("SELECT id, title, pass_percent FROM academy_quizzes WHERE course_id = $1", [course.id]),
                 query("SELECT lesson_id, completed_at FROM academy_lesson_progress WHERE user_id = $1 AND lesson_id IN (SELECT id FROM academy_lessons WHERE course_id = $2)", [req.user.id, course.id]),
-                query("SELECT score_percent, passed, attempted_at FROM academy_quiz_attempts WHERE user_id = $1 AND quiz_id IN (SELECT id FROM academy_quizzes WHERE course_id = $2) ORDER BY attempted_at DESC LIMIT 10", [req.user.id, course.id]),
+                query("SELECT a.score_percent, a.passed, a.attempted_at, r.decision AS examiner_decision, r.feedback AS examiner_feedback, " +
+                    "COALESCE(ex.display_name,ex.username) AS examiner_name FROM academy_quiz_attempts a " +
+                    "LEFT JOIN academy_examiner_reviews r ON r.quiz_attempt_id = a.id LEFT JOIN users ex ON ex.id = r.examiner_id " +
+                    "WHERE a.user_id = $1 AND a.quiz_id IN (SELECT id FROM academy_quizzes WHERE course_id = $2) " +
+                    "ORDER BY a.attempted_at DESC LIMIT 10", [req.user.id, course.id]),
                 query("SELECT certificate_code, issued_at FROM academy_certificates WHERE user_id = $1 AND course_id = $2", [req.user.id, course.id])
             ]);
             let quizData = null;
@@ -1058,22 +1370,31 @@ function registerPlatformRoutes(app, dependencies) {
                 [userId, courseId]
             ),
             query("SELECT id FROM academy_quizzes WHERE course_id = $1", [courseId]),
-            query("SELECT id, certificate_code FROM academy_certificates WHERE user_id = $1 AND course_id = $2", [userId, courseId])
+            query("SELECT id, certificate_code, issued_at FROM academy_certificates WHERE user_id = $1 AND course_id = $2", [userId, courseId])
         ]);
         const totalLessons = Number(lessonCounts.rows[0].total || 0);
         const completedLessons = Number(lessonCounts.rows[0].completed || 0);
         let quizPassed = false;
+        let examinerVerified = false;
         if (quiz.rows[0]) {
-            const passed = await query(
-                "SELECT 1 FROM academy_quiz_attempts WHERE user_id = $1 AND quiz_id = $2 AND passed = TRUE LIMIT 1",
+            const latestAttempt = await query(
+                "SELECT a.passed, a.attempted_at, r.decision AS examiner_decision FROM academy_quiz_attempts a " +
+                "LEFT JOIN academy_examiner_reviews r ON r.quiz_attempt_id = a.id " +
+                "WHERE a.user_id = $1 AND a.quiz_id = $2 ORDER BY a.attempted_at DESC, a.id DESC LIMIT 1",
                 [userId, quiz.rows[0].id]
             );
-            quizPassed = passed.rows.length > 0;
+            const latest = latestAttempt.rows[0];
+            quizPassed = Boolean(latest && latest.passed);
+            const examinerApprovedLatest = Boolean(latest && latest.passed && latest.examiner_decision === "verified");
+            // Preserve certificates earned before examiner review was introduced.
+            // Only an explicit retake_required decision on the latest attempt revokes a prior certificate.
+            const historicCertificate = Boolean(certificateResult.rows[0] && (!latest || latest.examiner_decision !== "retake_required"));
+            examinerVerified = examinerApprovedLatest || historicCertificate;
         }
         const progress = totalLessons > 0
-            ? Math.min(100, Math.round((completedLessons / totalLessons) * 80) + (quizPassed ? 20 : 0))
-            : (quizPassed ? 100 : 0);
-        const completed = totalLessons > 0 && completedLessons === totalLessons && quizPassed;
+            ? Math.min(100, Math.round((completedLessons / totalLessons) * 80) + (examinerVerified ? 20 : 0))
+            : (examinerVerified ? 100 : 0);
+        const completed = totalLessons > 0 && completedLessons === totalLessons && examinerVerified;
         await query(
             "INSERT INTO academy_enrollments (user_id, course_id, status, progress_percent, completed_at, updated_at) " +
             "VALUES ($1,$2,$3,$4,CASE WHEN $3 = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END,CURRENT_TIMESTAMP) " +
@@ -1091,8 +1412,11 @@ function registerPlatformRoutes(app, dependencies) {
                 [userId, courseId, code]
             );
             certificate = created.rows[0];
+        } else if (!completed && certificate) {
+            await query("DELETE FROM academy_certificates WHERE id = $1", [certificate.id]);
+            certificate = null;
         }
-        return { totalLessons, completedLessons, quizPassed, progress, completed, certificate };
+        return { totalLessons, completedLessons, quizPassed, examinerVerified, progress, completed, certificate };
     }
 
     app.post("/api/platform/academy/lessons/:lessonId/complete", authenticate, async (req, res) => {

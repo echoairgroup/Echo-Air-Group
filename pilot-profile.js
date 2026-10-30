@@ -78,6 +78,7 @@
     text("#statBestRating",m.bestRating===null?"—":fmt(m.bestRating,2));text("#statAircraft",fmt(m.aircraft,0));text("#statRoutes",fmt(m.routes,0));
     text("#sidePosition",position?"#"+position:"—");text("#sideRank",rank);text("#sideAvgStars",m.avgStars===null?"—":fmt(m.avgStars,2)+" ⭐");text("#sideLatestFlight",latest);text("#sideMemberSince",joined);
     rankProgress(m.stars);renderRecent();renderFlights();$("#profileLoading").hidden=true;$("#profileContent").hidden=false;
+    window.dispatchEvent(new CustomEvent("eag:pilot-profile-loaded",{detail:{pilot:p,flights,leaderboard,metrics:m,position,rank}}));
     if(results[1].status==="rejected")text("#flightHistoryFooter","Leaderboard position could not be loaded. Other figures come from the saved flight records.");
   }
   $("#flightSearch").addEventListener("input",renderFlights);

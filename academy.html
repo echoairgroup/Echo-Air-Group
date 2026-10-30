@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="site-shell.css">
     <link rel="stylesheet" href="academy.css">
+    <link rel="stylesheet" href="academy-staff.css">
 </head>
 <body>
 <header id="siteHeader">
@@ -132,6 +133,14 @@
                     <div id="academyTrainingFlights"><p class="academy-muted">Loading your recent NewSky flights…</p></div>
                 </section>
 
+                <section id="academyStaffPanel" class="academy-panel academy-staff-panel" hidden>
+                    <span class="academy-kicker">Teaching team</span>
+                    <h2>Instructor &amp; examiner workspace</h2>
+                    <p class="academy-muted">Review practical training records and independently assess theory exams. This workspace is available only to authorised Academy staff.</p>
+                    <div id="academyInstructorQueue"></div>
+                    <div id="academyExaminerQueue"></div>
+                </section>
+
                 <section class="academy-panel">
                     <span class="academy-kicker">Training library</span>
                     <h2>Available courses</h2>
@@ -238,5 +247,6 @@
 </footer>
 <script src="site-shell.js"></script>
 <script src="academy.js"></script>
+<script src="academy-staff.js"></script>
 </body>
 </html>

@@ -4486,7 +4486,8 @@ app.get(
                         display_name,
                         newsky_pilot_id,
                         discord_user_id,
-                        created_at
+                        created_at,
+                        (avatar_data IS NOT NULL) AS has_avatar
                     FROM users
                     ORDER BY
                         LOWER(
@@ -4524,6 +4525,9 @@ app.get(
                     displayName:
                         user.display_name ||
                         user.username,
+
+                    avatarUrl:
+                        user.has_avatar ? "/pilots/" + user.id + "/avatar" : null,
 
                     rank:
                         stats.rank.name,
@@ -4611,7 +4615,9 @@ app.get(
                         id,
                         username,
                         display_name,
-                        created_at
+                        profile_bio,
+                        created_at,
+                        (avatar_data IS NOT NULL) AS has_avatar
                     FROM users
                     WHERE id = $1
                     `,
@@ -4647,6 +4653,12 @@ app.get(
                     displayName:
                         user.display_name ||
                         user.username,
+
+                    bio:
+                        user.profile_bio || "",
+
+                    avatarUrl:
+                        user.has_avatar ? "/pilots/" + user.id + "/avatar" : null,
 
                     rank:
                         stats.rank.name,
@@ -4697,6 +4709,36 @@ app.get(
         }
     }
 );
+
+app.get(
+    "/api/pilots/:id/avatar",
+    async (req, res) => {
+        const userId = Number.parseInt(req.params.id, 10);
+        if (!Number.isSafeInteger(userId) || userId < 1) {
+            return res.status(400).json({ error: "Invalid pilot ID." });
+        }
+        try {
+            const result = await query(
+                "SELECT avatar_mime, avatar_data FROM users WHERE id = $1",
+                [userId]
+            );
+            const pilot = result.rows[0];
+            if (!pilot || !pilot.avatar_data) {
+                return res.status(404).json({ error: "This pilot has not added a profile photo." });
+            }
+            const allowed = ["image/jpeg", "image/png", "image/webp"];
+            const mime = allowed.includes(pilot.avatar_mime) ? pilot.avatar_mime : "image/jpeg";
+            res.set("Content-Type", mime);
+            res.set("Cache-Control", "public, max-age=60");
+            res.set("X-Content-Type-Options", "nosniff");
+            return res.send(pilot.avatar_data);
+        } catch (error) {
+            console.error("Pilot avatar load failed:", error.message);
+            return res.status(500).json({ error: "Unable to load this profile photo." });
+        }
+    }
+);
+
 // ============================================================
 // RECENT FLIGHTS
 // ============================================================
@@ -4848,7 +4890,8 @@ app.get(
                         id,
                         username,
                         display_name,
-                        newsky_pilot_id
+                        newsky_pilot_id,
+                        (avatar_data IS NOT NULL) AS has_avatar
                     FROM users
                     `
                 );
@@ -4879,6 +4922,9 @@ app.get(
 
                     username:
                         user.username,
+
+                    avatarUrl:
+                        user.has_avatar ? "/pilots/" + user.id + "/avatar" : null,
 
                     stars:
                         stats.stars,

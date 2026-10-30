@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="site-shell.css">
     <link rel="stylesheet" href="pilot-profile.css">
+    <link rel="stylesheet" href="pilot-profile-expansion.css">
 </head>
 <body class="pilot-profile-page">
 <header id="siteHeader">
@@ -84,6 +85,23 @@
                     <article class="profile-stat"><span>Routes flown</span><strong id="statRoutes">—</strong><small>Unique airport pairs recorded</small></article>
                 </div>
 
+                <div class="profile-expansion-grid">
+                    <section class="profile-card profile-expansion-card">
+                        <div class="profile-expansion-heading">
+                            <div><p class="profile-section-label">Career milestones</p><h2>Achievements &amp; badges</h2></div>
+                            <strong id="pilotAchievementCount">0 earned</strong>
+                        </div>
+                        <div id="pilotAchievements" class="profile-achievements"><p class="profile-empty">Loading achievements…</p></div>
+                    </section>
+                    <section class="profile-card profile-expansion-card">
+                        <div class="profile-expansion-heading">
+                            <div><p class="profile-section-label">Leaderboard</p><h2>Pilots around you</h2></div>
+                            <a href="ranking.html">Full ranking ↗</a>
+                        </div>
+                        <div id="pilotPeerCompare" class="profile-peer-list"><p class="profile-empty">Loading pilot comparison…</p></div>
+                    </section>
+                </div>
+
                 <div class="profile-layout">
                     <div class="profile-main-column">
                         <section class="profile-card">
@@ -92,6 +110,7 @@
                                 <div style="min-width:0;flex:1">
                                     <h2 id="pilotDisplayName">Pilot</h2>
                                     <p id="pilotMemberSince">Echo Air Group pilot</p>
+                                    <p id="pilotBio" class="profile-bio" hidden></p>
                                     <span class="profile-rank-pill" id="pilotRankPill">Pilot rank</span>
                                 </div>
                             </div>
@@ -197,5 +216,6 @@
 <script src="site-shell.js"></script>
 <script src="site-content.js"></script>
 <script src="pilot-profile.js"></script>
+<script src="pilot-profile-enhancements.js"></script>
 </body>
 </html>

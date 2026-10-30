@@ -46,6 +46,12 @@
     } else {
       const total = enrollments.length;
       const completed = enrollments.filter(item => item.status === "completed").length;
+      const summary=node("div","academy-progress-overview");
+      const attempts=data.recentAttempts||[];
+      const passed=attempts.filter(item=>item.passed&&item.examiner_decision==="verified").length;
+      const pending=attempts.filter(item=>!item.examiner_decision).length;
+      [[completed+" / "+total,"Courses completed"],[(data.certificates||[]).length,"Certificates"],[passed,"Verified exams"],[pending,"Awaiting examiner"]].forEach(item=>{const tile=node("div","academy-progress-stat");tile.append(node("strong","",item[0]),node("span","",item[1]));summary.appendChild(tile);});
+      target.appendChild(summary);
       target.appendChild(node("p","",completed + " of " + total + " enrolled courses completed."));
       enrollments.slice(0,6).forEach(item => {
         const row = node("div","academy-lesson");
@@ -53,6 +59,21 @@
         const bar = node("div","academy-progress"); const fill = node("span"); fill.style.width = item.progress_percent + "%"; bar.appendChild(fill); row.appendChild(bar);
         target.appendChild(row);
       });
+    }
+    const attempts=data.recentAttempts||[];
+    if(attempts.length){
+      const examPanel=node("div","academy-exam-history");
+      examPanel.appendChild(node("h3","","Recent theory exam results"));
+      attempts.slice(0,8).forEach(attempt=>{
+        const item=node("div","academy-exam-history-row");
+        const title=node("strong","",attempt.course_title+" · "+attempt.quiz_title);
+        const score=node("span","academy-chip",attempt.score_percent+"% · "+(attempt.passed?"Quiz passed":"Retake quiz"));
+        const decision=attempt.examiner_decision==="verified"?" · Examiner verified":attempt.examiner_decision==="retake_required"?" · Retake required":" · Awaiting examiner";
+        item.append(title,score,node("p","academy-muted",new Date(attempt.attempted_at).toLocaleDateString("en-GB")+decision));
+        if(attempt.examiner_feedback)item.appendChild(node("p","academy-notice","Examiner feedback: "+attempt.examiner_feedback));
+        examPanel.appendChild(item);
+      });
+      target.appendChild(examPanel);
     }
     const certs = $("#academyCertificates"); certs.replaceChildren();
     (data.certificates || []).forEach(certificate => {
@@ -93,6 +114,7 @@
       renderCourses(catalog.courses || []);
       renderTrainingFlights(training, catalog.courses || []);
       showWorkspace();
+      window.dispatchEvent(new CustomEvent("eag:academy-portal-ready",{detail:{catalog,progress,training}}));
     } catch (error) {
       if (error.status === 401) {
         localStorage.removeItem(TOKEN_KEY); token = ""; showLogin("Your pilot session expired. Sign in again with your Pilot Dashboard credentials.");
@@ -119,6 +141,9 @@
         );
         if (item.objective) card.appendChild(node("p", "", "Objective: " + item.objective));
         if (item.reflection) card.appendChild(node("p", "academy-muted", "Reflection: " + item.reflection));
+        const status=item.review_status||"pending";
+        card.appendChild(node("span","academy-review-chip "+status,status==="approved"?"Instructor approved":status==="needs_practice"?"More practice requested":"Awaiting instructor review"));
+        if(item.review_feedback)card.appendChild(node("p","academy-notice","Instructor feedback: "+item.review_feedback));
         history.appendChild(card);
       });
       root.appendChild(history);
@@ -296,7 +321,8 @@
         try{
           const result=await api("/platform/academy/quizzes/"+data.quiz.id+"/attempt",{method:"POST",body:JSON.stringify({answers})});
           resultBox.hidden=false;
-          resultBox.replaceChildren(node("strong","",result.passed?"Knowledge check passed":"Knowledge check not passed yet"),node("p","",result.scorePercent+"% · "+result.correctCount+" of "+result.questionCount+" correct. Pass mark: "+result.passPercent+"%."));
+          resultBox.replaceChildren(node("strong","",result.passed?"Knowledge check passed":"Knowledge check not passed yet"),node("p","",result.scorePercent+"% · "+result.correctCount+" of "+result.questionCount+" correct. Pass mark: "+result.passPercent+"%.")); 
+          if(result.passed&&!result.examinerVerified)resultBox.appendChild(node("p","academy-notice","Your theory exam passed. An authorised examiner must verify this attempt before the course certificate is issued."));
           if(result.review){result.review.forEach(item=>{const question=(data.quiz.questions||[]).find(q=>Number(q.id)===Number(item.questionId));const line=node("p","", (item.correct?"✓ ":"✕ ")+(question?question.prompt:"Question")+" — "+item.explanation);resultBox.appendChild(line);});}
           if(result.certificate) resultBox.appendChild(node("p","","Certificate earned: "+result.certificate.certificate_code));
           await loadPortal();

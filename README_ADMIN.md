@@ -19,7 +19,9 @@ Root administrators can open the **Admin roles** section and assign scoped roles
 |---|---|
 | `admin` | Platform overview, system monitoring, operations, fleet, audit, notifications, Academy, website content and application inbox |
 | `operations_manager` | Platform overview, live system monitoring, pilot activity, fleet data and audit log |
-| `academy_manager` | Academy course management and learning overview |
+| `academy_manager` | Academy course management, teaching assessments, examiner reviews and learning overview |
+| `academy_instructor` | Review practical training flights and provide instructor feedback |
+| `academy_examiner` | Independently verify passed theory exams or require a retake |
 | `analyst` | Read-only overview, monitoring, pilot activity, fleet and audit log |
 | `viewer` | Read-only overview, operations, fleet and Academy |
 
@@ -33,7 +35,9 @@ The root username allowlist is the bootstrap mechanism. Do not remove the final 
 - **Routes flown:** historical map and flight list for imported flights in the last 30 days.
 - **Audit log:** records successful administrator changes, actor, action and timestamp. It avoids storing passwords or applicant form contents.
 - **Notifications:** lets administrators create and manage operational notices.
-- **Aviation Academy:** existing pilot accounts can complete lessons, knowledge checks, NewSky-linked training flight logs and course certificates. There is no separate Academy account.
+- **Pilot profiles:** pilots can edit their public display name, profile photo and short bio. Flight totals, rank and achievements are calculated from imported NewSky records and cannot be edited manually.
+- **Pilot achievements:** badges are awarded automatically for flight milestones, hours, distance, routes, airports, aircraft variety and consistent ratings. Public profiles compare each pilot with nearby leaderboard positions.
+- **Aviation Academy:** existing pilot accounts can complete interactive lessons and theory exams, record a NewSky-linked practice flight, track personal progress and earn certificates. A theory pass must be verified by an authorised examiner before the course certificate is issued. An instructor reviews practical flight logs and records feedback. There is no separate Academy account.
 
 ### NewSky data limitations
 

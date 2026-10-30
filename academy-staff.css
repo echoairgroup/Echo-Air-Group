@@ -1,0 +1,32 @@
+.academy-staff-panel{border-color:#d4e4bd;background:linear-gradient(180deg,#fbfdf7,#fff)}
+.academy-staff-panel[hidden]{display:none!important}
+.academy-staff-panel>h2{margin:7px 0 8px;color:#283723;font-size:26px;letter-spacing:-.035em}
+.academy-staff-section{margin-top:23px}
+.academy-staff-section>h3{font-size:17px;color:#405332;margin:0 0 12px}
+.academy-staff-queue{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.academy-staff-card{padding:17px;border:1px solid #e0e8d8;border-radius:15px;background:#fff;min-width:0}
+.academy-staff-card h4{margin:0;color:#2d3b27;font-size:15px}
+.academy-staff-meta{color:#88927f;font-size:11px;margin:5px 0 12px}
+.academy-staff-card p{font-size:12px;color:#606e58;line-height:1.65;margin:7px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.academy-staff-card label{display:block;color:#647457;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px}
+.academy-staff-card textarea{width:100%;min-height:68px;padding:10px;border:1px solid #dce5d6;border-radius:9px;background:#fbfcf9;color:#263324;font:inherit;font-size:12px;resize:vertical}
+.academy-staff-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.academy-staff-actions button{border:0;border-radius:9px;padding:9px 12px;background:#ace336;color:#1b270f;font-size:11px;font-weight:950;cursor:pointer}
+.academy-staff-actions button.secondary{background:#f0f4eb;border:1px solid #dfe7d8;color:#53614b}
+.academy-staff-actions button:disabled{opacity:.5;cursor:wait}
+.academy-staff-empty,.academy-staff-error{padding:15px;border:1px dashed #d9e3d0;border-radius:12px;color:#7b8773;font-size:12px;background:#fff}
+.academy-staff-error{color:#9b453b;border-color:#edcfc9;background:#fff8f6}
+.academy-review-chip{display:inline-flex;margin-top:8px;padding:5px 9px;border-radius:999px;background:#f1f5ed;color:#66765b;font-size:10px;font-weight:900}
+.academy-review-chip.approved{background:#eef7df;color:#5d801d}
+.academy-review-chip.needs_practice{background:#fff5e8;color:#9b6a1e}
+.academy-progress-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:13px 0}
+.academy-progress-stat{padding:12px;border:1px solid #e4ebdc;border-radius:11px;background:#fbfcf9}
+.academy-progress-stat strong{display:block;font-size:19px;color:#304126}
+.academy-progress-stat span{display:block;margin-top:3px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#7c8872}
+.academy-exam-history{margin-top:17px;padding-top:16px;border-top:1px solid #e7eee1}
+.academy-exam-history h3{font-size:15px;color:#384a2e;margin:0 0 9px}
+.academy-exam-history-row{padding:10px 0;border-bottom:1px solid #edf1e8;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;align-items:center}
+.academy-exam-history-row strong{font-size:11px;color:#43513b}
+.academy-exam-history-row p{grid-column:1/-1;margin:0}
+.academy-review-chip.pending{background:#f2f4ef;color:#7c8774}
+@media(max-width:760px){.academy-staff-queue{grid-template-columns:1fr}.academy-progress-overview{grid-template-columns:repeat(2,minmax(0,1fr))}}
