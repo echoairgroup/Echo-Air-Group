@@ -109,7 +109,7 @@
       const data=await request("/platform/admin/notifications");root.replaceChildren();
       (data.notifications||[]).forEach(item=>{
         const card=node("article","platform-admin-notification");card.append(node("h3","",item.title),node("p","",item.message));
-        const foot=node("footer");foot.append(node("span","",item.level.toUpperCase()+" · "+fmtDate(item.created_at)));
+        const foot=node("div","platform-admin-notification-footer");foot.append(node("span","",item.level.toUpperCase()+" · "+fmtDate(item.created_at)));
         const remove=node("button","admin-button danger","Delete");remove.type="button";remove.addEventListener("click",async()=>{await request("/platform/admin/notifications/"+item.id,{method:"DELETE"});loadNotifications();});
         foot.appendChild(remove);card.appendChild(foot);root.appendChild(card);
       });
