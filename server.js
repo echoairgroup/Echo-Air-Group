@@ -4486,7 +4486,8 @@ app.get(
                         display_name,
                         newsky_pilot_id,
                         discord_user_id,
-                        created_at
+                        created_at,
+                        (avatar_data IS NOT NULL) AS has_avatar
                     FROM users
                     ORDER BY
                         LOWER(
@@ -4526,7 +4527,7 @@ app.get(
                         user.username,
 
                     avatarUrl:
-                        "/pilots/" + user.id + "/avatar",
+                        user.has_avatar ? "/pilots/" + user.id + "/avatar" : null,
 
                     rank:
                         stats.rank.name,
@@ -4615,7 +4616,8 @@ app.get(
                         username,
                         display_name,
                         profile_bio,
-                        created_at
+                        created_at,
+                        (avatar_data IS NOT NULL) AS has_avatar
                     FROM users
                     WHERE id = $1
                     `,
@@ -4656,7 +4658,7 @@ app.get(
                         user.profile_bio || "",
 
                     avatarUrl:
-                        "/pilots/" + user.id + "/avatar",
+                        user.has_avatar ? "/pilots/" + user.id + "/avatar" : null,
 
                     rank:
                         stats.rank.name,
@@ -4888,7 +4890,8 @@ app.get(
                         id,
                         username,
                         display_name,
-                        newsky_pilot_id
+                        newsky_pilot_id,
+                        (avatar_data IS NOT NULL) AS has_avatar
                     FROM users
                     `
                 );
@@ -4921,7 +4924,7 @@ app.get(
                         user.username,
 
                     avatarUrl:
-                        "/pilots/" + user.id + "/avatar",
+                        user.has_avatar ? "/pilots/" + user.id + "/avatar" : null,
 
                     stars:
                         stats.stars,
