@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#090d08">
+    <meta name="description" content="Meet the Echo Air Group community, discover group flights and training events, and follow the latest airline announcements.">
+    <title>Community — Echo Air Group</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="site-shell.css">
+    <link rel="stylesheet" href="community.css">
+</head>
+<body class="eag-community-page">
+<header id="siteHeader">
+    <div class="container nav">
+        <a class="brand" href="index.html" aria-label="Echo Air Group home">
+            <img class="brand-logo" src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768" alt="Echo Air Group Logo">
+            <div class="brand-text">ECHO AIR GROUP<small>6L · ECV · CLOVER</small></div>
+        </a>
+        <nav class="navlinks" aria-label="Primary navigation">
+            <a href="index.html">Home</a><a href="about.html">About</a><a href="fleet.html">Fleet</a><a href="routes.html">Routes</a><a href="team.html">Team</a><a href="index.html#news">News</a><a href="join.html">Join Us</a><a href="manual.html">Pilot Manual</a><a href="contact.html">Contact</a><a href="ranking.html">Pilot Dashboard</a><a href="booking.html">Book a flight</a>
+        </nav>
+        <a class="register" href="join.html">REGISTER</a>
+        <button class="menu" id="menuButton" onclick="toggleMenu()" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNav">☰</button>
+    </div>
+    <div id="mobileNav" class="mobileNav"><div class="container">
+        <a href="index.html">Home</a><a href="about.html">About</a><a href="fleet.html">Fleet</a><a href="routes.html">Routes</a><a href="team.html">Team</a><a href="index.html#news">News</a><a href="join.html">Join Us</a><a href="manual.html">Pilot Manual</a><a href="contact.html">Contact</a><a href="ranking.html">Pilot Dashboard</a><a href="booking.html">Book a flight</a><a href="join.html">Register</a>
+    </div></div>
+</header>
+
+<main>
+    <section class="community-hero">
+        <div class="community-container community-hero-inner">
+            <span class="community-eyebrow">THE PEOPLE BEHIND THE FLIGHT</span>
+            <h1>Stronger together.<br><span>Higher together.</span></h1>
+            <p>From shared routes to training sessions and special events, this is where Echo pilots come together beyond the flight deck.</p>
+            <a class="community-button primary" href="#events">Discover upcoming events</a>
+        </div>
+    </section>
+
+    <section class="community-container community-main">
+        <div class="community-overview" id="communityOverview">
+            <article><span>Upcoming events</span><strong id="communityEventCount">—</strong><small>Published community calendar</small></article>
+            <article><span>Announcements</span><strong id="communityNewsCount">—</strong><small>Updates from the EAG team</small></article>
+            <article><span>Community flights</span><strong id="communityGroupCount">—</strong><small>Group-flight and training sessions</small></article>
+        </div>
+
+        <div class="community-layout">
+            <div class="community-primary">
+                <section class="community-section" id="events">
+                    <div class="community-section-heading"><div><span class="community-kicker">CALENDAR</span><h2>Upcoming events</h2><p>Find your next group flight, training session or community meet-up.</p></div><a href="operations-center.html" class="community-text-link">Operations Center →</a></div>
+                    <div id="communityEvents" class="community-event-grid" aria-live="polite"><div class="community-loading">Loading the community calendar…</div></div>
+                </section>
+                <section class="community-section community-my-section" id="myEvents">
+                    <div class="community-section-heading"><div><span class="community-kicker">YOUR CALENDAR</span><h2>My registrations</h2><p>Keep track of events you have joined or marked as interested.</p></div><a href="ranking.html" class="community-text-link">Pilot Dashboard →</a></div>
+                    <div id="myCommunityEvents" class="community-my-events"><div class="community-loading">Sign in with your pilot account to manage your event registrations.</div></div>
+                </section>
+            </div>
+            <aside class="community-sidebar">
+                <section class="community-side-card community-callout">
+                    <span class="community-kicker">STAY CONNECTED</span>
+                    <h2>One community.<br>Many destinations.</h2>
+                    <p>Join the Echo Air Group Discord to meet other pilots, follow briefings and take part in group activities.</p>
+                    <a href="https://discord.gg/e7ePxYA24" target="_blank" rel="noopener noreferrer" class="community-button dark">Open Discord</a>
+                </section>
+                <section class="community-side-card">
+                    <div class="community-section-heading compact"><div><span class="community-kicker">LATEST UPDATES</span><h2>Announcements</h2></div></div>
+                    <div id="communityAnnouncements" class="community-announcements"><div class="community-loading">Loading announcements…</div></div>
+                </section>
+                <section class="community-side-card community-join-card">
+                    <span class="community-kicker">NEW TO EAG?</span>
+                    <h2>Your next chapter starts here.</h2>
+                    <p>Meet the team, learn how our operations work and apply to join the flight roster.</p>
+                    <a href="join.html" class="community-text-link">Become an Echo pilot →</a>
+                </section>
+            </aside>
+        </div>
+
+        <section class="community-staff-card" id="communityStaffPanel" hidden>
+            <div class="community-section-heading"><div><span class="community-kicker">STAFF WORKSPACE</span><h2>Community event management</h2><p>Create events and publish the calendar for pilots. Changes are recorded in the administrator audit log.</p></div><span class="community-role-label" id="communityRoleLabel">Operations staff</span></div>
+            <div class="community-staff-layout">
+                <form id="eventForm" class="community-form">
+                    <h3 id="eventFormTitle">Create a community event</h3>
+                    <div class="community-form-grid">
+                        <label class="full">Event title<input name="title" maxlength="120" placeholder="EAG Saturday Group Flight" required></label>
+                        <label>Event type<select name="eventType"><option value="group-flight">Group flight</option><option value="training">Training session</option><option value="meeting">Team meeting</option><option value="community">Community event</option><option value="other">Other</option></select></label>
+                        <label>Location / platform<input name="location" maxlength="160" placeholder="Discord · Voice channel"></label>
+                        <label>Starts at<input name="startsAt" type="datetime-local" required></label>
+                        <label>Ends at<input name="endsAt" type="datetime-local"></label>
+                        <label>Capacity<input name="capacity" type="number" min="1" max="2000" placeholder="Unlimited"></label>
+                        <label class="full">Description<textarea name="description" rows="4" maxlength="4000" placeholder="What should pilots know before joining?"></textarea></label>
+                        <label class="community-check full"><input name="published" type="checkbox" checked> Publish this event on the community calendar</label>
+                    </div>
+                    <div class="community-form-actions"><button id="saveEventButton" class="community-button primary" type="submit">Publish event</button><button id="cancelEventEdit" class="community-button quiet" type="button" hidden>Cancel edit</button></div>
+                    <p id="eventFormStatus" class="community-form-status" role="status" aria-live="polite"></p>
+                </form>
+                <div class="community-staff-list"><h3>Manage events</h3><div id="staffEventList"><div class="community-loading">Loading event management…</div></div></div>
+            </div>
+        </section>
+        <p class="community-footer-note">Event registration requires an Echo Air Group pilot account. Public announcements and published events are visible to everyone.</p>
+    </section>
+</main>
+
+<footer class="community-footer">
+    <div class="community-container community-footer-inner">
+        <a class="brand" href="index.html"><img class="brand-logo" src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768" alt=""><div class="brand-text">ECHO AIR GROUP<small>VIRTUAL AVIATION · REAL PASSION</small></div></a>
+        <div class="community-footer-links"><a href="operations-center.html">Operations</a><a href="academy.html">Academy</a><a href="ranking.html">Pilot Dashboard</a><a href="join.html">Join us</a></div>
+        <p>© 2026 Echo Air Group. Virtual airline. Not affiliated with any real-world airline.</p>
+    </div>
+</footer>
+<script src="site-shell.js"></script>
+<script src="community.js"></script>
+</body>
+</html>
