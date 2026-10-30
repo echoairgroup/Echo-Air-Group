@@ -1,52 +1,159 @@
 
-:root{--eag-accent:#a8d65e;--eag-panel:#111811;--eag-panel-2:#172117;--eag-border:rgba(176,207,151,.17);--eag-muted:#9eaa9a}
-.eag-platform-section{padding:74px 0;background:linear-gradient(135deg,#0b110b,#121a12 55%,#0a100a);color:#f5f7f2}
-.eag-platform-section .container{width:min(1220px,calc(100% - 40px));margin:auto}
-.eag-section-kicker{display:inline-flex;align-items:center;gap:8px;color:var(--eag-accent);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
-.eag-platform-section h2{margin:12px 0 10px;font-size:clamp(26px,4vw,42px);letter-spacing:-.035em;color:#f6f8f2}
-.eag-section-intro{max-width:760px;color:#aeb8a7;line-height:1.7;margin:0 0 26px}
-.eag-status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.eag-status-card,.eag-platform-card{background:linear-gradient(145deg,rgba(26,38,26,.96),rgba(13,21,13,.98));border:1px solid var(--eag-border);border-radius:16px;padding:18px;min-width:0}
-.eag-status-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.eag-status-label{color:#aeb8a7;font-size:12px;font-weight:700}
-.eag-status-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;background:rgba(255,255,255,.06);color:#e9eee4}
-.eag-status-pill:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}
-.eag-status-pill.healthy{color:#a8e28a;background:rgba(103,178,76,.12)}
-.eag-status-pill.warning{color:#f0c36d;background:rgba(207,155,48,.12)}
-.eag-status-pill.error{color:#ff8989;background:rgba(197,68,68,.12)}
-.eag-status-detail{color:#879483;font-size:11px;line-height:1.5;margin-top:11px;min-height:30px}
-.eag-status-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:17px;color:#788574;font-size:10px}
-.eag-status-foot a{color:var(--eag-accent);text-decoration:none;font-weight:700}
-.eag-live-dot{width:8px;height:8px;border-radius:50%;background:#a8e28a;display:inline-block;box-shadow:0 0 0 5px rgba(168,226,138,.08)}
+:root{
+  --eag-accent:var(--green,#ace336);
+  --eag-ink:var(--ink,#111612);
+  --eag-muted:var(--muted,#667064);
+  --eag-line:var(--line,#dfe6da);
+  --eag-soft:var(--soft,#f4f7f2);
+}
+.eag-platform-section{
+  padding:90px 0;
+  background:#f7f9f6;
+  color:var(--eag-ink);
+}
+.eag-platform-section .container{
+  width:min(1180px,calc(100% - 50px));
+  margin:0 auto;
+}
+.eag-section-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 17px;
+  border:1px solid #cbd9c1;
+  border-radius:999px;
+  background:#f4f9ed;
+  color:#76a51d;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.eag-platform-section h2{
+  margin:18px 0 12px;
+  color:#111612;
+  font-size:clamp(32px,5vw,48px);
+  line-height:1.05;
+  letter-spacing:-.045em;
+}
+.eag-section-intro{
+  max-width:760px;
+  margin:0 0 28px;
+  color:#667064;
+  font-size:17px;
+  line-height:1.7;
+}
+.eag-status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.eag-status-card,.eag-platform-card{
+  min-width:0;
+  padding:20px;
+  border:1px solid #dfe6da;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 12px 35px rgba(20,30,15,.06);
+}
+.eag-status-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.eag-status-label{color:#667064;font-size:12px;font-weight:800}
+.eag-status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 10px;
+  border:1px solid transparent;
+  border-radius:999px;
+  background:#f0f2ed;
+  color:#4f5b4a;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+.eag-status-pill:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.eag-status-pill.healthy{color:#4c7613;background:#eef7df;border-color:#d8e9bd}
+.eag-status-pill.warning{color:#956a12;background:#fff7e4;border-color:#f2e1b6}
+.eag-status-pill.error{color:#a63c35;background:#fff0ef;border-color:#f0d0cd}
+.eag-status-detail{min-height:30px;margin-top:12px;color:#687267;font-size:12px;line-height:1.55}
+.eag-status-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;color:#778172;font-size:11px}
+.eag-status-foot a{color:#6e9c1e;text-decoration:none;font-weight:800}
+.eag-live-dot{display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:50%;background:#8fca22;box-shadow:0 0 0 4px rgba(172,227,54,.16)}
 .eag-fleet-toolbar,.eag-routes-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:22px 0}
-.eag-platform-counts{display:flex;gap:10px;flex-wrap:wrap}
-.eag-count-chip{padding:8px 12px;border:1px solid var(--eag-border);border-radius:999px;background:rgba(255,255,255,.035);color:#c2ccb9;font-size:11px}
-.eag-fleet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.eag-aircraft-card{overflow:hidden;border:1px solid var(--eag-border);border-radius:17px;background:linear-gradient(145deg,#172117,#0d140e);display:flex;flex-direction:column;min-width:0}
-.eag-aircraft-photo{height:170px;background:radial-gradient(circle at 50% 50%,rgba(168,214,94,.14),transparent 60%),#0a100a;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.eag-platform-counts{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 18px}
+.eag-count-chip{
+  padding:8px 12px;
+  border:1px solid #dfe6da;
+  border-radius:999px;
+  background:#fff;
+  color:#566150;
+  font-size:11px;
+  font-weight:800;
+}
+.eag-fleet-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.eag-aircraft-card{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid #dfe6da;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 14px 36px rgba(20,30,16,.08);
+  color:#263025;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.eag-aircraft-card:hover{transform:translateY(-3px);box-shadow:0 20px 45px rgba(20,30,16,.12)}
+.eag-aircraft-photo{
+  display:flex;
+  height:190px;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:linear-gradient(135deg,#dfe8d8,#f9fbf7);
+}
 .eag-aircraft-photo img{width:100%;height:100%;object-fit:cover}
-.eag-aircraft-photo .eag-aircraft-placeholder{font-size:34px;color:#607653;font-weight:900;letter-spacing:.06em}
-.eag-aircraft-content{padding:17px;display:flex;flex-direction:column;gap:9px;flex:1}
-.eag-aircraft-reg{font-size:20px;letter-spacing:.04em;color:#f5f7f2;font-weight:850}
-.eag-aircraft-name{color:#9eaa98;font-size:11px;line-height:1.45;min-height:30px}
-.eag-aircraft-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:5px}
-.eag-aircraft-meta div{background:rgba(255,255,255,.035);border-radius:9px;padding:9px}
-.eag-aircraft-meta small{display:block;color:#81907d;font-size:9px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.eag-aircraft-meta strong{display:block;color:#e8eee1;font-size:12px}
-.eag-aircraft-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#788575;font-size:10px;margin-top:auto;padding-top:8px}
-.eag-photo-credit{color:#899683;font-size:9px}
-.eag-photo-credit a{color:#a8d65e;text-decoration:none}
-.eag-empty-state,.eag-load-error{border:1px dashed rgba(176,207,151,.25);padding:22px;border-radius:14px;color:#9fae97;background:rgba(255,255,255,.025);line-height:1.6}
-.eag-routes-map{height:540px;border-radius:18px;overflow:hidden;border:1px solid var(--eag-border);background:#111811}
-.eag-routes-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
-.eag-route-card{padding:15px;border-radius:13px;border:1px solid var(--eag-border);background:#111811}
-.eag-route-title{font-size:16px;color:#f2f5ed;font-weight:850}
-.eag-route-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;color:#99a692;font-size:10px}
-.eag-flight-table-wrap{overflow:auto;margin-top:18px;border:1px solid var(--eag-border);border-radius:14px}
-.eag-flight-table{width:100%;border-collapse:collapse;min-width:680px;background:#101710;color:#dfe7d8}
-.eag-flight-table th,.eag-flight-table td{text-align:left;padding:12px 14px;border-bottom:1px solid rgba(176,207,151,.1);font-size:11px}
-.eag-flight-table th{color:#93a188;background:#172117;text-transform:uppercase;letter-spacing:.08em;font-size:9px}
+.eag-aircraft-photo .eag-aircraft-placeholder{color:#819875;font-size:32px;font-weight:950;letter-spacing:.06em}
+.eag-aircraft-content{display:flex;flex:1;flex-direction:column;gap:9px;padding:20px}
+.eag-aircraft-reg{color:#172016;font-size:20px;font-weight:950;letter-spacing:.025em}
+.eag-aircraft-name{min-height:30px;color:#667064;font-size:12px;line-height:1.5}
+.eag-aircraft-meta{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:5px}
+.eag-aircraft-meta div{padding:10px;border-radius:10px;background:#f4f7f2}
+.eag-aircraft-meta small{display:block;margin-bottom:4px;color:#788472;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.eag-aircraft-meta strong{display:block;color:#273025;font-size:12px}
+.eag-aircraft-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:10px;color:#687267;font-size:10px}
+.eag-photo-credit{color:#859082;font-size:9px}
+.eag-photo-credit a{color:#6e9c1e;text-decoration:none;font-weight:800}
+.eag-empty-state,.eag-load-error{
+  padding:22px;
+  border:1px dashed #cbd9c1;
+  border-radius:14px;
+  background:#fff;
+  color:#667064;
+  line-height:1.6;
+}
+.eag-load-error{border-color:#e7c3c0;background:#fff8f7;color:#9c4039}
+.eag-routes-map{
+  height:540px;
+  overflow:hidden;
+  border:1px solid #dfe6da;
+  border-radius:20px;
+  background:#f4f7f2;
+  box-shadow:0 14px 36px rgba(20,30,16,.08);
+}
+.eag-routes-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.eag-route-card{padding:17px;border:1px solid #dfe6da;border-radius:15px;background:#fff;box-shadow:0 8px 25px rgba(20,30,16,.045)}
+.eag-route-title{color:#172016;font-size:17px;font-weight:950}
+.eag-route-meta{display:flex;flex-wrap:wrap;gap:9px;margin-top:9px;color:#687267;font-size:11px}
+.eag-flight-table-wrap{overflow:auto;margin-top:20px;border:1px solid #dfe6da;border-radius:16px;background:#fff;box-shadow:0 10px 30px rgba(20,30,16,.05)}
+.eag-flight-table{width:100%;min-width:680px;border-collapse:collapse;background:#fff;color:#273025}
+.eag-flight-table th,.eag-flight-table td{padding:13px 15px;border-bottom:1px solid #e6ebe2;text-align:left;font-size:12px}
+.eag-flight-table th{background:#f4f7f2;color:#65705f;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.08em}
 .eag-flight-table tr:last-child td{border-bottom:0}
-.eag-map-note{color:#899783;font-size:10px;line-height:1.5;margin-top:11px}
-@media(max-width:850px){.eag-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.eag-fleet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.eag-routes-map{height:430px}}
-@media(max-width:560px){.eag-platform-section{padding:54px 0}.eag-platform-section .container{width:calc(100% - 28px)}.eag-status-grid,.eag-fleet-grid,.eag-routes-list{grid-template-columns:1fr}.eag-status-card{padding:15px}.eag-aircraft-photo{height:190px}.eag-routes-map{height:360px}}
+.eag-map-note{margin-top:12px;color:#788472;font-size:11px;line-height:1.55}
+@media(max-width:900px){.eag-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.eag-fleet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.eag-routes-map{height:440px}}
+@media(max-width:600px){
+  .eag-platform-section{padding:65px 0}
+  .eag-platform-section .container{width:calc(100% - 28px)}
+  .eag-status-grid,.eag-fleet-grid,.eag-routes-list{grid-template-columns:1fr}
+  .eag-status-card{padding:17px}
+  .eag-aircraft-photo{height:205px}
+  .eag-routes-map{height:360px}
+}
