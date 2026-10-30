@@ -114,3 +114,11 @@
 .community-spotlight-identity strong{display:block;color:#2e3c23;font-size:10px}
 .community-spotlight-identity small{display:block;color:#87917f;font-size:8px;margin-top:4px}
 .community-spotlight-card>p{margin-bottom:5px}
+
+.community-spotlight{display:grid;gap:8px;margin-top:9px}
+.community-spotlight-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #edf1e8}
+.community-spotlight-row:first-child{border-top:0}
+.community-spotlight-rank{width:26px;height:26px;flex:0 0 26px;display:grid;place-items:center;border-radius:8px;background:#eaf3dd;color:#557b23;font-size:9px;font-weight:950}
+.community-spotlight-identity{min-width:0}
+.community-spotlight-identity strong{display:block;overflow-wrap:anywhere;color:#304025;font-size:10px}
+.community-spotlight-identity small{display:block;margin-top:4px;color:#86917e;font-size:8px;line-height:1.5}
