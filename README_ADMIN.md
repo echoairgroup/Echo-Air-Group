@@ -101,4 +101,4 @@ Only submissions made after the Forminit and inbox integration is deployed are c
 
 Supported categories: `news`, `aircraft`, `route`, `team`, `announcement`, `gallery`, `other`.
 
-Supported display targets include `all`, `index.html`, `about.html`, `fleet.html`, `routes.html`, `team.html`, `join.html`, `manual.html`, `contact.html`, `booking.html`, `ranking.html`, `pilot.html`, `manager.html`, `server.html`, `legal.html`, `privacy.html`, `operations-center.html` and `community.html`.
+Supported display targets include `all`, `index.html`, `about.html`, `fleet.html`, `routes.html`, `team.html`, `join.html`, `manual.html`, `contact.html`, `booking.html`, `ranking.html`, `pilot.html`, `manager.html`, `legal.html`, `privacy.html`, `operations-center.html` and `community.html`.
