@@ -399,6 +399,10 @@ function registerOperationsRoutes(app, dependencies) {
             const current = currentResult.rows[0];
             if (!current) return res.status(404).json({ error: "Flight plan not found." });
             const plan = normalizePlan(req.body, current);
+            const assigned = await query("SELECT COUNT(*)::INTEGER AS count FROM operations_flight_plan_pilots WHERE plan_id=$1", [id]);
+            if (Number(assigned.rows[0].count || 0) > plan.capacity) {
+                return res.status(409).json({ error: "Pilot capacity cannot be lower than the number of pilots already assigned." });
+            }
             const published = req.body && req.body.published !== undefined ? req.body.published === true : current.published === true;
             await query(
                 "UPDATE operations_flight_plans SET flight_number=$1, departure_icao=$2, arrival_icao=$3, aircraft=$4, callsign=$5, " +
@@ -544,26 +548,22 @@ function registerOperationsRoutes(app, dependencies) {
 
     app.get("/api/community/announcements", async (req, res) => {
         try {
-            const [notifications, items] = await Promise.all([
-                query(
-                    "SELECT id, title, message, level, created_at, expires_at FROM platform_notifications " +
-                    "WHERE expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP ORDER BY created_at DESC LIMIT 15"
-                ),
-                query(
-                    "SELECT id, title, description, category, link_url, created_at FROM site_items " +
-                    "WHERE published=TRUE AND LOWER(category) IN ('news','announcement') " +
-                    "ORDER BY created_at DESC LIMIT 15"
-                )
-            ]);
-            const list = notifications.rows.map(row => ({
-                id: "notification-" + row.id, title: row.title, body: row.message,
-                level: row.level, createdAt: row.created_at, url: null
-            })).concat(items.rows.map(row => ({
-                id: "site-item-" + row.id, title: row.title, body: row.description,
-                level: row.category === "news" ? "news" : "info", createdAt: row.created_at, url: row.link_url
-            })));
-            list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            return res.json({ announcements: list.slice(0, 20) });
+            // Only explicitly published website News/Announcement items are public.
+            // Internal platform_notifications are intentionally never exposed here.
+            const items = await query(
+                "SELECT id, title, description, category, link_url, created_at FROM site_items " +
+                "WHERE published=TRUE AND LOWER(category) IN ('news','announcement') " +
+                "ORDER BY created_at DESC LIMIT 20"
+            );
+            const announcements = items.rows.map(row => ({
+                id: "site-item-" + row.id,
+                title: row.title,
+                body: row.description,
+                level: row.category === "news" ? "news" : "info",
+                createdAt: row.created_at,
+                url: row.link_url
+            }));
+            return res.json({ announcements });
         } catch (error) {
             console.error("Community announcements failed:", error.message);
             return res.status(500).json({ error: "Unable to load announcements." });
