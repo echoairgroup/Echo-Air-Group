@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
+const { initializePlatformSchema, registerPlatformRoutes } = require("./platform-extension");
 
 const {
     Client,
@@ -96,6 +97,22 @@ const pool = new Pool({
 async function query(text, params = []) {
     return pool.query(text, params);
 }
+
+// Record successful administrative mutations without storing submitted form
+// contents or other applicant/pilot personal data in the audit log.
+app.use("/api", (req, res, next) => {
+    const path = String(req.path || "");
+    if (!path.startsWith("/admin/") || !["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return next();
+    res.once("finish", () => {
+        if (res.statusCode < 200 || res.statusCode >= 400 || !req.user) return;
+        void query(
+            "INSERT INTO platform_audit_log (actor_id, actor_username, action, target_type, details) VALUES ($1,$2,$3,$4,$5::jsonb)",
+            [req.user.id, req.user.username || "unknown", req.method.toLowerCase() + " " + path.slice(0, 160), "admin_api",
+                JSON.stringify({ method: req.method, path, status: res.statusCode })]
+        ).catch(error => console.error("Admin audit event failed:", error.message));
+    });
+    next();
+});
 
 // ============================================================
 // DATABASE INITIALIZATION
@@ -835,6 +852,32 @@ function getAircraft(flight) {
         aircraft ||
         "Unknown aircraft"
     );
+}
+
+function getAircraftRegistration(flight) {
+    const aircraftObject = flight && flight.aircraft && typeof flight.aircraft === "object"
+        ? flight.aircraft
+        : null;
+    const explicit = firstValue(flight, ["registration", "aircraftRegistration", "aircraft_registration", "tailNumber", "tail_number", "reg"]) ||
+        firstValue(aircraftObject, ["registration", "tailNumber", "tail_number", "reg"]);
+    const raw = String(explicit || getAircraft(flight) || "").trim().toUpperCase();
+    const match = raw.match(/^(?:([A-Z0-9]{1,2}-[A-Z0-9]{3,5})|(N[1-9][0-9]{0,4}[A-Z]{0,2}))/);
+    return match ? (match[1] || match[2]) : null;
+}
+
+function getAircraftType(flight) {
+    const aircraftObject = flight && flight.aircraft && typeof flight.aircraft === "object"
+        ? flight.aircraft
+        : null;
+    const direct = firstValue(flight, ["aircraftType", "aircraft_type", "aircraftModel", "aircraft_model", "icaoType", "icao_type", "equipmentType"]) ||
+        firstValue(aircraftObject, ["model", "type", "icaoType", "icao_type", "icao"]);
+    if (direct !== null && direct !== undefined && String(direct).trim()) {
+        return String(direct).trim().slice(0, 120);
+    }
+    const raw = String(getAircraft(flight) || "").trim();
+    if (!raw || getAircraftRegistration(flight)) return null;
+    const model = raw.match(/^((?:Airbus|Boeing|Embraer|ATR|Bombardier|Cessna|Piper|Diamond|Fokker|De Havilland|McDonnell Douglas|Dassault|Beechcraft)\s+[A-Za-z0-9-]{2,20})/i);
+    return model ? model[1] : null;
 }
 
 // ============================================================
@@ -3747,6 +3790,8 @@ async function saveFlight(
                 dep_icao,
                 arr_icao,
                 aircraft,
+                aircraft_registration,
+                aircraft_type,
                 rating,
                 duration,
                 distance,
@@ -3766,6 +3811,8 @@ async function saveFlight(
                 $8,
                 $9,
                 $10,
+                $11,
+                $12,
                 CURRENT_TIMESTAMP
             )
 
@@ -3785,6 +3832,12 @@ async function saveFlight(
 
                 aircraft =
                     EXCLUDED.aircraft,
+
+                aircraft_registration =
+                    EXCLUDED.aircraft_registration,
+
+                aircraft_type =
+                    EXCLUDED.aircraft_type,
 
                 rating =
                     EXCLUDED.rating,
@@ -3814,6 +3867,8 @@ async function saveFlight(
                 data.depIcao,
                 data.arrIcao,
                 data.aircraft,
+                data.aircraftRegistration || null,
+                data.aircraftType || null,
                 data.rating,
                 data.duration,
                 data.distance,
@@ -3915,6 +3970,12 @@ async function importAllFlights(
                     flight
                 );
 
+            const aircraftRegistration =
+                getAircraftRegistration(flight);
+
+            const aircraftType =
+                getAircraftType(flight);
+
             const rating =
                 getRating(
                     flight
@@ -3966,6 +4027,10 @@ async function importAllFlights(
                                     aircraft
                                 )
                                 : null,
+
+                        aircraftRegistration,
+
+                        aircraftType,
 
                         rating,
 
@@ -5563,6 +5628,23 @@ app.delete("/api/admin/applications/:id", authenticateAdmin, async (req, res) =>
 });
 
 // ============================================================
+// EXTENDED PLATFORM ROUTES
+// ============================================================
+
+registerPlatformRoutes(app, {
+    query,
+    pool,
+    authenticate,
+    getRuntimeState: async () => {
+        const syncResult = await query("SELECT * FROM flight_sync_state WHERE sync_key = 'global' LIMIT 1");
+        return {
+            discordReady,
+            sync: syncResult.rows[0] || null
+        };
+    }
+});
+
+// ============================================================
 // 404
 // ============================================================
 
@@ -5651,6 +5733,7 @@ async function initializeBackend() {
             databaseInitError = null;
             console.log("Initializing PostgreSQL / Neon database...");
             await initializeDatabase();
+            await initializePlatformSchema(query);
             databaseReady = true;
             databaseInitError = null;
 
