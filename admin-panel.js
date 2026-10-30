@@ -86,6 +86,7 @@
 
             const platformTabs = {
                 operations: "operations.read",
+                routes: "routes.write",
                 fleet: "fleet.read",
                 system: "system.read",
                 roles: "roles.read",
