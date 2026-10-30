@@ -129,6 +129,7 @@
                 <button class="admin-tab" type="button" data-admin-tab="settings">Discord settings</button>
                 <button class="admin-tab" type="button" data-admin-tab="import">Import JSON</button>
                 <button class="admin-tab" type="button" data-admin-tab="operations">Pilot activity</button>
+                <button class="admin-tab" type="button" data-admin-tab="routes">Route network</button>
                 <button class="admin-tab" type="button" data-admin-tab="fleet">Fleet intelligence</button>
                 <button class="admin-tab" type="button" data-admin-tab="system">System monitoring</button>
                 <button class="admin-tab" type="button" data-admin-tab="roles">Admin roles</button>
@@ -359,6 +360,12 @@
             <section class="admin-view" data-admin-view="operations" hidden>
                 <div class="admin-view-header"><div><h2>Pilot activity & attendance</h2><p>Automatically matched to each Echo pilot through their linked NewSky account. Activity is based on completed flights in the last 30 days.</p></div><button class="admin-button secondary" type="button" data-platform-refresh="operations">Refresh</button></div>
                 <div id="platformOperations"><div class="admin-empty">Loading pilot activity…</div></div>
+            </section>
+
+            <section class="admin-view" data-admin-view="routes" hidden>
+                <div class="admin-view-header"><div><h2>Route network management</h2><p>Routes are added automatically when NewSky flight history contains a completed flight. Archive a route to move it out of the public active list; the flight records remain in the database. Restore it whenever it becomes part of the network again.</p></div><button class="admin-button secondary" type="button" data-platform-refresh="routes">Refresh</button></div>
+                <div class="admin-inline-note">This catalogue is based on actual recorded Echo flights, not NewSky's planned schedules. Archived routes remain visible on the public Routes page under the Archived filter.</div>
+                <div id="platformRoutes"><div class="admin-empty">Loading route network…</div></div>
             </section>
 
             <section class="admin-view" data-admin-view="fleet" hidden>
