@@ -1370,7 +1370,7 @@ function registerPlatformRoutes(app, dependencies) {
                 [userId, courseId]
             ),
             query("SELECT id FROM academy_quizzes WHERE course_id = $1", [courseId]),
-            query("SELECT id, certificate_code FROM academy_certificates WHERE user_id = $1 AND course_id = $2", [userId, courseId])
+            query("SELECT id, certificate_code, issued_at FROM academy_certificates WHERE user_id = $1 AND course_id = $2", [userId, courseId])
         ]);
         const totalLessons = Number(lessonCounts.rows[0].total || 0);
         const completedLessons = Number(lessonCounts.rows[0].completed || 0);
@@ -1378,14 +1378,18 @@ function registerPlatformRoutes(app, dependencies) {
         let examinerVerified = false;
         if (quiz.rows[0]) {
             const latestAttempt = await query(
-                "SELECT a.passed, r.decision AS examiner_decision FROM academy_quiz_attempts a " +
+                "SELECT a.passed, a.attempted_at, r.decision AS examiner_decision FROM academy_quiz_attempts a " +
                 "LEFT JOIN academy_examiner_reviews r ON r.quiz_attempt_id = a.id " +
                 "WHERE a.user_id = $1 AND a.quiz_id = $2 ORDER BY a.attempted_at DESC, a.id DESC LIMIT 1",
                 [userId, quiz.rows[0].id]
             );
             const latest = latestAttempt.rows[0];
             quizPassed = Boolean(latest && latest.passed);
-            examinerVerified = Boolean(latest && latest.passed && latest.examiner_decision === "verified");
+            const examinerApprovedLatest = Boolean(latest && latest.passed && latest.examiner_decision === "verified");
+            // Preserve certificates earned before examiner review was introduced.
+            // Only an explicit retake_required decision on the latest attempt revokes a prior certificate.
+            const historicCertificate = Boolean(certificateResult.rows[0] && (!latest || latest.examiner_decision !== "retake_required"));
+            examinerVerified = examinerApprovedLatest || historicCertificate;
         }
         const progress = totalLessons > 0
             ? Math.min(100, Math.round((completedLessons / totalLessons) * 80) + (examinerVerified ? 20 : 0))
