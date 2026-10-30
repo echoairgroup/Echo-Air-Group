@@ -559,6 +559,34 @@ function registerOperationsRoutes(app, dependencies) {
         }
     });
 
+    app.get("/api/community/spotlight", async (req, res) => {
+        try {
+            const result = await query(
+                "SELECT u.id, COALESCE(NULLIF(BTRIM(u.display_name),''),u.username) AS pilot_name, " +
+                "COUNT(f.id)::INTEGER AS flights, COALESCE(SUM(f.distance),0)::DOUBLE PRECISION AS distance_nm, " +
+                "MAX(CASE WHEN f.dep_time ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' THEN f.dep_time::timestamptz ELSE NULL END) AS last_flight_at " +
+                "FROM flights f JOIN users u ON u.id=f.user_id " +
+                "WHERE CASE WHEN f.dep_time ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' " +
+                "THEN f.dep_time::timestamptz >= CURRENT_TIMESTAMP - INTERVAL '30 days' ELSE FALSE END " +
+                "GROUP BY u.id,u.username,u.display_name ORDER BY COUNT(f.id) DESC,SUM(f.distance) DESC,LOWER(u.username) ASC LIMIT 3"
+            );
+            return res.json({
+                periodDays: 30,
+                pilots: result.rows.map((row,index) => ({
+                    rank: index + 1,
+                    pilotId: Number(row.id),
+                    pilotName: row.pilot_name,
+                    flights: Number(row.flights || 0),
+                    distanceNm: Number(row.distance_nm || 0),
+                    lastFlightAt: row.last_flight_at
+                }))
+            });
+        } catch (error) {
+            console.error("Community pilot spotlight failed:", error.message);
+            return res.status(500).json({ error: "Unable to load the pilot spotlight." });
+        }
+    });
+
     app.get("/api/community/announcements", async (req, res) => {
         try {
             // Only explicitly published website News/Announcement items are public.
