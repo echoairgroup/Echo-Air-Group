@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-const apiBase = String(process.env.API_BASE_URL || "https://echo-air-group-api.onrender.com").replace(/\/$/, "");
+const apiBase = String(process.env.API_BASE_URL || "https://echo-air-group-staging-api.onrender.com").replace(/\/$/, "");
 const secret = String(process.env.SYNC_CRON_SECRET || "");
 
 if (!secret || secret.length < 32) {
