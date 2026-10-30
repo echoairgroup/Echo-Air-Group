@@ -321,7 +321,8 @@
         try{
           const result=await api("/platform/academy/quizzes/"+data.quiz.id+"/attempt",{method:"POST",body:JSON.stringify({answers})});
           resultBox.hidden=false;
-          resultBox.replaceChildren(node("strong","",result.passed?"Knowledge check passed":"Knowledge check not passed yet"),node("p","",result.scorePercent+"% · "+result.correctCount+" of "+result.questionCount+" correct. Pass mark: "+result.passPercent+"%."));
+          resultBox.replaceChildren(node("strong","",result.passed?"Knowledge check passed":"Knowledge check not passed yet"),node("p","",result.scorePercent+"% · "+result.correctCount+" of "+result.questionCount+" correct. Pass mark: "+result.passPercent+"%.")); 
+          if(result.passed&&!result.examinerVerified)resultBox.appendChild(node("p","academy-notice","Your theory exam passed. An authorised examiner must verify this attempt before the course certificate is issued."));
           if(result.review){result.review.forEach(item=>{const question=(data.quiz.questions||[]).find(q=>Number(q.id)===Number(item.questionId));const line=node("p","", (item.correct?"✓ ":"✕ ")+(question?question.prompt:"Question")+" — "+item.explanation);resultBox.appendChild(line);});}
           if(result.certificate) resultBox.appendChild(node("p","","Certificate earned: "+result.certificate.certificate_code));
           await loadPortal();
