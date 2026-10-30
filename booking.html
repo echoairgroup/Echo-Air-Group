@@ -5418,40 +5418,6 @@ document
 
 
 /* =========================================================
-   CARD NUMBER FORMAT
-========================================================= */
-
-document
-    .getElementById(
-        "cardNumber"
-    )
-    .addEventListener(
-        "input",
-        function() {
-
-            let value =
-                this.value
-                    .replace(
-                        /\D/g,
-                        ""
-                    )
-                    .substring(
-                        0,
-                        16
-                    );
-
-
-            this.value =
-                value.replace(
-                    /(.{4})/g,
-                    "$1 "
-                ).trim();
-
-        }
-    );
-
-
-/* =========================================================
    MOBILE MENU
 ========================================================= */
 
