@@ -30,7 +30,7 @@
           const ctx=canvas.getContext("2d");if(!ctx)return reject(new Error("Image editing is not available in this browser."));
           ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
           const data=canvas.toDataURL("image/jpeg",.82);
-          if(data.length>1400000)return reject(new Error("This photo is still too large. Please choose a smaller image."));
+          if(data.length>1395000)return reject(new Error("This photo is still too large. Please choose a smaller image."));
           resolve(data);
         };
         image.src=String(reader.result);
