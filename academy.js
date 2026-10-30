@@ -83,16 +83,152 @@
   }
   async function loadPortal() {
     try {
-      const [catalog, progress] = await Promise.all([api("/platform/academy/catalog"),api("/platform/academy/me")]);
+      const [catalog, progress, training] = await Promise.all([
+        api("/platform/academy/catalog"),
+        api("/platform/academy/me"),
+        api("/platform/academy/training-flights")
+      ]);
       $("#academyWelcome").textContent = "Welcome, " + (window.ECHO_PILOT_NAME || "Pilot");
       renderProgress(progress);
       renderCourses(catalog.courses || []);
+      renderTrainingFlights(training, catalog.courses || []);
       showWorkspace();
     } catch (error) {
       if (error.status === 401) {
         localStorage.removeItem(TOKEN_KEY); token = ""; showLogin("Your pilot session expired. Sign in again with your Pilot Dashboard credentials.");
       } else showLogin(error.message);
     }
+  }
+  function renderTrainingFlights(data, courses) {
+    const root = $("#academyTrainingFlights");
+    if (!root) return;
+    root.replaceChildren();
+    const recent = Array.isArray(data.recentFlights) ? data.recentFlights : [];
+    const recorded = Array.isArray(data.recordedTrainingFlights) ? data.recordedTrainingFlights : [];
+    root.appendChild(node("p", "academy-muted", recorded.length + " training flight(s) recorded · " + recent.length + " recent NewSky flight(s) available."));
+    if (recorded.length) {
+      const history = node("div", "academy-training-history");
+      history.appendChild(node("h3", "", "Recorded training flights"));
+      recorded.forEach(item => {
+        const card = node("article", "academy-training-record");
+        const route = (item.dep_icao || "Unknown") + " → " + (item.arr_icao || "Unknown");
+        card.append(
+          node("strong", "", route),
+          node("span", "academy-chip", item.course_title || "General simulator practice"),
+          node("p", "academy-muted", (item.aircraft_registration ? item.aircraft_registration + " · " : "") + (item.aircraft || "Aircraft not supplied") + " · " + (item.dep_time ? new Date(item.dep_time).toLocaleDateString("en-GB") : "Date unavailable"))
+        );
+        if (item.objective) card.appendChild(node("p", "", "Objective: " + item.objective));
+        if (item.reflection) card.appendChild(node("p", "academy-muted", "Reflection: " + item.reflection));
+        history.appendChild(card);
+      });
+      root.appendChild(history);
+    }
+    const heading = node("h3", "", "Recent flights from NewSky");
+    root.appendChild(heading);
+    if (!recent.length) {
+      root.appendChild(node("p", "academy-muted", "No imported NewSky flights were found for this pilot yet. Link your NewSky pilot ID in the Pilot Dashboard and complete a flight to populate this list."));
+      return;
+    }
+    const grid = node("div", "academy-training-grid");
+    recent.forEach(flight => {
+      const card = node("article", "academy-training-card");
+      const route = (flight.dep_icao || "Unknown") + " → " + (flight.arr_icao || "Unknown");
+      const alreadyLogged = Boolean(flight.training_record_id);
+      card.append(
+        node("div", "academy-training-route", route),
+        node("p", "academy-muted", (flight.aircraft_registration ? flight.aircraft_registration + " · " : "") + (flight.aircraft || "Aircraft not supplied")),
+        node("p", "academy-muted", (flight.dep_time ? new Date(flight.dep_time).toLocaleDateString("en-GB") : "Date unavailable") +
+          (flight.duration != null ? " · " + Math.round(Number(flight.duration)) + " min" : "") +
+          (flight.distance != null ? " · " + Math.round(Number(flight.distance)) + " km" : ""))
+      );
+      const form = document.createElement("form");
+      form.className = "academy-training-form";
+      const courseField = node("div", "academy-field");
+      const courseLabel = document.createElement("label");
+      courseLabel.textContent = "Link to an Academy course";
+      const courseSelect = document.createElement("select");
+      courseSelect.name = "courseId";
+      const noCourse = document.createElement("option");
+      noCourse.value = "";
+      noCourse.textContent = "General practice";
+      courseSelect.appendChild(noCourse);
+      (courses || []).forEach(course => {
+        const option = document.createElement("option");
+        option.value = String(course.id);
+        option.textContent = course.title;
+        if (String(course.id) === String(flight.course_id || "")) option.selected = true;
+        courseSelect.appendChild(option);
+      });
+      courseLabel.appendChild(courseSelect);
+      courseField.appendChild(courseLabel);
+      const objectiveField = node("div", "academy-field");
+      const objectiveLabel = document.createElement("label");
+      objectiveLabel.textContent = "Training objective";
+      const objective = document.createElement("input");
+      objective.type = "text";
+      objective.maxLength = 240;
+      objective.placeholder = "e.g. practice a stabilized ILS approach";
+      objective.value = flight.objective || "";
+      objectiveLabel.appendChild(objective);
+      objectiveField.appendChild(objectiveLabel);
+      const reflectionField = node("div", "academy-field academy-training-reflection");
+      const reflectionLabel = document.createElement("label");
+      reflectionLabel.textContent = "Post-flight reflection";
+      const reflection = document.createElement("textarea");
+      reflection.rows = 3;
+      reflection.maxLength = 3000;
+      reflection.placeholder = "What went well? What would you improve next time?";
+      reflection.value = flight.reflection || "";
+      reflectionLabel.appendChild(reflection);
+      reflectionField.appendChild(reflectionLabel);
+      const actionRow = node("div", "academy-actions");
+      const save = node("button", "academy-button primary", alreadyLogged ? "Update training record" : "Record as training flight");
+      save.type = "submit";
+      actionRow.appendChild(save);
+      if (alreadyLogged) {
+        const remove = node("button", "academy-button secondary", "Remove training mark");
+        remove.type = "button";
+        remove.addEventListener("click", async () => {
+          remove.disabled = true;
+          try {
+            await api("/platform/academy/training-flights/" + flight.training_record_id, { method:"DELETE" });
+            const refreshed = await api("/platform/academy/training-flights");
+            renderTrainingFlights(refreshed, courses);
+          } catch (error) {
+            remove.disabled = false;
+            card.appendChild(node("p", "academy-notice", error.message));
+          }
+        });
+        actionRow.appendChild(remove);
+      }
+      const status = node("p", "academy-notice", "");
+      form.append(courseField, objectiveField, reflectionField, actionRow, status);
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        save.disabled = true;
+        status.textContent = "Saving training record…";
+        try {
+          await api("/platform/academy/training-flights", {
+            method:"POST",
+            body:JSON.stringify({
+              flightId:flight.id,
+              courseId:courseSelect.value || null,
+              objective:objective.value,
+              reflection:reflection.value
+            })
+          });
+          const refreshed = await api("/platform/academy/training-flights");
+          renderTrainingFlights(refreshed, courses);
+        } catch (error) {
+          status.textContent = error.message;
+          save.disabled = false;
+        }
+      });
+      card.appendChild(form);
+      grid.appendChild(card);
+    });
+    root.appendChild(grid);
+    root.appendChild(node("p", "academy-notice", "Flight details are imported from your linked NewSky account. This log adds a personal training purpose and reflection; it does not change the original NewSky flight."));
   }
   async function openCourse(slug, courseId) {
     const detail = $("#academyCourseDetail");
