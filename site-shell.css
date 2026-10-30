@@ -376,3 +376,11 @@ footer .copy {
         height: 220px;
     }
 }
+
+
+/* The expanded navigation has two extra platform destinations. Switch to the shared mobile menu before desktop links crowd the header. */
+@media (max-width: 1320px) {
+    #siteHeader .navlinks,
+    #siteHeader .register { display: none; }
+    #siteHeader .menu { display: block; margin-left: auto; }
+}
