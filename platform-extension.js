@@ -5,12 +5,12 @@ const crypto = require("crypto");
 const ROLE_PERMISSIONS = {
     super_admin: ["*"],
     admin: [
-        "overview.read", "system.read", "operations.read", "fleet.read",
+        "overview.read", "system.read", "operations.read", "routes.write", "fleet.read",
         "audit.read", "notifications.read", "notifications.write",
         "academy.read", "academy.write", "applications.read", "applications.write",
         "content.read", "content.write"
     ],
-    operations_manager: ["overview.read", "system.read", "operations.read", "fleet.read", "audit.read"],
+    operations_manager: ["overview.read", "system.read", "operations.read", "routes.write", "fleet.read", "audit.read"],
     academy_manager: ["overview.read", "academy.read", "academy.write"],
     analyst: ["overview.read", "system.read", "operations.read", "fleet.read", "audit.read"],
     viewer: ["overview.read", "operations.read", "fleet.read", "academy.read"]
@@ -222,6 +222,7 @@ async function initializePlatformSchema(query) {
         "CREATE TABLE IF NOT EXISTS platform_admin_roles (user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK (role IN ('admin','operations_manager','academy_manager','analyst','viewer')), granted_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
         "CREATE TABLE IF NOT EXISTS platform_audit_log (id BIGSERIAL PRIMARY KEY, actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL, actor_username TEXT NOT NULL DEFAULT 'system', action TEXT NOT NULL, target_type TEXT NOT NULL DEFAULT 'system', target_id TEXT, details JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
         "CREATE INDEX IF NOT EXISTS platform_audit_log_created_idx ON platform_audit_log (created_at DESC)",
+        "CREATE TABLE IF NOT EXISTS platform_route_overrides (departure_icao TEXT NOT NULL, arrival_icao TEXT NOT NULL, archived BOOLEAN NOT NULL DEFAULT FALSE, reason TEXT NOT NULL DEFAULT '', changed_by INTEGER REFERENCES users(id) ON DELETE SET NULL, changed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (departure_icao, arrival_icao))",
         "CREATE TABLE IF NOT EXISTS platform_notifications (id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, message TEXT NOT NULL, level TEXT NOT NULL DEFAULT 'info' CHECK (level IN ('info','success','warning','critical')), created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, expires_at TIMESTAMPTZ)",
         "CREATE INDEX IF NOT EXISTS platform_notifications_created_idx ON platform_notifications (created_at DESC)",
         "CREATE TABLE IF NOT EXISTS academy_courses (id SERIAL PRIMARY KEY, slug TEXT UNIQUE NOT NULL, title TEXT NOT NULL, subtitle TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'General', level TEXT NOT NULL DEFAULT 'Beginner', duration_minutes INTEGER NOT NULL DEFAULT 30, published BOOLEAN NOT NULL DEFAULT TRUE, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
@@ -470,6 +471,85 @@ function registerPlatformRoutes(app, dependencies) {
         } catch (error) {
             console.error("Platform route history error:", error.message);
             return res.status(500).json({ error: "Unable to load route history." });
+        }
+    });
+
+    app.get("/api/platform/route-network", async (req, res) => {
+        try {
+            const result = await query(
+                "SELECT UPPER(BTRIM(f.dep_icao)) AS departure, UPPER(BTRIM(f.arr_icao)) AS arrival, " +
+                "COUNT(*)::INTEGER AS total_flights, " +
+                "COUNT(*) FILTER (WHERE CASE WHEN f.dep_time ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' THEN f.dep_time::timestamptz >= NOW() - INTERVAL '30 days' ELSE FALSE END)::INTEGER AS flights_30d, " +
+                "COUNT(DISTINCT f.user_id)::INTEGER AS pilot_count, " +
+                "MAX(CASE WHEN f.dep_time ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' THEN f.dep_time::timestamptz ELSE NULL END) AS last_flown_at, " +
+                "COALESCE(o.archived, FALSE) AS archived, COALESCE(o.reason, '') AS archive_reason, " +
+                "o.changed_at AS status_changed_at, changed_by.username AS status_changed_by " +
+                "FROM flights f " +
+                "LEFT JOIN platform_route_overrides o ON o.departure_icao = UPPER(BTRIM(f.dep_icao)) AND o.arrival_icao = UPPER(BTRIM(f.arr_icao)) " +
+                "LEFT JOIN users changed_by ON changed_by.id = o.changed_by " +
+                "WHERE f.dep_icao IS NOT NULL AND BTRIM(f.dep_icao) <> '' " +
+                "AND f.arr_icao IS NOT NULL AND BTRIM(f.arr_icao) <> '' " +
+                "AND UPPER(BTRIM(f.dep_icao)) <> UPPER(BTRIM(f.arr_icao)) " +
+                "GROUP BY UPPER(BTRIM(f.dep_icao)), UPPER(BTRIM(f.arr_icao)), o.archived, o.reason, o.changed_at, changed_by.username " +
+                "ORDER BY MAX(CASE WHEN f.dep_time ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' THEN f.dep_time::timestamptz ELSE NULL END) DESC NULLS LAST, departure, arrival"
+            );
+            const sync = await query("SELECT last_completed_at FROM flight_sync_state WHERE sync_key = 'global'");
+            const routes = result.rows.map(row => ({
+                departure: row.departure,
+                arrival: row.arrival,
+                totalFlights: Number(row.total_flights || 0),
+                flights30d: Number(row.flights_30d || 0),
+                pilotCount: Number(row.pilot_count || 0),
+                lastFlownAt: row.last_flown_at,
+                archived: row.archived === true,
+                archiveReason: row.archive_reason || "",
+                statusChangedAt: row.status_changed_at,
+                statusChangedBy: row.status_changed_by || null
+            }));
+            res.set("Cache-Control", "no-store");
+            return res.json({
+                routes,
+                count: routes.length,
+                activeCount: routes.filter(route => !route.archived).length,
+                archivedCount: routes.filter(route => route.archived).length,
+                lastSyncedAt: sync.rows[0] ? sync.rows[0].last_completed_at : null,
+                source: "Imported NewSky flight history"
+            });
+        } catch (error) {
+            console.error("Platform route network error:", error.message);
+            return res.status(500).json({ error: "Unable to load the flown route network." });
+        }
+    });
+
+    app.put("/api/platform/route-network/:departure/:arrival", requirePermission("routes.write"), async (req, res) => {
+        const departure = String(req.params.departure || "").trim().toUpperCase();
+        const arrival = String(req.params.arrival || "").trim().toUpperCase();
+        if (!/^[A-Z0-9]{3,4}$/.test(departure) || !/^[A-Z0-9]{3,4}$/.test(arrival) || departure === arrival) {
+            return res.status(400).json({ error: "A valid departure and arrival airport code are required." });
+        }
+        const archived = Boolean(req.body && req.body.archived === true);
+        const reason = String(req.body && req.body.reason || "").trim().slice(0, 300);
+        try {
+            const exists = await query(
+                "SELECT 1 FROM flights WHERE UPPER(BTRIM(dep_icao)) = $1 AND UPPER(BTRIM(arr_icao)) = $2 LIMIT 1",
+                [departure, arrival]
+            );
+            if (!exists.rows.length) return res.status(404).json({ error: "This route is not present in imported flight history." });
+            const saved = await query(
+                "INSERT INTO platform_route_overrides (departure_icao, arrival_icao, archived, reason, changed_by, changed_at) " +
+                "VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP) " +
+                "ON CONFLICT (departure_icao, arrival_icao) DO UPDATE SET archived = EXCLUDED.archived, reason = EXCLUDED.reason, changed_by = EXCLUDED.changed_by, changed_at = CURRENT_TIMESTAMP " +
+                "RETURNING departure_icao, arrival_icao, archived, reason, changed_at",
+                [departure, arrival, archived, archived ? reason : "", req.user.id]
+            );
+            await audit(req, archived ? "routes.archive" : "routes.restore", "route", departure + "-" + arrival, { reason });
+            return res.json({
+                message: archived ? "Route archived. Its completed flight history remains available." : "Route restored to the active network.",
+                route: saved.rows[0]
+            });
+        } catch (error) {
+            console.error("Platform route status update error:", error.message);
+            return res.status(500).json({ error: "Unable to update the route status." });
         }
     });
 
