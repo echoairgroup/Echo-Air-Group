@@ -39,8 +39,12 @@
     const element = formElement(form, name);
     const type = String(element && (element.type || element.tagName) || "text").toLowerCase();
     const slug = camelCase(name);
-    if (type === "select-one" || type === "select-multiple" || type === "radio") return "fi-select-" + slug;
-    if (type === "number" || type === "range") return "fi-number-" + slug;
+    if (type === "radio") return "fi-radio-" + slug;
+    if (type === "checkbox") return "fi-checkbox-" + slug;
+    if (type === "select-one" || type === "select-multiple") return "fi-select-" + slug;
+    if (type === "number") return "fi-number-" + slug;
+    if (type === "range") return "fi-rating-" + slug;
+    if (type === "date") return "fi-date-" + slug;
     if (type === "tel") return "fi-phone-" + slug;
     if (type === "url") return "fi-url-" + slug;
     if (type === "email") return "fi-email-" + slug;
