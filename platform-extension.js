@@ -5,12 +5,12 @@ const crypto = require("crypto");
 const ROLE_PERMISSIONS = {
     super_admin: ["*"],
     admin: [
-        "overview.read", "system.read", "operations.read", "routes.write", "fleet.read",
+        "overview.read", "system.read", "operations.read", "operations.write", "events.manage", "routes.write", "fleet.read",
         "audit.read", "notifications.read", "notifications.write",
         "academy.read", "academy.write", "academy.instructor", "academy.examiner",
         "applications.read", "applications.write", "content.read", "content.write"
     ],
-    operations_manager: ["overview.read", "system.read", "operations.read", "routes.write", "fleet.read", "audit.read"],
+    operations_manager: ["overview.read", "system.read", "operations.read", "operations.write", "events.manage", "routes.write", "fleet.read", "audit.read"],
     academy_manager: ["overview.read", "academy.read", "academy.write", "academy.instructor", "academy.examiner"],
     academy_instructor: ["overview.read", "academy.read", "academy.instructor"],
     academy_examiner: ["overview.read", "academy.read", "academy.examiner"],
