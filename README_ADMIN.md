@@ -1,24 +1,67 @@
-# Website Admin Dashboard
+# Echo Air Group Admin & Platform
 
-The dashboard is available at `admin.html` on the published website. It supports:
-- Creating, editing, publishing, and deleting website items.
-- Uploading JPG, PNG, or WebP images (maximum 2 MB each).
-- Showing content on one page or across all pages.
-- Importing up to 50 website items from a JSON file.
-- Updating the Discord invite centrally; website links and the booking QR code refresh from the saved setting.
+The admin dashboard is available at `admin.html`. It uses the same Echo Air Group pilot login as the Pilot Dashboard.
 
-## One-time backend configuration
+## Root administrator setup
 
-The API uses the existing Echo Air Group login and database. Admin access is intentionally disabled until an allowlist is configured.
+Admin access is intentionally disabled until at least one root administrator is configured.
 
-In the Render dashboard, open the existing `echo-air-group-api` web service and go to **Environment**. Add:
+In the Render dashboard, open the **production** `Echo-Air-Group-api` service and go to **Environment**. Configure:
 
 - **Key:** `ADMIN_USERNAMES`
-- **Value:** the existing website login username that should be allowed to manage the site. Multiple usernames can be comma-separated.
+- **Value:** one or more existing Echo pilot usernames, separated by commas.
 
-For multiple admins, put each person's existing Echo Air Group **username** into the same value, separated by commas (for example `pilotone,pilottwo,flightlead`). Each person signs in with their own username and password; never share a password or add email addresses unless an email address is literally the account username. Save the environment change and let Render redeploy the service. Then open `admin.html`; accounts not listed in `ADMIN_USERNAMES` cannot change website content.
+For example: `pilotone,pilottwo,flightlead`. These accounts become root administrators. Each person signs in with their own existing Echo username and password; never share passwords.
 
-The server creates the `site_items` and `site_settings` tables in the existing Neon PostgreSQL database at startup. Uploaded images are stored in the database; imported JSON items can include an HTTPS `imageUrl`.
+Root administrators can open the **Admin roles** section and assign scoped roles to other existing Echo pilot accounts. Each delegated administrator then signs in through `admin.html` with their own Pilot Dashboard credentials. Available roles:
+
+| Role | Access |
+|---|---|
+| `admin` | Platform overview, system monitoring, operations, fleet, audit, notifications, Academy, website content and application inbox |
+| `operations_manager` | Platform overview, live system monitoring, pilot activity, fleet data and audit log |
+| `academy_manager` | Academy course management and learning overview |
+| `analyst` | Read-only overview, monitoring, pilot activity, fleet and audit log |
+| `viewer` | Read-only overview, operations, fleet and Academy |
+
+The root username allowlist is the bootstrap mechanism. Do not remove the final root administrator until another root account has been configured.
+
+## Platform modules
+
+- **Live system status:** backend process, Neon database, Discord bot and NewSky synchronization status.
+- **Fleet intelligence:** aircraft seen in imported NewSky flight records. Registration and activity are automatically derived. Home base is inferred from the most frequent departure airport in the last 180 days.
+- **Pilot activity:** shows each pilot's imported flight count, most recent flight and whether they flew during the last 30 days.
+- **Routes flown:** historical map and flight list for imported flights in the last 30 days.
+- **Audit log:** records successful administrator changes, actor, action and timestamp. It avoids storing passwords or applicant form contents.
+- **Notifications:** lets administrators create and manage operational notices.
+- **Aviation Academy:** existing pilot accounts can complete lessons, knowledge checks, NewSky-linked training flight logs and course certificates. There is no separate Academy account.
+
+### NewSky data limitations
+
+Fleet information is generated from aircraft actually present in imported NewSky flight records. NewSky's published API currently marks its fleet scope as not used, so aircraft that have never appeared in imported flights cannot be discovered through that API. Aircraft types are shown only when present or safely recognizable in source data. Photographs are optional external lookups by known registration; when no reliable photograph is available the aircraft card remains usable without one. The displayed home base is an inference, not an official airline assignment.
+
+The route map uses completed/imported flights with both departure and arrival identifiers. It is historical activity, not live aircraft tracking. All activity calculations are based on the data already synchronized into the Echo database.
+
+## Website content management
+
+The existing Website Content tools remain available to root administrators and delegated `admin` accounts:
+
+- Create, edit, publish and delete website items.
+- Upload JPG, PNG or WebP images (maximum 2 MB each).
+- Show content on one page or across all pages.
+- Import up to 50 website items from a JSON file.
+- Update the Discord invite centrally; website links and the booking QR code refresh from the saved setting.
+
+The server creates the `site_items` and `site_settings` tables in Neon at startup. Uploaded images are stored in the database; imported JSON items can include an HTTPS `imageUrl`.
+
+## Applications inbox & Forminit
+
+Pilot and manager application forms keep their existing visual layout and fields. Their submission is sent to Forminit using form ID `lzhwmmwkoq5` and is also copied to the private Neon Applications inbox when the API is available.
+
+For browser submissions, the Forminit form must be set to **Public** authentication mode. Configure the Forminit field blocks to match the existing form fields; the website maps sender fields (first name, last name and email) and text, select, number, phone and URL fields to Forminit's documented `fi-*` names.
+
+New submissions appear in the Applications tab. The inbox supports search, filtering by type and status, viewing submitted answers, private admin notes, status updates, deletion and CSV export. Keep access restricted because application data is personal information.
+
+Only submissions made after the Forminit and inbox integration is deployed are captured in this dashboard. Historical FormSubmit emails are not automatically imported.
 
 ## JSON import shape
 
@@ -40,15 +83,4 @@ The server creates the `site_items` and `site_settings` tables in the existing N
 
 Supported categories: `news`, `aircraft`, `route`, `team`, `announcement`, `gallery`, `other`.
 
-Supported display targets include `all`, `index.html`, `about.html`, `fleet.html`, `routes.html`, `team.html`, `join.html`, `manual.html`, `contact.html`, `booking.html`, `ranking.html`, `pilot.html`, `manager.html`, `server.html`, `legal.html`, and `privacy.html`.
-
-
-## Applications inbox
-
-The private **Applications** tab in `admin.html` captures new pilot and manager application submissions in the Neon `applications` table. The existing FormSubmit email workflow is preserved: the form first attempts to save a dashboard copy, then continues to submit to FormSubmit for email delivery. If the tracker is temporarily unavailable, the email submission is still attempted.
-
-The inbox supports search, filtering by type and status, viewing all submitted answers, private admin notes, changing application status, deleting a record, and exporting CSV. Application data is personal information; keep access restricted.
-
-Only submissions made after the application tracker is deployed are captured. Historical FormSubmit emails are not imported automatically.
-
-The backend creates the table during startup. The same `ADMIN_USERNAMES` allowlist required for website content management also controls access to the Applications tab.
+Supported display targets include `all`, `index.html`, `about.html`, `fleet.html`, `routes.html`, `team.html`, `join.html`, `manual.html`, `contact.html`, `booking.html`, `ranking.html`, `pilot.html`, `manager.html`, `server.html`, `legal.html` and `privacy.html`.
