@@ -25,6 +25,6 @@
 .platform-admin-notification{padding:16px;border:1px solid #dfe6da;border-radius:14px;background:#fff;margin-top:12px;box-shadow:0 8px 24px rgba(20,30,15,.045)}
 .platform-admin-notification h3{margin:0 0 7px;color:#151b13;font-size:15px}
 .platform-admin-notification p{margin:0;color:#687267;white-space:pre-wrap;line-height:1.6;font-size:12px}
-.platform-admin-notification footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:13px;color:#788472;font-size:10px}
+.platform-admin-notification .platform-admin-notification-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:13px;color:#788472;font-size:10px}
 @media(max-width:900px){.platform-admin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.platform-admin-grid{grid-template-columns:1fr 1fr}.platform-admin-stat strong{font-size:22px}.platform-admin-form{grid-template-columns:1fr}.platform-admin-form .full{grid-column:auto}}
