@@ -6,10 +6,11 @@
     const menuButton = document.getElementById("menuButton");
     const pageName = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
 
+    // Inserted after Routes; reverse order keeps the resulting navigation intuitive.
     const sharedLinks = [
-        { href: "operations-center.html", label: "Operations", active: ["operations-center.html"] },
+        { href: "academy.html", label: "Aviation Academy", active: ["academy.html"] },
         { href: "community.html", label: "Community", active: ["community.html"] },
-        { href: "academy.html", label: "Aviation Academy", active: ["academy.html"] }
+        { href: "operations-center.html", label: "Operations", active: ["operations-center.html"] }
     ];
 
     [document.querySelector(".navlinks"), mobileNav && mobileNav.querySelector(".container"), document.querySelector(".foot-links")].forEach((container) => {
