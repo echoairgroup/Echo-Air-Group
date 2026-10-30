@@ -394,28 +394,41 @@ function registerOperationsRoutes(app, dependencies) {
     app.patch("/api/platform/operations/flight-plans/:id", requirePermission("operations.write"), async (req, res) => {
         const id = Number.parseInt(req.params.id, 10);
         if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: "Invalid flight-plan ID." });
+        const client = await pool.connect();
         try {
-            const currentResult = await query("SELECT * FROM operations_flight_plans WHERE id = $1", [id]);
+            await client.query("BEGIN");
+            const currentResult = await client.query("SELECT * FROM operations_flight_plans WHERE id=$1 FOR UPDATE", [id]);
             const current = currentResult.rows[0];
-            if (!current) return res.status(404).json({ error: "Flight plan not found." });
+            if (!current) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ error: "Flight plan not found." });
+            }
             const plan = normalizePlan(req.body, current);
-            const assigned = await query("SELECT COUNT(*)::INTEGER AS count FROM operations_flight_plan_pilots WHERE plan_id=$1", [id]);
+            const assigned = await client.query(
+                "SELECT COUNT(*)::INTEGER AS count FROM operations_flight_plan_pilots WHERE plan_id=$1",
+                [id]
+            );
             if (Number(assigned.rows[0].count || 0) > plan.capacity) {
+                await client.query("ROLLBACK");
                 return res.status(409).json({ error: "Pilot capacity cannot be lower than the number of pilots already assigned." });
             }
             const published = req.body && req.body.published !== undefined ? req.body.published === true : current.published === true;
-            await query(
+            await client.query(
                 "UPDATE operations_flight_plans SET flight_number=$1, departure_icao=$2, arrival_icao=$3, aircraft=$4, callsign=$5, " +
                 "scheduled_departure=$6, estimated_duration_minutes=$7, status=$8, capacity=$9, notes=$10, published=$11, updated_at=CURRENT_TIMESTAMP " +
                 "WHERE id=$12",
                 [plan.flightNumber, plan.departure, plan.arrival, plan.aircraft, plan.callsign, plan.departureTime,
                     plan.duration, plan.status, plan.capacity, plan.notes, published, id]
             );
-            await writeAudit(req, "operations.flight_plan.update", "flight_plan", id, { status: plan.status, published });
+            await client.query("COMMIT");
+            await writeAudit(req, "operations.flight_plan.update", "flight_plan", id, { status: plan.status, published, capacity: plan.capacity });
             return res.json({ message: "Flight plan updated.", id });
         } catch (error) {
+            await client.query("ROLLBACK").catch(() => {});
             const clientError = /valid|Enter|must be|Choose|between|different/.test(error.message || "");
             return res.status(clientError ? 400 : 500).json({ error: clientError ? error.message : "Unable to update flight plan." });
+        } finally {
+            client.release();
         }
     });
 
