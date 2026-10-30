@@ -62,7 +62,7 @@
     const save=node("button","","Save profile");save.type="submit";
     const remove=node("button","secondary","Remove photo");remove.type="button";
     const note=node("p","pilot-profile-settings-note full","Your flight history, stars, achievements and rank cannot be edited here. They are based on flights imported from your linked NewSky account.");
-    fields.append(makeField("Display name",name,false),makeField("Profile photo",file,false),makeField("About you",bio,true),note,status,actions);
+    fields.append(makeField("Display name",name,false),makeField("About you",bio,true),note,status,actions);
     actions.append(save,remove);
     form.append(photoBox,fields);
     section.appendChild(form);
