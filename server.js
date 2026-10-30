@@ -46,9 +46,12 @@ app.use((req, res, next) => {
 const PORT =
     process.env.PORT || 3000;
 
-const JWT_SECRET =
-    process.env.JWT_SECRET ||
-    "CHANGE_THIS_SECRET";
+const JWT_SECRET = String(process.env.JWT_SECRET || "").trim();
+
+if (!JWT_SECRET) {
+    console.error("ERROR: JWT_SECRET is missing; refusing to start with an insecure fallback.");
+    process.exit(1);
+}
 
 const DATABASE_URL =
     process.env.DATABASE_URL;
@@ -71,11 +74,6 @@ if (!process.env.NEWSKY_API_KEY) {
     );
 }
 
-if (!process.env.JWT_SECRET) {
-    console.warn(
-        "WARNING: JWT_SECRET is missing. Please set it in Render."
-    );
-}
 
 // ============================================================
 // POSTGRESQL / NEON
