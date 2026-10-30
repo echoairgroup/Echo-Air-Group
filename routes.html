@@ -9,6 +9,7 @@
     <title>Routes — Echo Air Group</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="platform-widgets.css">
 
     <style>
 
@@ -3196,6 +3197,20 @@
 
         </section>
 
+<section class="eag-platform-section" id="flown-routes">
+    <div class="container">
+        <span class="eag-section-kicker">NewSky flight history</span>
+        <h2>Routes flown in the last 30 days</h2>
+        <p class="eag-section-intro">Every imported completed flight with a known departure and arrival airport is included. Lines connect the recorded airports; this is historical activity, not live aircraft tracking.</p>
+        <div id="eagFlownRoutes">
+            <div id="eagRouteSummary"><div class="eag-empty-state">Loading NewSky flight history…</div></div>
+            <div id="eagFlownRoutesMap" class="eag-routes-map" aria-label="Map of Echo Air Group flights completed in the last 30 days"></div>
+            <p class="eag-map-note">Map coordinates are matched using public airport reference data. Some airports may not appear if their ICAO identifier is missing from that dataset.</p>
+            <div id="eagRouteFlights"></div>
+        </div>
+    </div>
+</section>
+
     </main>
 
 
@@ -3397,6 +3412,7 @@
     <script src="site-shell.js"></script>
 
     <script src="site-content.js"></script>
+    <script src="flown-routes.js"></script>
 
 </body>
 
