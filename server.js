@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const { initializePlatformSchema, registerPlatformRoutes } = require("./platform-extension");
+const { initializeOperationsSchema, registerOperationsRoutes } = require("./platform-operations");
 
 const {
     Client,
@@ -5694,6 +5695,8 @@ registerPlatformRoutes(app, {
     }
 });
 
+registerOperationsRoutes(app, { query, pool, authenticate });
+
 // ============================================================
 // 404
 // ============================================================
@@ -5784,6 +5787,7 @@ async function initializeBackend() {
             console.log("Initializing PostgreSQL / Neon database...");
             await initializeDatabase();
             await initializePlatformSchema(query);
+            await initializeOperationsSchema(query);
             databaseReady = true;
             databaseInitError = null;
 
