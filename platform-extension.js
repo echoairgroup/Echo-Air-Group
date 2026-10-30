@@ -1269,7 +1269,7 @@ function registerPlatformRoutes(app, dependencies) {
     app.patch("/api/platform/academy/examiner/queue/:attemptId", requirePermission("academy.examiner"), async (req, res) => {
         const attemptId = Number.parseInt(req.params.attemptId, 10);
         const decision = String(req.body && req.body.decision || "");
-        const feedback = String(req.body && req.body.feedback || "").replace(/\\u0000/g, "").trim().slice(0, 1200);
+        const feedback = String(req.body && req.body.feedback || "").replace(/\u0000/g, "").trim().slice(0, 1200);
         if (!Number.isSafeInteger(attemptId) || attemptId < 1) return res.status(400).json({ error: "Invalid exam attempt." });
         if (!["verified", "retake_required"].includes(decision)) return res.status(400).json({ error: "Choose a verification or retake decision." });
         try {
