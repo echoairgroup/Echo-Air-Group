@@ -238,7 +238,7 @@ function registerOperationsRoutes(app, dependencies) {
                     departure: row.dep_icao || null,
                     arrival: row.arr_icao || null,
                     aircraft: row.aircraft || null,
-                    durationHours: Number(row.duration || 0),
+                    durationMinutes: Number(row.duration || 0),
                     distanceNm: Number(row.distance || 0),
                     departureTime: row.dep_time || null,
                     pilotName: row.pilot_name || "Echo pilot"
