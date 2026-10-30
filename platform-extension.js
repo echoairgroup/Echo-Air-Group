@@ -229,6 +229,8 @@ async function initializePlatformSchema(query) {
         "CREATE TABLE IF NOT EXISTS academy_quizzes (id SERIAL PRIMARY KEY, course_id INTEGER NOT NULL UNIQUE REFERENCES academy_courses(id) ON DELETE CASCADE, title TEXT NOT NULL, pass_percent INTEGER NOT NULL DEFAULT 75 CHECK (pass_percent BETWEEN 1 AND 100), created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
         "CREATE TABLE IF NOT EXISTS academy_questions (id SERIAL PRIMARY KEY, quiz_id INTEGER NOT NULL REFERENCES academy_quizzes(id) ON DELETE CASCADE, prompt TEXT NOT NULL, options JSONB NOT NULL, correct_option INTEGER NOT NULL, explanation TEXT NOT NULL DEFAULT '', sort_order INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(quiz_id, sort_order))",
         "CREATE TABLE IF NOT EXISTS academy_enrollments (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, course_id INTEGER NOT NULL REFERENCES academy_courses(id) ON DELETE CASCADE, status TEXT NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress','completed')), progress_percent INTEGER NOT NULL DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100), enrolled_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, completed_at TIMESTAMPTZ, UNIQUE(user_id, course_id))",
+        "CREATE TABLE IF NOT EXISTS academy_training_flights (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, flight_id INTEGER NOT NULL REFERENCES flights(id) ON DELETE CASCADE, course_id INTEGER REFERENCES academy_courses(id) ON DELETE SET NULL, objective TEXT NOT NULL DEFAULT '', reflection TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, flight_id))",
+        "CREATE INDEX IF NOT EXISTS academy_training_flights_user_idx ON academy_training_flights (user_id, created_at DESC)",
         "CREATE TABLE IF NOT EXISTS academy_lesson_progress (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, lesson_id INTEGER NOT NULL REFERENCES academy_lessons(id) ON DELETE CASCADE, completed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, lesson_id))",
         "CREATE TABLE IF NOT EXISTS academy_quiz_attempts (id BIGSERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, quiz_id INTEGER NOT NULL REFERENCES academy_quizzes(id) ON DELETE CASCADE, score_percent INTEGER NOT NULL, question_count INTEGER NOT NULL, correct_count INTEGER NOT NULL, passed BOOLEAN NOT NULL, answers JSONB NOT NULL DEFAULT '{}'::jsonb, attempted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
         "CREATE INDEX IF NOT EXISTS academy_quiz_attempts_lookup_idx ON academy_quiz_attempts (user_id, quiz_id, attempted_at DESC)",
@@ -830,6 +832,81 @@ function registerPlatformRoutes(app, dependencies) {
             return res.json({ enrollments: enrollments.rows, certificates: certificates.rows, recentAttempts: attempts.rows });
         } catch (error) {
             return res.status(500).json({ error: "Unable to load your academy progress." });
+        }
+    });
+
+    app.get("/api/platform/academy/training-flights", authenticate, async (req, res) => {
+        try {
+            const [recent, recorded] = await Promise.all([
+                query(
+                    "SELECT f.id, f.newsky_id, f.dep_icao, f.arr_icao, f.aircraft, f.aircraft_registration, " +
+                    "f.duration, f.distance, f.dep_time, tf.id AS training_record_id, tf.course_id, " +
+                    "tf.objective, tf.reflection, c.title AS course_title " +
+                    "FROM flights f LEFT JOIN academy_training_flights tf ON tf.flight_id = f.id AND tf.user_id = $1 " +
+                    "LEFT JOIN academy_courses c ON c.id = tf.course_id " +
+                    "WHERE f.user_id = $1 ORDER BY f.dep_time DESC NULLS LAST, f.id DESC LIMIT 30",
+                    [req.user.id]
+                ),
+                query(
+                    "SELECT tf.id, tf.flight_id, tf.objective, tf.reflection, tf.created_at, " +
+                    "c.title AS course_title, f.dep_icao, f.arr_icao, f.aircraft, f.aircraft_registration, " +
+                    "f.duration, f.distance, f.dep_time " +
+                    "FROM academy_training_flights tf JOIN flights f ON f.id = tf.flight_id " +
+                    "LEFT JOIN academy_courses c ON c.id = tf.course_id " +
+                    "WHERE tf.user_id = $1 ORDER BY tf.created_at DESC LIMIT 100",
+                    [req.user.id]
+                )
+            ]);
+            return res.json({ recentFlights: recent.rows, recordedTrainingFlights: recorded.rows });
+        } catch (error) {
+            console.error("Academy training flight history error:", error.message);
+            return res.status(500).json({ error: "Unable to load your NewSky training flight history." });
+        }
+    });
+
+    app.post("/api/platform/academy/training-flights", authenticate, async (req, res) => {
+        const body = req.body || {};
+        const flightId = Number.parseInt(body.flightId, 10);
+        const courseId = body.courseId === null || body.courseId === undefined || body.courseId === ""
+            ? null
+            : Number.parseInt(body.courseId, 10);
+        const objective = String(body.objective || "").trim().slice(0, 240);
+        const reflection = String(body.reflection || "").trim().slice(0, 3000);
+        if (!Number.isSafeInteger(flightId) || flightId < 1) return res.status(400).json({ error: "Choose a valid imported NewSky flight." });
+        if (courseId !== null && (!Number.isSafeInteger(courseId) || courseId < 1)) return res.status(400).json({ error: "Choose a valid Academy course." });
+        try {
+            const flight = await query("SELECT id FROM flights WHERE id = $1 AND user_id = $2", [flightId, req.user.id]);
+            if (!flight.rows.length) return res.status(404).json({ error: "That flight does not belong to your Echo pilot account." });
+            if (courseId !== null) {
+                const course = await query("SELECT id FROM academy_courses WHERE id = $1 AND published = TRUE", [courseId]);
+                if (!course.rows.length) return res.status(404).json({ error: "That Academy course is not available." });
+            }
+            const result = await query(
+                "INSERT INTO academy_training_flights (user_id, flight_id, course_id, objective, reflection) " +
+                "VALUES ($1,$2,$3,$4,$5) ON CONFLICT (user_id, flight_id) DO UPDATE SET " +
+                "course_id = EXCLUDED.course_id, objective = EXCLUDED.objective, reflection = EXCLUDED.reflection, updated_at = CURRENT_TIMESTAMP " +
+                "RETURNING id, flight_id, course_id, objective, reflection, created_at, updated_at",
+                [req.user.id, flightId, courseId, objective, reflection]
+            );
+            return res.status(201).json({ trainingFlight: result.rows[0] });
+        } catch (error) {
+            console.error("Academy training flight save error:", error.message);
+            return res.status(500).json({ error: "Unable to save this training flight." });
+        }
+    });
+
+    app.delete("/api/platform/academy/training-flights/:id", authenticate, async (req, res) => {
+        const id = Number.parseInt(req.params.id, 10);
+        if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: "Invalid training flight." });
+        try {
+            const result = await query(
+                "DELETE FROM academy_training_flights WHERE id = $1 AND user_id = $2 RETURNING id",
+                [id, req.user.id]
+            );
+            if (!result.rows.length) return res.status(404).json({ error: "Training flight not found." });
+            return res.json({ deleted: true, id });
+        } catch (error) {
+            return res.status(500).json({ error: "Unable to remove this training flight." });
         }
     });
 
