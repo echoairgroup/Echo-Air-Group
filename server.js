@@ -1981,7 +1981,7 @@ app.get(
                 status: "ok",
                 database: "connected",
                 discordBot: discordReady ? "connected" : "not connected",
-                automaticFlightSync: true,
+                automaticFlightSync: Boolean(process.env.NEWSKY_API_KEY),
                 time: new Date().toISOString()
             });
         } catch (error) {
@@ -4244,7 +4244,7 @@ app.get("/api/sync/status", async (req, res) => {
         const state = result.rows[0] || null;
         res.set("Cache-Control", "no-store");
         return res.json({
-            automatic: true,
+            automatic: Boolean(process.env.NEWSKY_API_KEY),
             intervalMinutes: 15,
             inProgress: automaticFlightSyncInProgress,
             lastSync: state
