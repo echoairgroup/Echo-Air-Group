@@ -105,7 +105,8 @@
                 node("span", "", dateTime(plan.scheduledDeparture)),
                 node("span", "", plan.aircraft || "Aircraft TBC"),
                 node("span", "", duration(plan.estimatedDurationMinutes)),
-                node("span", "", plan.pilotName ? "Pilot: " + plan.pilotName : "Pilot open")
+                node("span", "", (Number(plan.pilotCount || 0) + " / " + Number(plan.capacity || 1) + " pilot slots")),
+                node("span", "", plan.pilotName ? "Lead pilot: " + plan.pilotName : "Pilot open")
             );
             left.append(route, meta);
 
@@ -114,20 +115,33 @@
             const status = node("span", "ops-pill" + (plan.status === "boarding" ? " boarding" : ""), plan.status === "boarding" ? "Boarding" : "Planned");
             actions.appendChild(status);
             if (localToken()) {
-                const button = node("button", "ops-claim-button", plan.assignedToMe ? "Your assignment" : plan.pilotName ? "Pilot assigned" : "Claim flight");
+                let actionLabel = "Join flight";
+                let actionMethod = "POST";
+                let actionDisabled = false;
+                if (plan.status !== "planned") {
+                    actionLabel = plan.status === "boarding" ? "Boarding in progress" : "Unavailable";
+                    actionDisabled = true;
+                } else if (plan.assignedToMe) {
+                    actionLabel = "Release assignment";
+                    actionMethod = "DELETE";
+                } else if (plan.full || Number(plan.pilotCount || 0) >= Number(plan.capacity || 1)) {
+                    actionLabel = "Fully assigned";
+                    actionDisabled = true;
+                }
+                const button = node("button", "ops-claim-button", actionLabel);
                 button.type = "button";
-                button.disabled = Boolean(plan.assignedToMe || plan.pilotName);
-                if (!button.disabled) {
+                button.disabled = actionDisabled;
+                if (!actionDisabled) {
                     button.addEventListener("click", async () => {
                         button.disabled = true;
                         button.textContent = "Saving…";
                         try {
-                            await request("/operations/flight-plans/" + encodeURIComponent(plan.id) + "/claim", { method: "POST" }, "pilot");
+                            await request("/operations/flight-plans/" + encodeURIComponent(plan.id) + "/claim", { method: actionMethod }, "pilot");
                             await loadSummary();
                         } catch (error) {
                             button.disabled = false;
                             button.textContent = error.message;
-                            window.setTimeout(() => { button.textContent = "Claim flight"; }, 3200);
+                            window.setTimeout(() => { button.textContent = actionLabel; }, 3200);
                         }
                     });
                 }
@@ -198,7 +212,7 @@
                 const info = node("div");
                 info.append(
                     node("strong", "", plan.flight_number + " · " + plan.departure_icao + " → " + plan.arrival_icao),
-                    node("small", "", dateTime(plan.scheduled_departure) + " · " + (plan.pilot_name || "No pilot assigned") + " · " + (plan.published ? "Published" : "Draft"))
+                    node("small", "", dateTime(plan.scheduled_departure) + " · " + Number(plan.pilot_count || 0) + " / " + Number(plan.capacity || 1) + " pilots · " + (plan.pilot_name || "No lead pilot") + " · " + (plan.published ? "Published" : "Draft"))
                 );
                 const actions = node("div", "ops-staff-plan-actions");
                 const edit = node("button", "", "Edit");
@@ -238,6 +252,7 @@
         form.elements.estimatedDurationMinutes.value = plan.estimated_duration_minutes || 60;
         form.elements.callsign.value = plan.callsign || "";
         form.elements.capacity.value = plan.capacity || 1;
+        form.elements.status.value = plan.status || "planned";
         form.elements.notes.value = plan.notes || "";
         form.elements.published.checked = plan.published === true;
         $("#planFormTitle").textContent = "Edit flight plan";
@@ -251,6 +266,7 @@
         $("#planForm").reset();
         $("#planForm").elements.estimatedDurationMinutes.value = 90;
         $("#planForm").elements.capacity.value = 1;
+        $("#planForm").elements.status.value = "planned";
         $("#planForm").elements.published.checked = true;
         $("#planFormTitle").textContent = "Publish a flight plan";
         $("#savePlanButton").textContent = "Publish flight plan";
@@ -274,6 +290,7 @@
                 estimatedDurationMinutes: Number(fields.get("estimatedDurationMinutes")),
                 callsign: fields.get("callsign"),
                 capacity: Number(fields.get("capacity")),
+                status: fields.get("status"),
                 notes: fields.get("notes"),
                 published: form.elements.published.checked
             };
