@@ -169,7 +169,6 @@
             $("#opsStaffPanel").hidden = false;
             $("#opsRoleLabel").textContent = (session.role || "Operations staff").replace(/_/g, " ");
             await loadStaffPlans();
-            await loadRecentFlights();
         } catch (_error) {
             // Visitors and pilots without operations permissions keep the public view.
         }
