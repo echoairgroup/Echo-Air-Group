@@ -893,7 +893,7 @@ function registerPlatformRoutes(app, dependencies) {
     });
 
     async function refreshCourseProgress(userId, courseId) {
-        const [lessonCounts, quiz, certificate] = await Promise.all([
+        const [lessonCounts, quiz, certificateResult] = await Promise.all([
             query(
                 "SELECT COUNT(*)::INTEGER AS total, COUNT(p.id)::INTEGER AS completed " +
                 "FROM academy_lessons l LEFT JOIN academy_lesson_progress p ON p.lesson_id = l.id AND p.user_id = $1 " +
@@ -925,7 +925,7 @@ function registerPlatformRoutes(app, dependencies) {
             "updated_at = CURRENT_TIMESTAMP",
             [userId, courseId, completed ? "completed" : "in_progress", progress]
         );
-        let certificate = certificate.rows[0] || null;
+        let certificate = certificateResult.rows[0] || null;
         if (completed && !certificate) {
             const code = "EAG-" + new Date().getUTCFullYear() + "-" + crypto.randomBytes(4).toString("hex").toUpperCase();
             const created = await query(
