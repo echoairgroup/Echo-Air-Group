@@ -379,7 +379,7 @@ function registerOperationsRoutes(app, dependencies) {
                 "scheduled_departure, estimated_duration_minutes, status, capacity, notes, published, created_by) " +
                 "VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id",
                 [plan.flightNumber, plan.departure, plan.arrival, plan.aircraft, plan.callsign, plan.departureTime,
-                    plan.duration, plan.status, plan.capacity, plan.notes, req.body.published !== false, req.user.id]
+                    plan.duration, plan.status, plan.capacity, plan.notes, (!req.body || req.body.published !== false), req.user.id]
             );
             await writeAudit(req, "operations.flight_plan.create", "flight_plan", result.rows[0].id, {
                 flightNumber: plan.flightNumber, departure: plan.departure, arrival: plan.arrival
