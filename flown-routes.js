@@ -3,7 +3,7 @@
  const API=(window.ECHO_API_URL||"https://echo-air-group-api.onrender.com/api").replace(/\/$/,"");
  const root=document.getElementById("eagRoutesPage");if(!root)return;
  const $=s=>root.querySelector(s);
- let routes=[],map=null,airportPromise=null,loading=false;
+ let routes=[],map=null,airportPromise=null,loading=false,routeLimit=18;
  const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const fmtDate=v=>{if(!v)return "—";const d=new Date(v);return Number.isNaN(d.getTime())?"—":d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});};
  const fmtTime=v=>{if(!v)return "not available";const d=new Date(v);return Number.isNaN(d.getTime())?"not available":d.toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});};
@@ -24,8 +24,10 @@
   const list=routes.filter(r=>(filter==="all"||(filter==="active"&&!r.archived)||(filter==="archived"&&r.archived))&&(!search||(r.departure+" "+r.arrival).includes(search)));
   list.sort((a,b)=>Number(a.archived)-Number(b.archived)||Number(b.flights30d)-Number(a.flights30d)||Number(b.totalFlights)-Number(a.totalFlights)||(a.departure+a.arrival).localeCompare(b.departure+b.arrival));
   $("#eagRouteCount").textContent=list.length+" of "+routes.length+" routes";target.replaceChildren();
+  const more=$("#eagRouteMoreRoutes");
+  if(more){more.hidden=list.length<=routeLimit;more.textContent="Show "+Math.min(18,list.length-routeLimit)+" more routes";}
   if(!list.length){target.appendChild(node("div","route-empty-state",routes.length?"No routes match this filter. Try another airport code or status.":"No completed NewSky routes have been imported yet. A route appears here once a linked pilot completes a flight."));return;}
-  list.forEach(r=>{
+  list.slice(0,routeLimit).forEach(r=>{
    const card=node("article","eag-route-card"),top=node("div","eag-route-card-top");
    top.append(node("div","eag-route-title",r.departure+" → "+r.arrival),node("span","eag-route-status"+(r.archived?" archived":""),r.archived?"Archived":"Active"));
    const meta=node("div","eag-route-meta");
@@ -93,6 +95,8 @@
   }finally{loading=false;}
  }
  const cssLink=document.createElement("link");cssLink.rel="stylesheet";cssLink.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";document.head.appendChild(cssLink);
- $("#eagRouteSearch").addEventListener("input",renderNetwork);$("#eagRouteFilter").addEventListener("change",renderNetwork);
+ $("#eagRouteSearch").addEventListener("input",()=>{routeLimit=18;renderNetwork();});
+ $("#eagRouteFilter").addEventListener("change",()=>{routeLimit=18;renderNetwork();});
+ $("#eagRouteMoreRoutes").addEventListener("click",()=>{routeLimit+=18;renderNetwork();});
  load();window.setInterval(()=>{if(document.visibilityState==="visible")load();},60000);
 })();
