@@ -18,7 +18,7 @@ Root administrators can open the **Admin roles** section and assign scoped roles
 | Role | Access |
 |---|---|
 | `admin` | Platform overview, system monitoring, operations, fleet, audit, notifications, Academy, website content and application inbox |
-| `operations_manager` | Platform overview, live system monitoring, pilot activity, fleet data and audit log |
+| `operations_manager` | Platform overview, live system monitoring, pilot activity, fleet data, audit log, flight-plan management and community event management |
 | `academy_manager` | Academy course management, teaching assessments, examiner reviews and learning overview |
 | `academy_instructor` | Review practical training flights and provide instructor feedback |
 | `academy_examiner` | Independently verify passed theory exams or require a retake |
@@ -50,13 +50,14 @@ The route map uses completed/imported flights with both departure and arrival id
 
 The website now includes two linked modules, available from the shared navigation:
 
-- **Operations Center:** public counts for NewSky-imported flights, the published operations schedule, pilot self-assignment to an open plan, and staff-only schedule management.
-- **Flight planning:** authorised administrators and `operations_manager` staff can create, edit, publish and cancel planned flights. Plans remain separate from imported completed-flight records; a plan never increments a pilot's actual flight totals.
-- **Community calendar:** pilots can RSVP as attending or interested, review their own registrations and cancel an RSVP. Event capacity is enforced on the server.
-- **Event management:** administrators and `operations_manager` staff can publish, edit and delete events. Event changes are written to the platform audit log.
-- **Announcements:** the Community page combines active platform notices with published News and Announcement content items.
+- **Operations Center:** public counts, recent completed flights, a published dispatch schedule, pilot assignments and a staff-only planning workspace. Public recent flights show only the imported NewSky records; the planned schedule is stored separately.
+- **Flight planning:** root administrators, delegated `admin` users and `operations_manager` users can create, edit, publish and cancel planned flights. Plans support a pilot-slot capacity, a planned/boarding status, optional aircraft and callsign details, and internal staff notes. Pilots can join open plans and release their own assignments. Slot counts are protected by row-level transactions; the configured capacity cannot be reduced below the number of current assignments. A plan never increments a pilot's actual flight totals.
+- **Community calendar:** authenticated pilots can RSVP as attending or interested, review their own registrations and cancel an RSVP. Event capacity is enforced server-side with a locked event row to avoid overbooking.
+- **Event management:** root administrators, delegated `admin` users and `operations_manager` users can publish, edit and delete events. Event changes are written to the platform audit log.
+- **Announcements:** the Community page displays only explicitly published News and Announcement website items. Internal administrator notifications remain private.
+- **Pilot spotlight:** a top-three snapshot is calculated from imported completed flights over the last 30 days. It is not manually editable.
 
-Live aircraft positions are intentionally marked unavailable until a real telemetry provider is configured. The Operations Center does not invent coordinates or treat planned flights as active flights.
+Live aircraft positions are intentionally marked unavailable until a real telemetry provider is configured. The connected NewSky sync currently supplies completed flight records, not live coordinates. The Operations Center never invents positions or treats planned flights as active flights.
 
 ## Website content management
 
