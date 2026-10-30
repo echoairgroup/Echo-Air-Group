@@ -231,9 +231,20 @@ function registerOperationsRoutes(app, dependencies) {
     // Public schedule exposes only published flight-plan information, never internal notes.
     app.get("/api/operations/schedule", async (req, res) => {
         try {
+            let currentUserId = 0;
+            const authorization = String(req.headers.authorization || "");
+            if (authorization.startsWith("Bearer ")) {
+                try {
+                    const decoded = require("jsonwebtoken").verify(authorization.slice(7), process.env.JWT_SECRET || "CHANGE_THIS_SECRET");
+                    const userResult = await query("SELECT id FROM users WHERE id=$1", [decoded.id]);
+                    if (userResult.rows[0]) currentUserId = Number(userResult.rows[0].id);
+                } catch (_error) {
+                    currentUserId = 0;
+                }
+            }
             const result = await query(
                 "SELECT p.id, p.flight_number, p.departure_icao, p.arrival_icao, p.aircraft, p.callsign, " +
-                "p.scheduled_departure, p.estimated_duration_minutes, p.status, p.capacity, " +
+                "p.scheduled_departure, p.estimated_duration_minutes, p.status, p.capacity, p.pilot_user_id, " +
                 "u.display_name AS pilot_name " +
                 "FROM operations_flight_plans p LEFT JOIN users u ON u.id = p.pilot_user_id " +
                 "WHERE p.published = TRUE AND p.status <> 'cancelled' " +
@@ -252,7 +263,8 @@ function registerOperationsRoutes(app, dependencies) {
                     estimatedDurationMinutes: Number(row.estimated_duration_minutes),
                     status: row.status,
                     capacity: Number(row.capacity),
-                    pilotName: row.pilot_name || null
+                    pilotName: row.pilot_name || null,
+                    assignedToMe: currentUserId > 0 && Number(row.pilot_user_id) === currentUserId
                 }))
             });
         } catch (error) {
