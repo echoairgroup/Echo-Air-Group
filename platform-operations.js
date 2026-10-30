@@ -20,6 +20,13 @@ async function initializeOperationsSchema(query) {
             "updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP)",
         "CREATE INDEX IF NOT EXISTS operations_flight_plans_schedule_idx ON operations_flight_plans (scheduled_departure, status) WHERE published = TRUE",
         "CREATE INDEX IF NOT EXISTS operations_flight_plans_pilot_idx ON operations_flight_plans (pilot_user_id, scheduled_departure)",
+        "CREATE TABLE IF NOT EXISTS operations_flight_plan_pilots (" +
+            "plan_id BIGINT NOT NULL REFERENCES operations_flight_plans(id) ON DELETE CASCADE, " +
+            "user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, " +
+            "created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (plan_id,user_id))",
+        "CREATE INDEX IF NOT EXISTS operations_flight_plan_pilots_user_idx ON operations_flight_plan_pilots (user_id, created_at DESC)",
+        "INSERT INTO operations_flight_plan_pilots (plan_id,user_id) SELECT id,pilot_user_id FROM operations_flight_plans " +
+            "WHERE pilot_user_id IS NOT NULL ON CONFLICT (plan_id,user_id) DO NOTHING",
         "CREATE TABLE IF NOT EXISTS community_events (" +
             "id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', " +
             "event_type TEXT NOT NULL DEFAULT 'community' CHECK (event_type IN ('group-flight','training','meeting','community','other')), " +
@@ -245,11 +252,14 @@ function registerOperationsRoutes(app, dependencies) {
             const result = await query(
                 "SELECT p.id, p.flight_number, p.departure_icao, p.arrival_icao, p.aircraft, p.callsign, " +
                 "p.scheduled_departure, p.estimated_duration_minutes, p.status, p.capacity, p.pilot_user_id, " +
-                "u.display_name AS pilot_name " +
+                "u.display_name AS pilot_name, " +
+                "(SELECT COUNT(*)::INTEGER FROM operations_flight_plan_pilots pp WHERE pp.plan_id=p.id) AS pilot_count, " +
+                "EXISTS (SELECT 1 FROM operations_flight_plan_pilots pp WHERE pp.plan_id=p.id AND pp.user_id=$1) AS assigned_to_me " +
                 "FROM operations_flight_plans p LEFT JOIN users u ON u.id = p.pilot_user_id " +
                 "WHERE p.published = TRUE AND p.status <> 'cancelled' " +
                 "AND p.scheduled_departure >= CURRENT_TIMESTAMP - INTERVAL '12 hours' " +
-                "ORDER BY p.scheduled_departure ASC LIMIT 100"
+                "ORDER BY p.scheduled_departure ASC LIMIT 100",
+                [currentUserId]
             );
             return res.json({
                 plans: result.rows.map(row => ({
@@ -264,7 +274,9 @@ function registerOperationsRoutes(app, dependencies) {
                     status: row.status,
                     capacity: Number(row.capacity),
                     pilotName: row.pilot_name || null,
-                    assignedToMe: currentUserId > 0 && Number(row.pilot_user_id) === currentUserId
+                    pilotCount: Number(row.pilot_count || 0),
+                    assignedToMe: row.assigned_to_me === true,
+                    full: Number(row.pilot_count || 0) >= Number(row.capacity)
                 }))
             });
         } catch (error) {
@@ -287,7 +299,8 @@ function registerOperationsRoutes(app, dependencies) {
                 query(
                     "SELECT p.id, p.flight_number, p.departure_icao, p.arrival_icao, p.aircraft, p.callsign, " +
                     "p.scheduled_departure, p.estimated_duration_minutes, p.status, p.capacity, p.notes, p.published, " +
-                    "p.pilot_user_id, u.username AS pilot_username, u.display_name AS pilot_name " +
+                    "p.pilot_user_id, u.username AS pilot_username, u.display_name AS pilot_name, " +
+                    "(SELECT COUNT(*)::INTEGER FROM operations_flight_plan_pilots pp WHERE pp.plan_id=p.id) AS pilot_count " +
                     "FROM operations_flight_plans p LEFT JOIN users u ON u.id = p.pilot_user_id " +
                     "ORDER BY p.scheduled_departure DESC LIMIT 150"
                 ),
@@ -323,7 +336,8 @@ function registerOperationsRoutes(app, dependencies) {
                     published: row.published === true,
                     pilotUserId: row.pilot_user_id,
                     pilotUsername: row.pilot_username || null,
-                    pilotName: row.pilot_name || null
+                    pilotName: row.pilot_name || null,
+                    pilotCount: Number(row.pilot_count || 0)
                 })),
                 recentFlights: actualFlights.rows.map(row => ({
                     id: Number(row.id),
@@ -346,7 +360,8 @@ function registerOperationsRoutes(app, dependencies) {
     app.get("/api/platform/operations/flight-plans", requirePermission("operations.read"), async (req, res) => {
         try {
             const result = await query(
-                "SELECT p.*, u.username AS pilot_username, u.display_name AS pilot_name " +
+                "SELECT p.*, u.username AS pilot_username, u.display_name AS pilot_name, " +
+                "(SELECT COUNT(*)::INTEGER FROM operations_flight_plan_pilots pp WHERE pp.plan_id=p.id) AS pilot_count " +
                 "FROM operations_flight_plans p LEFT JOIN users u ON u.id = p.pilot_user_id " +
                 "ORDER BY p.scheduled_departure DESC LIMIT 200"
             );
@@ -419,34 +434,90 @@ function registerOperationsRoutes(app, dependencies) {
     app.post("/api/operations/flight-plans/:id/claim", authenticate, async (req, res) => {
         const id = Number.parseInt(req.params.id, 10);
         if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: "Invalid flight-plan ID." });
+        const client = await pool.connect();
         try {
-            const result = await query(
-                "UPDATE operations_flight_plans SET pilot_user_id=$1, updated_at=CURRENT_TIMESTAMP " +
-                "WHERE id=$2 AND published=TRUE AND status='planned' AND scheduled_departure > CURRENT_TIMESTAMP " +
-                "AND (pilot_user_id IS NULL OR pilot_user_id=$1) RETURNING id",
+            await client.query("BEGIN");
+            const planResult = await client.query(
+                "SELECT id, capacity, status, published, scheduled_departure FROM operations_flight_plans WHERE id=$1 FOR UPDATE",
+                [id]
+            );
+            const plan = planResult.rows[0];
+            if (!plan || plan.published !== true || plan.status !== "planned" || new Date(plan.scheduled_departure).getTime() <= Date.now()) {
+                await client.query("ROLLBACK");
+                return res.status(409).json({ error: "This flight is no longer available for pilot assignment." });
+            }
+            const existing = await client.query(
+                "SELECT 1 FROM operations_flight_plan_pilots WHERE plan_id=$1 AND user_id=$2",
+                [id, req.user.id]
+            );
+            if (existing.rows.length) {
+                await client.query("COMMIT");
+                return res.json({ assigned: true, alreadyAssigned: true, id });
+            }
+            const count = await client.query(
+                "SELECT COUNT(*)::INTEGER AS count FROM operations_flight_plan_pilots WHERE plan_id=$1",
+                [id]
+            );
+            const assignedCount = Number(count.rows[0].count || 0);
+            if (assignedCount >= Number(plan.capacity)) {
+                await client.query("ROLLBACK");
+                return res.status(409).json({ error: "All pilot slots for this flight have been claimed." });
+            }
+            await client.query(
+                "INSERT INTO operations_flight_plan_pilots (plan_id,user_id) VALUES ($1,$2)",
+                [id, req.user.id]
+            );
+            await client.query(
+                "UPDATE operations_flight_plans SET pilot_user_id=COALESCE(pilot_user_id,$1),updated_at=CURRENT_TIMESTAMP WHERE id=$2",
                 [req.user.id, id]
             );
-            if (!result.rows.length) return res.status(409).json({ error: "This flight is no longer available for pilot assignment." });
+            await client.query("COMMIT");
             await writeAudit(req, "operations.flight_plan.claim", "flight_plan", id, { pilotId: req.user.id });
-            return res.json({ assigned: true, id });
+            return res.json({ assigned: true, id, remainingSlots: Math.max(0, Number(plan.capacity) - assignedCount - 1) });
         } catch (error) {
+            await client.query("ROLLBACK");
+            console.error("Flight-plan assignment failed:", error.message);
             return res.status(500).json({ error: "Unable to assign yourself to this flight." });
+        } finally {
+            client.release();
         }
     });
 
     app.delete("/api/operations/flight-plans/:id/claim", authenticate, async (req, res) => {
         const id = Number.parseInt(req.params.id, 10);
         if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: "Invalid flight-plan ID." });
+        const client = await pool.connect();
         try {
-            const result = await query(
-                "UPDATE operations_flight_plans SET pilot_user_id=NULL, updated_at=CURRENT_TIMESTAMP " +
-                "WHERE id=$1 AND pilot_user_id=$2 AND status='planned' RETURNING id",
+            await client.query("BEGIN");
+            const planResult = await client.query(
+                "SELECT id,status FROM operations_flight_plans WHERE id=$1 FOR UPDATE",
+                [id]
+            );
+            if (!planResult.rows.length || planResult.rows[0].status !== "planned") {
+                await client.query("ROLLBACK");
+                return res.status(409).json({ error: "You cannot release this pilot assignment." });
+            }
+            const removed = await client.query(
+                "DELETE FROM operations_flight_plan_pilots WHERE plan_id=$1 AND user_id=$2 RETURNING user_id",
                 [id, req.user.id]
             );
-            if (!result.rows.length) return res.status(409).json({ error: "You cannot release this pilot assignment." });
+            if (!removed.rows.length) {
+                await client.query("ROLLBACK");
+                return res.status(409).json({ error: "You do not have a pilot assignment for this flight." });
+            }
+            await client.query(
+                "UPDATE operations_flight_plans SET pilot_user_id=(SELECT user_id FROM operations_flight_plan_pilots WHERE plan_id=$1 ORDER BY created_at ASC LIMIT 1),updated_at=CURRENT_TIMESTAMP WHERE id=$1",
+                [id]
+            );
+            await client.query("COMMIT");
+            await writeAudit(req, "operations.flight_plan.unclaim", "flight_plan", id, { pilotId: req.user.id });
             return res.json({ released: true, id });
         } catch (error) {
+            await client.query("ROLLBACK");
+            console.error("Flight-plan release failed:", error.message);
             return res.status(500).json({ error: "Unable to release your assignment." });
+        } finally {
+            client.release();
         }
     });
 
