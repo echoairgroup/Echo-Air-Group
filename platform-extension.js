@@ -7,7 +7,8 @@ const ROLE_PERMISSIONS = {
     admin: [
         "overview.read", "system.read", "operations.read", "fleet.read",
         "audit.read", "notifications.read", "notifications.write",
-        "academy.read", "academy.write"
+        "academy.read", "academy.write", "applications.read", "applications.write",
+        "content.read", "content.write"
     ],
     operations_manager: ["overview.read", "system.read", "operations.read", "fleet.read", "audit.read"],
     academy_manager: ["overview.read", "academy.read", "academy.write"],
