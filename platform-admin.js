@@ -136,6 +136,10 @@
   }
   const loadable=new Set(["overview","operations","fleet","system","roles","audit","notifications","academy"]);
   document.addEventListener("click",event=>{
+    const refresh=event.target.closest("[data-platform-refresh]");
+    if(refresh&&loadable.has(refresh.dataset.platformRefresh))loadView(refresh.dataset.platformRefresh);
+  });
+  document.addEventListener("click",event=>{
     const tab=event.target.closest("[data-admin-tab]");if(!tab||!loadable.has(tab.dataset.adminTab))return;
     window.setTimeout(()=>loadView(tab.dataset.adminTab),0);
   });
