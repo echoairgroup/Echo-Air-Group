@@ -99,7 +99,8 @@
                         <label>Scheduled departure<input name="scheduledDeparture" type="datetime-local" required></label>
                         <label>Estimated duration (minutes)<input name="estimatedDurationMinutes" type="number" min="1" max="1800" value="90" required></label>
                         <label>Callsign<input name="callsign" maxlength="32" placeholder="ECHO SIX ZERO ONE"></label>
-                        <label>Pilot capacity<input name="capacity" type="number" min="1" max="100" value="1" required></label>
+                        <label>Available pilot slots<input name="capacity" type="number" min="1" max="100" value="1" required></label>
+                        <label>Schedule status<select name="status"><option value="planned">Planned · open for pilots</option><option value="boarding">Boarding · assignment closed</option></select></label>
                         <label class="full">Operational notes<textarea name="notes" maxlength="2000" rows="3" placeholder="Optional instructions for pilots. Internal notes are only visible to authorised operations staff."></textarea></label>
                         <label class="ops-check full"><input name="published" type="checkbox" checked> Publish this flight plan on the public schedule</label>
                     </div>
