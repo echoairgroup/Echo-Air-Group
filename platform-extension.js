@@ -494,8 +494,8 @@ function registerPlatformRoutes(app, dependencies) {
 
     app.patch("/api/platform/pilot/profile", authenticate, async (req, res) => {
         const body = req.body || {};
-        const displayName = body.displayName === undefined ? null : String(body.displayName || "").trim().replace(/\\s+/g, " ").slice(0, 60);
-        const bio = body.bio === undefined ? null : String(body.bio || "").replace(/\\u0000/g, "").trim().slice(0, 400);
+        const displayName = body.displayName === undefined ? null : String(body.displayName || "").trim().replace(/\s+/g, " ").slice(0, 60);
+        const bio = body.bio === undefined ? null : String(body.bio || "").replace(/\u0000/g, "").trim().slice(0, 400);
         if (displayName !== null && (displayName.length < 2 || displayName.length > 60)) {
             return res.status(400).json({ error: "Your display name must contain 2–60 characters." });
         }
@@ -1228,7 +1228,7 @@ function registerPlatformRoutes(app, dependencies) {
     app.patch("/api/platform/academy/instructor/queue/:id", requirePermission("academy.instructor"), async (req, res) => {
         const id = Number.parseInt(req.params.id, 10);
         const status = String(req.body && req.body.status || "");
-        const feedback = String(req.body && req.body.feedback || "").replace(/\\u0000/g, "").trim().slice(0, 1200);
+        const feedback = String(req.body && req.body.feedback || "").replace(/\u0000/g, "").trim().slice(0, 1200);
         if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: "Invalid practical assessment." });
         if (!["approved", "needs_practice"].includes(status)) return res.status(400).json({ error: "Choose an approval or more-practice result." });
         try {
@@ -1274,11 +1274,14 @@ function registerPlatformRoutes(app, dependencies) {
         if (!["verified", "retake_required"].includes(decision)) return res.status(400).json({ error: "Choose a verification or retake decision." });
         try {
             const attempt = await query(
-                "SELECT a.id, a.user_id, q.course_id FROM academy_quiz_attempts a JOIN academy_quizzes q ON q.id = a.quiz_id WHERE a.id = $1",
+                "SELECT a.id, a.user_id, a.passed, q.course_id FROM academy_quiz_attempts a JOIN academy_quizzes q ON q.id = a.quiz_id WHERE a.id = $1",
                 [attemptId]
             );
             if (!attempt.rows.length) return res.status(404).json({ error: "Exam attempt not found." });
             const row = attempt.rows[0];
+            if (decision === "verified" && !row.passed) {
+                return res.status(400).json({ error: "This theory attempt did not reach the course pass mark and cannot be verified." });
+            }
             const result = await query(
                 "INSERT INTO academy_examiner_reviews (quiz_attempt_id,user_id,course_id,examiner_id,decision,feedback,reviewed_at) " +
                 "VALUES ($1,$2,$3,$4,$5,$6,CURRENT_TIMESTAMP) ON CONFLICT (quiz_attempt_id) DO UPDATE SET " +
@@ -1286,8 +1289,9 @@ function registerPlatformRoutes(app, dependencies) {
                 "RETURNING quiz_attempt_id, decision, feedback, reviewed_at",
                 [attemptId, row.user_id, row.course_id, req.user.id, decision, feedback]
             );
+            const progress = await refreshCourseProgress(row.user_id, row.course_id);
             await audit(req, "academy.examiner.review", "academy_quiz_attempt", attemptId, { decision });
-            return res.json({ review: result.rows[0] });
+            return res.json({ review: result.rows[0], progress });
         } catch (error) {
             console.error("Academy examiner review error:", error.message);
             return res.status(500).json({ error: "Unable to save the examiner decision." });
@@ -1371,17 +1375,22 @@ function registerPlatformRoutes(app, dependencies) {
         const totalLessons = Number(lessonCounts.rows[0].total || 0);
         const completedLessons = Number(lessonCounts.rows[0].completed || 0);
         let quizPassed = false;
+        let examinerVerified = false;
         if (quiz.rows[0]) {
-            const passed = await query(
-                "SELECT 1 FROM academy_quiz_attempts WHERE user_id = $1 AND quiz_id = $2 AND passed = TRUE LIMIT 1",
+            const latestAttempt = await query(
+                "SELECT a.passed, r.decision AS examiner_decision FROM academy_quiz_attempts a " +
+                "LEFT JOIN academy_examiner_reviews r ON r.quiz_attempt_id = a.id " +
+                "WHERE a.user_id = $1 AND a.quiz_id = $2 ORDER BY a.attempted_at DESC, a.id DESC LIMIT 1",
                 [userId, quiz.rows[0].id]
             );
-            quizPassed = passed.rows.length > 0;
+            const latest = latestAttempt.rows[0];
+            quizPassed = Boolean(latest && latest.passed);
+            examinerVerified = Boolean(latest && latest.passed && latest.examiner_decision === "verified");
         }
         const progress = totalLessons > 0
-            ? Math.min(100, Math.round((completedLessons / totalLessons) * 80) + (quizPassed ? 20 : 0))
-            : (quizPassed ? 100 : 0);
-        const completed = totalLessons > 0 && completedLessons === totalLessons && quizPassed;
+            ? Math.min(100, Math.round((completedLessons / totalLessons) * 80) + (examinerVerified ? 20 : 0))
+            : (examinerVerified ? 100 : 0);
+        const completed = totalLessons > 0 && completedLessons === totalLessons && examinerVerified;
         await query(
             "INSERT INTO academy_enrollments (user_id, course_id, status, progress_percent, completed_at, updated_at) " +
             "VALUES ($1,$2,$3,$4,CASE WHEN $3 = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END,CURRENT_TIMESTAMP) " +
@@ -1399,8 +1408,11 @@ function registerPlatformRoutes(app, dependencies) {
                 [userId, courseId, code]
             );
             certificate = created.rows[0];
+        } else if (!completed && certificate) {
+            await query("DELETE FROM academy_certificates WHERE id = $1", [certificate.id]);
+            certificate = null;
         }
-        return { totalLessons, completedLessons, quizPassed, progress, completed, certificate };
+        return { totalLessons, completedLessons, quizPassed, examinerVerified, progress, completed, certificate };
     }
 
     app.post("/api/platform/academy/lessons/:lessonId/complete", authenticate, async (req, res) => {
