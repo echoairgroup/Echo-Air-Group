@@ -1,27 +1,38 @@
-/* Shared navigation behavior matched to index.html. */
+/* Shared navigation behavior matched to the Echo Air Group site shell. */
 (() => {
+    "use strict";
     const siteHeader = document.getElementById("siteHeader");
     const mobileNav = document.getElementById("mobileNav");
     const menuButton = document.getElementById("menuButton");
+    const pageName = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
+
+    // Inserted after Routes; reverse order keeps the resulting navigation intuitive.
+    const sharedLinks = [
+        { href: "academy.html", label: "Aviation Academy", active: ["academy.html"] },
+        { href: "community.html", label: "Community", active: ["community.html"] },
+        { href: "operations-center.html", label: "Operations", active: ["operations-center.html"] }
+    ];
+
+    [document.querySelector(".navlinks"), mobileNav && mobileNav.querySelector(".container"), document.querySelector(".foot-links")].forEach((container) => {
+        if (!container) return;
+        sharedLinks.forEach((item) => {
+            let link = container.querySelector('a[href="' + item.href + '"]');
+            if (!link) {
+                link = document.createElement("a");
+                link.href = item.href;
+                link.textContent = item.label;
+                const routesLink = container.querySelector('a[href="routes.html"]');
+                const teamLink = container.querySelector('a[href="team.html"]');
+                if (routesLink && routesLink.parentNode === container) routesLink.after(link);
+                else if (teamLink && teamLink.parentNode === container) container.insertBefore(link, teamLink);
+                else container.appendChild(link);
+            }
+            if (item.active.includes(pageName) && container.classList.contains("navlinks")) link.classList.add("active");
+        });
+    });
 
     document.querySelectorAll('a[href="ranking.html"]').forEach((link) => {
         link.textContent = "Pilot Dashboard";
-    });
-
-    // Keep the Aviation Academy discoverable across desktop, mobile and footer navigation.
-    const academyPage = window.location.pathname.split("/").pop() === "academy.html";
-    [document.querySelector(".navlinks"), mobileNav && mobileNav.querySelector(".container"), document.querySelector(".foot-links")].forEach((container) => {
-        if (!container) return;
-        let link = container.querySelector('a[href="academy.html"]');
-        if (!link) {
-            link = document.createElement("a");
-            link.href = "academy.html";
-            link.textContent = "Aviation Academy";
-            const dashboardLink = container.querySelector('a[href="ranking.html"]');
-            if (dashboardLink) container.insertBefore(link, dashboardLink);
-            else container.appendChild(link);
-        }
-        if (academyPage && container.classList.contains("navlinks")) link.classList.add("active");
     });
 
     function closeMenu() {
@@ -41,21 +52,14 @@
         document.body.classList.toggle("menu-open", isOpen);
     };
 
-    if (mobileNav) {
-        mobileNav.querySelectorAll("a").forEach((link) => {
-            link.addEventListener("click", closeMenu);
-        });
-    }
+    if (mobileNav) mobileNav.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
 
     let previousScrollY = window.scrollY;
     function updateHeader() {
         if (!siteHeader) return;
         const currentScrollY = window.scrollY;
         siteHeader.classList.toggle("scrolled", currentScrollY > 10);
-        siteHeader.classList.toggle(
-            "hide-on-scroll",
-            currentScrollY > previousScrollY && currentScrollY > 500
-        );
+        siteHeader.classList.toggle("hide-on-scroll", currentScrollY > previousScrollY && currentScrollY > 500);
         previousScrollY = currentScrollY;
     }
     window.addEventListener("scroll", updateHeader, { passive: true });

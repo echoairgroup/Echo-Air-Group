@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const { initializePlatformSchema, registerPlatformRoutes } = require("./platform-extension");
+const { initializeOperationsSchema, registerOperationsRoutes } = require("./platform-operations");
 
 const {
     Client,
@@ -5135,7 +5136,7 @@ const SITE_ITEM_PAGES = new Set([
     "all", "index.html", "about.html", "fleet.html", "routes.html",
     "team.html", "join.html", "manual.html", "contact.html", "booking.html",
     "ranking.html", "pilot.html", "manager.html", "server.html",
-    "legal.html", "privacy.html"
+    "legal.html", "privacy.html", "operations-center.html", "community.html"
 ]);
 const SITE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 
@@ -5694,6 +5695,8 @@ registerPlatformRoutes(app, {
     }
 });
 
+registerOperationsRoutes(app, { query, pool, authenticate });
+
 // ============================================================
 // 404
 // ============================================================
@@ -5784,6 +5787,7 @@ async function initializeBackend() {
             console.log("Initializing PostgreSQL / Neon database...");
             await initializeDatabase();
             await initializePlatformSchema(query);
+            await initializeOperationsSchema(query);
             databaseReady = true;
             databaseInitError = null;
 

@@ -86,7 +86,7 @@
     try{
       const data=await request("/platform/admin/roles");
       const form=$("#platformRoleForm");const roleField=$("#platformNewRole");
-      if(roleField&&!roleField.options.length)(data.availableRoles||[]).forEach(role=>{const option=document.createElement("option");option.value=role;const labels={academy_instructor:"Academy instructor — review practical flights",academy_examiner:"Academy examiner — verify theory exams",academy_manager:"Academy manager — manage courses and assessments",operations_manager:"Operations manager — manage flight operations",analyst:"Analyst — read-only operational access",viewer:"Viewer — limited read access",admin:"Administrator — manage platform features"};option.textContent=labels[role]||role.replace(/_/g," ");roleField.appendChild(option);});
+      if(roleField&&!roleField.options.length)(data.availableRoles||[]).forEach(role=>{const option=document.createElement("option");option.value=role;const labels={academy_instructor:"Academy instructor — review practical flights",academy_examiner:"Academy examiner — verify theory exams",academy_manager:"Academy manager — manage courses and assessments",operations_manager:"Operations manager — manage flight plans and community events",analyst:"Analyst — read-only operational access",viewer:"Viewer — limited read access",admin:"Administrator — manage platform features"};option.textContent=labels[role]||role.replace(/_/g," ");roleField.appendChild(option);});
       table(root,["Pilot account","Role","Assigned"],(data.roles||[]).map(role=>[role.display_name||role.username,role.role,fmtDate(role.created_at)]));
       root.querySelectorAll("table tbody tr").forEach((row,index)=>{
         const role=data.roles[index];if(!role)return;

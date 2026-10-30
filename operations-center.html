@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#090d08">
+    <meta name="description" content="Echo Air Group Operations Center — published flight plans, real flight activity and operational updates.">
+    <title>Operations Center — Echo Air Group</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="site-shell.css">
+    <link rel="stylesheet" href="operations-center.css">
+</head>
+<body class="eag-operations-page">
+<header id="siteHeader">
+    <div class="container nav">
+        <a class="brand" href="index.html" aria-label="Echo Air Group home">
+            <img class="brand-logo" src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768" alt="Echo Air Group Logo">
+            <div class="brand-text">ECHO AIR GROUP<small>6L · ECV · CLOVER</small></div>
+        </a>
+        <nav class="navlinks" aria-label="Primary navigation">
+            <a href="index.html">Home</a><a href="about.html">About</a><a href="fleet.html">Fleet</a><a href="routes.html">Routes</a><a href="team.html">Team</a><a href="index.html#news">News</a><a href="join.html">Join Us</a><a href="manual.html">Pilot Manual</a><a href="contact.html">Contact</a><a href="ranking.html">Pilot Dashboard</a><a href="booking.html">Book a flight</a>
+        </nav>
+        <a class="register" href="join.html">REGISTER</a>
+        <button class="menu" id="menuButton" onclick="toggleMenu()" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNav">☰</button>
+    </div>
+    <div id="mobileNav" class="mobileNav"><div class="container">
+        <a href="index.html">Home</a><a href="about.html">About</a><a href="fleet.html">Fleet</a><a href="routes.html">Routes</a><a href="team.html">Team</a><a href="index.html#news">News</a><a href="join.html">Join Us</a><a href="manual.html">Pilot Manual</a><a href="contact.html">Contact</a><a href="ranking.html">Pilot Dashboard</a><a href="booking.html">Book a flight</a><a href="join.html">Register</a>
+    </div></div>
+</header>
+
+<main>
+    <section class="ops-hero">
+        <div class="ops-container ops-hero-inner">
+            <div>
+                <span class="ops-eyebrow">ECHO AIR GROUP · DISPATCH & OPERATIONS</span>
+                <h1>Operations <span>Center.</span></h1>
+                <p>One place for the published flight schedule, verified flight activity and the operational picture of our virtual airline.</p>
+                <div class="ops-hero-actions">
+                    <a class="ops-button primary" href="#flightSchedule">View flight schedule</a>
+                    <a class="ops-button ghost" href="community.html">Community events</a>
+                </div>
+            </div>
+            <div class="ops-hero-mark" aria-hidden="true"><span>6L</span><small>OPERATIONS</small></div>
+        </div>
+    </section>
+
+    <section class="ops-container ops-main">
+        <div class="ops-section-heading">
+            <div><span class="ops-kicker">NETWORK OVERVIEW</span><h2>Operational snapshot</h2><p>Figures below come from imported flight records and published plans.</p></div>
+            <span id="opsUpdated" class="ops-updated">Loading data…</span>
+        </div>
+        <div class="ops-stats" id="opsStats" aria-live="polite">
+            <article class="ops-stat"><span>Recorded flights</span><strong>—</strong><small>NewSky flight history</small></article>
+            <article class="ops-stat"><span>Flights · 30 days</span><strong>—</strong><small>Imported activity</small></article>
+            <article class="ops-stat"><span>Active pilots · 30 days</span><strong>—</strong><small>Based on flown records</small></article>
+            <article class="ops-stat"><span>Upcoming plans</span><strong>—</strong><small>Published schedule</small></article>
+        </div>
+
+        <div class="ops-grid">
+            <section class="ops-card ops-schedule-card" id="flightSchedule">
+                <div class="ops-card-heading"><div><span class="ops-kicker">DISPATCH BOARD</span><h2>Published flight schedule</h2><p>Upcoming flights planned by Echo Air Group operations.</p></div><button id="refreshSchedule" class="ops-small-button" type="button">Refresh</button></div>
+                <div id="flightPlans" class="ops-flight-list" aria-live="polite"><div class="ops-loading">Loading the published flight schedule…</div></div>
+            </section>
+            <aside class="ops-side-stack">
+                <section class="ops-card ops-tracking-card">
+                    <span class="ops-kicker">FLIGHT FOLLOWING</span>
+                    <h2>Live aircraft tracking</h2>
+                    <div class="ops-status-line"><span class="ops-status-dot unavailable"></span><strong id="trackingStatus">Telemetry not connected</strong></div>
+                    <p id="trackingMessage">The connected flight-data service currently provides completed flight records, not a live position feed. This panel will only show aircraft positions when a genuine telemetry source is connected.</p>
+                    <div class="ops-tracking-meta"><span>Position source</span><strong>Not available</strong></div>
+                    <div class="ops-tracking-meta"><span>Displayed positions</span><strong>0 · no simulated data</strong></div>
+                </section>
+                <section class="ops-card ops-community-card">
+                    <span class="ops-kicker">FLY TOGETHER</span>
+                    <h2>Upcoming community flights</h2>
+                    <p>Find group flights, training sessions and community events. Register your interest and keep your place up to date.</p>
+                    <a class="ops-text-link" href="community.html">Explore events <span aria-hidden="true">→</span></a>
+                </section>
+            </aside>
+        </div>
+
+        <section class="ops-card ops-actual-card">
+            <div class="ops-card-heading"><div><span class="ops-kicker">VERIFIED ACTIVITY</span><h2>Recently flown</h2><p>Recent flights imported from linked NewSky pilot accounts. Planned flights do not appear here until the flight data is received.</p></div><a class="ops-text-link" href="ranking.html">Pilot dashboard →</a></div>
+            <div id="recentFlights" class="ops-actual-grid"><div class="ops-loading">Loading recent completed NewSky flights…</div></div>
+        </section>
+
+        <section class="ops-staff-card" id="opsStaffPanel" hidden>
+            <div class="ops-card-heading"><div><span class="ops-kicker">STAFF WORKSPACE</span><h2>Dispatch management</h2><p>Create and maintain the published schedule. Changes are recorded in the administrator audit log.</p></div><span class="ops-role-label" id="opsRoleLabel">Operations staff</span></div>
+            <div class="ops-staff-layout">
+                <form id="planForm" class="ops-form">
+                    <h3 id="planFormTitle">Publish a flight plan</h3>
+                    <div class="ops-form-grid">
+                        <label>Flight number<input name="flightNumber" maxlength="16" placeholder="EAG601" required></label>
+                        <label>Aircraft<input name="aircraft" maxlength="100" placeholder="Airbus A320neo"></label>
+                        <label>Departure ICAO<input name="departureIcao" maxlength="4" pattern="[A-Za-z0-9]{4}" placeholder="EHAM" required></label>
+                        <label>Arrival ICAO<input name="arrivalIcao" maxlength="4" pattern="[A-Za-z0-9]{4}" placeholder="EGLL" required></label>
+                        <label>Scheduled departure<input name="scheduledDeparture" type="datetime-local" required></label>
+                        <label>Estimated duration (minutes)<input name="estimatedDurationMinutes" type="number" min="1" max="1800" value="90" required></label>
+                        <label>Callsign<input name="callsign" maxlength="32" placeholder="ECHO SIX ZERO ONE"></label>
+                        <label>Available pilot slots<input name="capacity" type="number" min="1" max="100" value="1" required></label>
+                        <label>Schedule status<select name="status"><option value="planned">Planned · open for pilots</option><option value="boarding">Boarding · assignment closed</option></select></label>
+                        <label class="full">Operational notes<textarea name="notes" maxlength="2000" rows="3" placeholder="Optional instructions for pilots. Internal notes are only visible to authorised operations staff."></textarea></label>
+                        <label class="ops-check full"><input name="published" type="checkbox" checked> Publish this flight plan on the public schedule</label>
+                    </div>
+                    <p class="ops-form-note">A flight plan is a schedule entry, not proof that the flight has happened. Completed flight records come from NewSky.</p>
+                    <div class="ops-form-actions"><button id="savePlanButton" class="ops-button primary" type="submit">Publish flight plan</button><button id="cancelPlanEdit" class="ops-button ghost-dark" type="button" hidden>Cancel edit</button></div>
+                    <p id="planFormStatus" class="ops-form-status" role="status" aria-live="polite"></p>
+                </form>
+                <div class="ops-staff-list-wrap"><h3>Manage published plans</h3><div id="staffPlanList"><div class="ops-loading">Loading staff schedule…</div></div></div>
+            </div>
+        </section>
+
+        <div class="ops-disclaimer"><strong>Data integrity:</strong> planned departures, manual planning statuses and NewSky-imported completed flights are separate records. Echo Air Group does not currently display live aircraft coordinates because the configured integration does not provide a live telemetry feed.</div>
+    </section>
+</main>
+
+<footer class="ops-footer">
+    <div class="ops-container ops-footer-inner">
+        <a class="brand" href="index.html"><img class="brand-logo" src="https://media.discordapp.net/attachments/1535409438683439314/1535737685921243176/Logo_Black_BG_2.png?ex=6a78daac&is=6a77892c&hm=6305c1a42b19573ab14a078da19356d64c6450caa398984d629aa154622cb491&=&format=webp&quality=lossless&width=768&height=768" alt=""><div class="brand-text">ECHO AIR GROUP<small>VIRTUAL AVIATION · REAL PASSION</small></div></a>
+        <div class="ops-footer-links"><a href="community.html">Community</a><a href="academy.html">Academy</a><a href="ranking.html">Pilot Dashboard</a><a href="contact.html">Contact</a></div>
+        <p>© 2026 Echo Air Group. Virtual airline. Not affiliated with any real-world airline.</p>
+    </div>
+</footer>
+<script src="site-shell.js"></script>
+<script src="operations-center.js"></script>
+</body>
+</html>
