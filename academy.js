@@ -162,7 +162,7 @@
           resultBox.hidden=false;
           resultBox.replaceChildren(node("strong","",result.passed?"Knowledge check passed":"Knowledge check not passed yet"),node("p","",result.scorePercent+"% · "+result.correctCount+" of "+result.questionCount+" correct. Pass mark: "+result.passPercent+"%."));
           if(result.review){result.review.forEach(item=>{const question=(data.quiz.questions||[]).find(q=>Number(q.id)===Number(item.questionId));const line=node("p","", (item.correct?"✓ ":"✕ ")+(question?question.prompt:"Question")+" — "+item.explanation);resultBox.appendChild(line);});}
-          if(result.certificate) resultBox.appendChild(node("p","","Certificate earned: "+result.certificate.certificate.certificate_code));
+          if(result.certificate) resultBox.appendChild(node("p","","Certificate earned: "+result.certificate.certificate_code));
           await loadPortal();
           await openCourse(course.slug,courseId);
           target.querySelector(".academy-result")?.replaceWith(resultBox);
