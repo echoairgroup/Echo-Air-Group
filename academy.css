@@ -1,5 +1,5 @@
 
-.academy-main{min-height:70vh;padding:0 0 70px;background:#fff;color:#111612}
+.academy-main{min-height:70vh;padding:80px 0 70px;background:#fff;color:#111612}
 .academy-wrap{width:min(1180px,calc(100% - 50px));margin:0 auto}
 .academy-panel{background:#fff;border:1px solid #dfe6da;border-radius:18px;padding:26px;margin:18px 0;box-shadow:0 12px 35px rgba(20,30,15,.06)}
 .academy-panel h2{margin:0 0 10px;color:#151b13;font-size:25px}
