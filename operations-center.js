@@ -80,6 +80,7 @@
             ? summary.liveTracking.reason
             : "Live position tracking is available from the configured telemetry source.";
         renderSchedule(schedule.plans || []);
+        renderActualFlights(summary.recentFlights || []);
     }
 
     function renderSchedule(plans) {
@@ -174,28 +175,25 @@
         }
     }
 
-    async function loadRecentFlights() {
-        try {
-            const data = await request("/platform/operations-center", {}, "admin");
-            const root = $("#recentFlights");
-            root.replaceChildren();
-            const flights = data.recentFlights || [];
-            if (!flights.length) {
-                root.appendChild(node("div", "ops-empty", "No imported flight records are available yet."));
-                return;
-            }
-            flights.forEach((flight) => {
-                const card = node("article", "ops-actual-item");
-                card.append(
-                    node("strong", "", (flight.departure || "----") + " → " + (flight.arrival || "----")),
-                    node("small", "", (flight.pilotName || "Pilot") + " · " + (flight.aircraft || "Aircraft not supplied")),
-                    node("small", "", dateTime(flight.departureTime) + " · " + duration(flight.duration) + (flight.distance ? " · " + Math.round(flight.distance) + " nm" : ""))
-                );
-                root.appendChild(card);
-            });
-        } catch (error) {
-            $("#recentFlights").replaceChildren(node("div", "ops-empty", error.message));
+    function renderActualFlights(flights) {
+        const root = $("#recentFlights");
+        root.replaceChildren();
+        if (!flights.length) {
+            root.appendChild(node("div", "ops-empty", "No completed flight records have been imported yet."));
+            return;
         }
+        flights.forEach((flight) => {
+            const card = node("article", "ops-actual-item");
+            const hours = Number(flight.durationHours || 0);
+            const hoursText = hours > 0 ? (Math.round(hours * 100) / 100) + " h" : "Duration not supplied";
+            const distanceText = Number(flight.distanceNm || 0) > 0 ? " · " + Math.round(flight.distanceNm).toLocaleString("en-GB") + " nm" : "";
+            card.append(
+                node("strong", "", (flight.departure || "----") + " → " + (flight.arrival || "----")),
+                node("small", "", (flight.pilotName || "Echo pilot") + " · " + (flight.aircraft || "Aircraft not supplied")),
+                node("small", "", dateTime(flight.departureTime) + " · " + hoursText + distanceText)
+            );
+            root.appendChild(card);
+        });
     }
 
     async function loadStaffPlans() {
