@@ -60,13 +60,37 @@
         }
 
         try {
-            const session = await request("/admin/site/session");
-            $("#adminUsername").textContent = session.username || "Admin";
+            const session = await request("/platform/admin/session");
+            window.EAGPlatformAdminSession = session;
+            $("#adminUsername").textContent = (session.username || "Admin") + " · " + String(session.role || "admin").replace(/_/g, " ");
             $("#adminLogin").hidden = true;
             $("#adminDashboard").hidden = false;
             clearStatus("#loginStatus");
-            await Promise.all([loadItems(), loadSettings(), loadApplications()]);
-            showView("overview");
+
+            const can = (permission) => Array.isArray(session.permissions) && (session.permissions.includes("*") || session.permissions.includes(permission));
+            const legacyTabs = ["add", "manage", "applications", "settings", "import"];
+            legacyTabs.forEach(name => {
+                const tab = document.querySelector('[data-admin-tab="' + name + '"]');
+                if (tab) tab.hidden = !session.isRootAdmin;
+            });
+            if (session.isRootAdmin) {
+                await Promise.all([loadItems(), loadSettings(), loadApplications()]);
+            }
+
+            const platformTabs = {
+                operations: "operations.read",
+                fleet: "fleet.read",
+                system: "system.read",
+                roles: "roles.read",
+                audit: "audit.read",
+                notifications: "notifications.read",
+                academy: "academy.read"
+            };
+            Object.entries(platformTabs).forEach(([name, permission]) => {
+                const tab = document.querySelector('[data-admin-tab="' + name + '"]');
+                if (tab) tab.hidden = !can(permission);
+            });
+            showView(session.isRootAdmin ? "overview" : (can("operations.read") ? "operations" : "academy"));
         } catch (error) {
             if (error.status === 401) {
                 token = "";
