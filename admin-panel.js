@@ -68,14 +68,21 @@
             clearStatus("#loginStatus");
 
             const can = (permission) => Array.isArray(session.permissions) && (session.permissions.includes("*") || session.permissions.includes(permission));
-            const legacyTabs = ["add", "manage", "applications", "settings", "import"];
-            legacyTabs.forEach(name => {
+            const legacyTabPermissions = {
+                add: "content.write",
+                manage: "content.write",
+                applications: "applications.read",
+                settings: "content.write",
+                import: "content.write"
+            };
+            Object.entries(legacyTabPermissions).forEach(([name, permission]) => {
                 const tab = document.querySelector('[data-admin-tab="' + name + '"]');
-                if (tab) tab.hidden = !session.isRootAdmin;
+                if (tab) tab.hidden = !can(permission);
             });
-            if (session.isRootAdmin) {
-                await Promise.all([loadItems(), loadSettings(), loadApplications()]);
-            }
+            const legacyLoads = [];
+            if (can("content.read")) legacyLoads.push(loadItems(), loadSettings());
+            if (can("applications.read")) legacyLoads.push(loadApplications());
+            await Promise.all(legacyLoads);
 
             const platformTabs = {
                 operations: "operations.read",
