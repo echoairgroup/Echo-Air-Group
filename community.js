@@ -57,12 +57,14 @@
     }
 
     async function loadCommunity() {
-        const [eventData, newsData] = await Promise.all([
+        const [eventData, newsData, spotlightData] = await Promise.all([
             request("/community/events"),
-            request("/community/announcements")
+            request("/community/announcements"),
+            request("/community/spotlight")
         ]);
         renderEvents(eventData.events || []);
         renderAnnouncements(newsData.announcements || []);
+        renderSpotlight(spotlightData.pilots || []);
         const events = eventData.events || [];
         $("#communityEventCount").textContent = String(events.filter(event => new Date(event.startsAt).getTime() >= Date.now()).length);
         $("#communityNewsCount").textContent = String((newsData.announcements || []).length);
@@ -154,6 +156,26 @@
             button.textContent = original;
             window.alert(error.message);
         }
+    }
+
+    function renderSpotlight(pilots) {
+        const root = $("#communitySpotlight");
+        root.replaceChildren();
+        if (!pilots.length) {
+            root.appendChild(node("div", "community-empty", "No completed flights were recorded during the last 30 days."));
+            return;
+        }
+        pilots.forEach((pilot) => {
+            const row = node("div", "community-spotlight-row");
+            const rank = node("span", "community-spotlight-rank", "#" + pilot.rank);
+            const identity = node("div", "community-spotlight-identity");
+            identity.append(
+                node("strong", "", pilot.pilotName),
+                node("small", "", Number(pilot.flights || 0) + " completed flights · " + Math.round(Number(pilot.distanceNm || 0)).toLocaleString("en-GB") + " nm")
+            );
+            row.append(rank, identity);
+            root.appendChild(row);
+        });
     }
 
     function renderAnnouncements(items) {
