@@ -1559,30 +1559,34 @@ async function authenticate(
 
 
 // WEBSITE ADMIN ACCESS
+// Root administrators are controlled by ADMIN_USERNAMES. Delegated "admin"
+// accounts are existing pilot accounts with an explicit Neon role assignment.
 function authenticateAdmin(req, res, next) {
     const allowedUsernames = String(process.env.ADMIN_USERNAMES || "")
         .split(",")
         .map(value => value.trim().toLowerCase())
         .filter(Boolean);
 
-    if (!allowedUsernames.length) {
-        return res.status(503).json({
-            error: "Website admin access is not configured yet. Set ADMIN_USERNAMES in the backend environment to the permitted website username(s)."
-        });
-    }
-
-    return authenticate(req, res, () => {
+    return authenticate(req, res, async () => {
         const username = String(req.user && req.user.username || "")
             .trim()
             .toLowerCase();
 
-        if (!allowedUsernames.includes(username)) {
-            return res.status(403).json({
-                error: "This account is not authorized to manage website content."
-            });
-        }
+        if (allowedUsernames.includes(username)) return next();
 
-        return next();
+        try {
+            const result = await query(
+                "SELECT role FROM platform_admin_roles WHERE user_id = $1",
+                [req.user.id]
+            );
+            if (result.rows[0] && result.rows[0].role === "admin") return next();
+            return res.status(403).json({
+                error: "This account is not authorized to manage website content or applications."
+            });
+        } catch (error) {
+            console.error("Delegated admin access check failed:", error.message);
+            return res.status(503).json({ error: "Administrator access is temporarily unavailable." });
+        }
     });
 }
 
