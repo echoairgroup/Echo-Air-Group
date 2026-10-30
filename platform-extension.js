@@ -205,6 +205,110 @@ const SEED_COURSES = [
     }
 ];
 
+
+const EXTRA_ACADEMY_COURSES = [
+  {
+    slug:"advanced-atc-communications",title:"Advanced ATC Communications",subtitle:"Readbacks, phraseology and frequency discipline",
+    category:"Radio communications",level:"Intermediate",duration:55,
+    description:"Practice concise simulator radio calls, complete readbacks and workload management. Examples are for flight simulation only, not real-world clearances or operating instructions.",
+    lessons:[
+      ["Building a clear radio call",15,"A useful simulator call is concise and ordered. Identify who you are calling, your callsign, your current context and the relevant request or information. Listen before transmitting and avoid unnecessary calls when a frequency is busy.\n\nUse the phraseology and network rules published by the online ATC network you are using. Different networks may use different conventions."],
+      ["Readbacks and corrections",20,"A readback repeats the key information the controller needs the pilot to confirm. Listen for the elements that affect the next action, such as a runway, altitude, heading or route instruction. If you did not understand a transmission, ask for clarification rather than guessing.\n\nWhen a readback is corrected, acknowledge the change and repeat the amended information calmly."],
+      ["Busy frequencies and workload",20,"Prepare what you need to say before transmitting. Avoid stepping on another call, keep the microphone clear when not speaking and leave non-operational chat off a busy frequency.\n\nFor practice, listen to a busy simulator frequency and note the callsign, instruction and readback. Repeat the exercise in a quieter session."]
+    ],
+    quiz:{title:"Advanced ATC Communications Exam",pass:85,questions:[
+      ["What should a concise simulator radio call include?",["Who you are calling, your callsign and the relevant request","A long explanation of every cockpit action","Only the aircraft registration"],0,"A structured call gives the listener the context and information needed."],
+      ["What should you do if you do not understand an instruction?",["Guess what was intended","Ask for the transmission to be repeated or clarified","Continue without acknowledging it"],1,"Clarifying an unclear transmission is better than guessing."],
+      ["Why are readbacks useful?",["They confirm key information was heard correctly","They replace the need to listen","They make every transmission longer"],0,"A readback helps identify misunderstandings before the next action."],
+      ["A controller corrects your readback. What next?",["Ignore the correction","Argue over the frequency","Acknowledge and repeat the corrected information"],2,"A corrected readback closes the communication loop."],
+      ["A frequency is busy. Which action is most appropriate?",["Transmit unrelated chat","Listen first and keep calls concise","Transmit over another pilot"],1,"Listening and concise calls reduce unnecessary frequency congestion."],
+      ["Can this course be treated as a real-world clearance or authority?",["Yes, after passing the exam","No, it is simulator education only","Only at familiar airports"],1,"Echo Academy does not authorize real aircraft operation."]
+    ]}
+  },
+  {
+    slug:"instrument-flight-fundamentals",title:"Instrument Flight Fundamentals",subtitle:"IFR concepts, chart review and mode awareness",
+    category:"Instrument procedures",level:"Advanced",duration:65,
+    description:"Develop stronger knowledge of instrument-flight concepts, procedure review and simulator approach preparation. This is not a substitute for approved charts, aircraft documentation or qualified instruction.",
+    lessons:[
+      ["Instrument scan and navigation modes",20,"Learn which displays in your selected simulator aircraft show attitude, altitude, speed, vertical trend and navigation guidance. Confirm the active navigation source and mode before relying on the displayed guidance.\n\nReview your aircraft documentation and simulator navigation-data status before each practice session. A displayed route or course should not be assumed correct without checking it."],
+      ["Departure and arrival procedure review",25,"Start a procedure review by confirming the correct airport, runway and chart revision for the simulator session. Identify the route structure and relevant transition, then compare the chart with the flight plan loaded into the simulator. Resolve differences before beginning the exercise.\n\nThis course does not provide real-world minima or authorize instrument operations."],
+      ["Approach briefing and mode awareness",20,"A simulator approach briefing can cover the approach type, navigation source, missed-approach concept, configuration plan and points where you will check progress. Be explicit about which automation modes are active and what guidance they provide.\n\nPractice explaining the plan aloud before starting the approach."]
+    ],
+    quiz:{title:"Instrument Flight Theory Exam",pass:85,questions:[
+      ["What should be checked before using a simulator instrument procedure?",["Only that the name looks familiar","Airport, runway, chart revision and simulator navigation data","Only the aircraft livery"],1,"Procedure context and current simulator data should be checked together."],
+      ["Why is mode awareness important?",["It shows what guidance automation is actually providing","It removes the need to monitor instruments","It guarantees the aircraft follows every route"],0,"Pilots should understand and monitor active modes."],
+      ["What is a useful approach briefing element?",["The aircraft paint scheme","The leaderboard position","Approach type, navigation source and missed-approach concept"],2,"The briefing describes how the simulator approach will be practiced."],
+      ["What if chart information and the loaded simulator route disagree?",["Resolve the discrepancy before the exercise","Ignore the chart","Assume the simulator is always correct"],0,"Understand discrepancies before continuing."],
+      ["What does a disciplined instrument scan help monitor?",["One display only","Relevant flight indications and trends","Only the navigation route"],1,"A scan helps monitor the aircraft state represented by the instruments."],
+      ["Does this course establish real-world instrument privileges?",["Yes","No, virtual-simulation education only","Only with a 100% score"],1,"Passing an Echo Academy course is not a real-world qualification."]
+    ]}
+  },
+  {
+    slug:"aircraft-performance-and-fuel",title:"Aircraft Performance & Fuel Planning",subtitle:"Configuration, simulated fuel and post-flight review",
+    category:"Aircraft performance",level:"Intermediate",duration:60,
+    description:"Build a repeatable simulator workflow for loading, fuel awareness and performance review. Use the documentation for the selected aircraft and simulator add-on.",
+    lessons:[
+      ["Aircraft configuration and loading",20,"Review passenger, cargo and fuel values shown by your simulator aircraft before departure. Keep units consistent and confirm that the displayed configuration matches the scenario you intend to practice.\n\nThis is a simulator workflow lesson, not a source of actual aircraft loading limits."],
+      ["Fuel planning and monitoring",20,"Use the fuel-planning features and performance documentation supplied for your simulator aircraft. Compare your planned route with the expected simulated consumption, then monitor the fuel indications during the session. Record your assumptions so you can compare them with the result after landing.\n\nDo not copy figures from another aircraft or add-on; variants and simulator configurations may differ."],
+      ["Performance trends and debrief",20,"Observe how loading, weather settings, runway choice and aircraft configuration influence the performance shown in your simulator. Change one variable at a time when you are learning its effect.\n\nAfter landing, compare the plan with the simulator result and write down one success and one item to investigate."]
+    ],
+    quiz:{title:"Aircraft Performance Exam",pass:80,questions:[
+      ["Which source should be used for aircraft-specific performance values?",["A random value from another pilot","The selected aircraft documentation and tools","One generic value for every aircraft"],1,"Performance data is aircraft- and configuration-specific."],
+      ["Why should loading units be checked?",["To avoid mixing incompatible values","To increase leaderboard points","Units do not matter"],0,"Consistent units help prevent data-entry mistakes."],
+      ["What is a useful post-flight fuel review?",["Delete the plan","Compare planning assumptions with the simulator result","Assume the plan was exact"],1,"Comparing planned and recorded values can improve future simulator planning."],
+      ["How can you learn the effect of one performance variable?",["Change many settings at once","Ignore the result","Change one variable at a time and observe"],2,"A controlled comparison makes cause and effect clearer."],
+      ["Why avoid copying a fuel figure from a different aircraft?",["Variants and simulator configurations can differ","All aircraft have the same fuel flow","Fuel is unrelated to aircraft type"],0,"Aircraft and add-on differences make generic figures unreliable."],
+      ["Does this exam authorize real-world fuel planning?",["Yes","No, use approved sources and qualified training","Only on short flights"],1,"This course covers virtual simulation only."]
+    ]}
+  },
+  {
+    slug:"approach-landing-and-go-around",title:"Approach, Landing & Go-Around",subtitle:"Approach preparation, energy awareness and debrief",
+    category:"Flight handling",level:"Advanced",duration:60,
+    description:"Practice approach preparation, energy awareness and go-around scenarios in flight simulation. Real-world criteria and procedures must come from approved sources and qualified instruction.",
+    lessons:[
+      ["Approach setup and preparation",20,"Prepare the simulator approach before reaching the final phase of flight. Review the runway, approach type, weather setting, aircraft configuration and expected sequence. Keep relevant charts and aircraft documentation available.\n\nIf the simulator or aircraft behaves unexpectedly, pause and identify the cause before repeating the exercise."],
+      ["Energy awareness on final",20,"During a simulator approach, monitor how speed, descent path, configuration and automation interact. Make deliberate corrections using the controls and procedures appropriate to your add-on.\n\nDo not assume one generic speed or descent value is valid for every aircraft."],
+      ["Go-around practice and debrief",20,"Practice the go-around sequence for your selected aircraft in a controlled simulator scenario. Review how the aircraft's indications, configuration and flight path change during the exercise.\n\nReal-world go-around criteria are defined by approved operator and aircraft procedures; this course does not replace that instruction."]
+    ],
+    quiz:{title:"Approach and Landing Exam",pass:85,questions:[
+      ["What should be completed before a simulator approach?",["Approach and runway preparation, aircraft setup and chart review","Only a livery change","Nothing; preparation is unnecessary"],0,"Preparation reduces workload during an approach exercise."],
+      ["Why should approach speeds not be copied from another aircraft?",["The simulator does not model speed","Aircraft and configuration requirements differ","All approaches are identical"],1,"Use the selected aircraft's own documentation and training."],
+      ["What is a useful go-around training objective?",["Practice the aircraft-specific sequence in a controlled scenario","Avoid learning the procedure","Change unrelated cockpit settings"],0,"A planned scenario helps you understand the aircraft's sequence."],
+      ["You notice unexpected aircraft behaviour. What next?",["Ignore it","Increase workload","Pause and identify the cause before repeating"],2,"Understanding the cause is more useful than repeating an unexplained result."],
+      ["What should a post-approach debrief include?",["One success and one improvement point","Only the aircraft registration","No reflection"],0,"A short debrief creates a specific learning objective."],
+      ["Where do real-world go-around criteria come from?",["A virtual achievement","Approved procedures and qualified instruction","A simulator leaderboard"],1,"Virtual courses do not define real-world operating requirements."]
+    ]}
+  },
+  {
+    slug:"multi-crew-coordination",title:"Multi-Crew Coordination & CRM",subtitle:"Briefings, role clarity and shared awareness",
+    category:"Crew coordination",level:"Advanced",duration:55,
+    description:"Improve cooperation in shared simulator sessions with clear briefings, role-sharing, communication and constructive debriefs.",
+    lessons:[
+      ["Roles and task sharing",18,"Agree on the roles for the simulator exercise before starting. Decide who will manage the aircraft, navigation or communications and how tasks will be handed over. Exact roles depend on the aircraft add-on and training scenario.\n\nA task division should never prevent either pilot from speaking up when something is unclear."],
+      ["Briefings and shared awareness",18,"A useful briefing gives both pilots the same mental picture of the route, weather settings, expected workload and training objectives. Invite questions and confirm that both pilots understand the plan.\n\nShare relevant changes promptly rather than assuming the other pilot has seen an indication."],
+      ["Debriefing and constructive feedback",19,"Discuss the objective, what happened and what you would change next time. Give feedback about observable actions rather than personal traits. Invite the other pilot's perspective and agree on one practical improvement.\n\nThese CRM topics are simplified simulation learning and do not confer real-world crew qualifications."]
+    ],
+    quiz:{title:"Multi-Crew Coordination Exam",pass:85,questions:[
+      ["When should simulator crew roles be agreed?",["Before the exercise begins","Only after a disagreement","They never need discussion"],0,"Agreeing roles in advance makes task sharing clear."],
+      ["What is the purpose of a shared briefing?",["Make one pilot responsible for everything","Build a common understanding of the plan and objectives","Remove the need for communication"],1,"A briefing aligns the crew on the exercise and expected workload."],
+      ["What should a pilot do when something is unclear?",["Stay silent","Assume the other pilot noticed","Speak up and clarify"],2,"Open communication helps maintain shared awareness."],
+      ["Which feedback is most constructive?",["Describe observable actions and agree on an improvement","Make it personal","Avoid discussing the session"],0,"Specific feedback is easier to use and act on."],
+      ["What is a useful handover?",["Stop communicating","Explain task status and relevant changes","Change roles without telling anyone"],1,"A clear handover preserves shared understanding."],
+      ["Does this virtual CRM course provide a real-world qualification?",["Yes","Only for captains","No, simulator learning only"],2,"The Academy is a virtual-airline learning resource."]
+    ]}
+  }
+];
+for (const course of EXTRA_ACADEMY_COURSES) {
+  SEED_COURSES.push({
+    slug:course.slug,title:course.title,subtitle:course.subtitle,category:course.category,level:course.level,
+    duration:course.duration,description:course.description,
+    lessons:course.lessons.map(item=>({title:item[0],minutes:item[1],body:item[2]})),
+    quiz:{title:course.quiz.title,pass:course.quiz.pass,questions:course.quiz.questions.map(item=>({
+      prompt:item[0],options:item[1],correct:item[2],explanation:item[3]
+    }))}
+  });
+}
+
 function clamp(value, minimum, maximum) {
     const number = Number(value);
     return Number.isFinite(number) ? Math.max(minimum, Math.min(maximum, number)) : minimum;
