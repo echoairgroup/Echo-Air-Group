@@ -189,7 +189,7 @@
                 card.append(
                     node("strong", "", (flight.departure || "----") + " → " + (flight.arrival || "----")),
                     node("small", "", (flight.pilotName || "Pilot") + " · " + (flight.aircraft || "Aircraft not supplied")),
-                    node("small", "", dateTime(flight.departureTime) + " · " + duration(flight.duration * 60) + (flight.distance ? " · " + Math.round(flight.distance) + " nm" : ""))
+                    node("small", "", dateTime(flight.departureTime) + " · " + duration(flight.duration) + (flight.distance ? " · " + Math.round(flight.distance) + " nm" : ""))
                 );
                 root.appendChild(card);
             });
