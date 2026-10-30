@@ -4729,7 +4729,7 @@ app.get(
             const allowed = ["image/jpeg", "image/png", "image/webp"];
             const mime = allowed.includes(pilot.avatar_mime) ? pilot.avatar_mime : "image/jpeg";
             res.set("Content-Type", mime);
-            res.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+            res.set("Cache-Control", "public, max-age=60");
             res.set("X-Content-Type-Options", "nosniff");
             return res.send(pilot.avatar_data);
         } catch (error) {
