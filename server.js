@@ -1601,6 +1601,7 @@ let discordReady = false;
 let discordStartPromise = null;
 let discordReconnectTimer = null;
 let discordReconnectAttempt = 0;
+let discordPublicGatewayProbeStarted = false;
 
 function clearDiscordReconnectTimer() {
     if (discordReconnectTimer) {
@@ -1806,9 +1807,39 @@ async function startDiscordBot() {
             }
         });
 
+        client.rest.on("restDebug", message => {
+            const safeMessage = String(message)
+                .replaceAll(DISCORD_BOT_TOKEN, "[REDACTED]")
+                .replace(/(Authorization\\s*:\\s*(?:Bot|Bearer)\\s+)\\S+/gi, "$1[REDACTED]");
+            console.log(`[Discord:REST:debug] ${safeMessage.slice(0, 300)}`);
+        });
+
         console.log(
             `[Discord] Starting gateway connection (token configured; server ID configured: ${Boolean(DISCORD_GUILD_ID)}).`
         );
+
+        // One public, unauthenticated probe distinguishes basic Render-to-Discord
+        // reachability from bot-token or /gateway/bot rate-limit problems.
+        if (!discordPublicGatewayProbeStarted) {
+            discordPublicGatewayProbeStarted = true;
+            const probeController = new AbortController();
+            const probeTimeout = setTimeout(() => probeController.abort(), 10_000);
+
+            void fetch("https://discord.com/api/v10/gateway", {
+                signal: probeController.signal
+            }).then(async response => {
+                const payload = await response.json().catch(() => ({}));
+                const retryAfter = response.headers.get("retry-after");
+
+                console.log(
+                    `[Discord] Public gateway reachability: HTTP ${response.status}; gatewayUrlPresent=${Boolean(payload.url)}; retryAfter=${retryAfter || "none"}.`
+                );
+            }).catch(error => {
+                console.error("[Discord] Public gateway reachability failed:", error.message);
+            }).finally(() => {
+                clearTimeout(probeTimeout);
+            });
+        }
 
         // Let discord.js manage Discord's own API rate limits. An extra
         // /users/@me probe can consume the same REST budget and does not prove
