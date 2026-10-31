@@ -4255,7 +4255,8 @@ app.get("/api/sync/status", async (req, res) => {
         res.set("Cache-Control", "no-store");
         return res.json({
             automatic: true,
-            intervalMinutes: 15,
+            intervalMinutes: 5,
+            scheduler: "GitHub Actions",
             inProgress: automaticFlightSyncInProgress,
             lastSync: state
                 ? {
@@ -4278,6 +4279,90 @@ app.get("/api/sync/status", async (req, res) => {
         return res.status(500).json({ error: "Unable to load flight sync status." });
     }
 });
+
+// ============================================================
+// EXTERNAL LIVE NEWSKY SCHEDULER
+// ============================================================
+
+// GitHub Actions calls this endpoint every five minutes. The short-lived
+// GITHUB_TOKEN is validated against this repository's Actions API before
+// an incremental import is allowed. No permanent scheduler secret is stored
+// in the public repository or exposed to website visitors.
+app.post("/api/sync/scheduled", async (req, res) => {
+    const authorization = String(req.headers.authorization || "");
+    const tokenMatch = authorization.match(/^Bearer\\s+(.+)$/i);
+    const githubToken = tokenMatch ? tokenMatch[1].trim() : "";
+
+    if (!githubToken) {
+        return res.status(401).json({ error: "A valid GitHub Actions token is required." });
+    }
+
+    if (!databaseReady) {
+        res.set("Retry-After", "15");
+        return res.status(503).json({ error: "The backend database is still starting." });
+    }
+
+    try {
+        const verification = await fetch(
+            "https://api.github.com/repos/echoairgroup/Echo-Air-Group/actions/runs?per_page=1",
+            {
+                method: "GET",
+                headers: {
+                    Authorization: "Bearer " + githubToken,
+                    Accept: "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                    "User-Agent": "Echo-Air-Group-NewSky-Scheduler"
+                },
+                signal: AbortSignal.timeout(10000)
+            }
+        );
+
+        if (!verification.ok) {
+            console.warn("Rejected scheduled NewSky sync: GitHub token validation returned HTTP " + verification.status + ".");
+            return res.status(401).json({ error: "GitHub Actions token validation failed." });
+        }
+    } catch (error) {
+        console.error("Unable to validate scheduled NewSky runner:", error.message);
+        res.set("Retry-After", "15");
+        return res.status(503).json({ error: "Unable to validate the scheduled sync runner." });
+    }
+
+    if (automaticFlightSyncInProgress) {
+        return res.status(202).json({
+            ok: true,
+            skipped: true,
+            reason: "A NewSky sync is already running."
+        });
+    }
+
+    try {
+        const result = await runAutomaticFlightSync("recent");
+
+        if (result.skipped) {
+            return res.status(202).json({
+                ok: true,
+                skipped: true,
+                reason: result.reason
+            });
+        }
+
+        return res.json({
+            ok: true,
+            scheduler: "github-actions",
+            intervalMinutes: 5,
+            mode: result.mode,
+            linkedPilots: result.linkedPilots,
+            flightsReceived: result.flightsReceived,
+            flightsImported: result.flightsImported,
+            flightsUpdated: result.flightsUpdated,
+            flightsSkipped: result.flightsSkipped
+        });
+    } catch (error) {
+        console.error("Scheduled NewSky sync failed:", error && error.message ? error.message : error);
+        return res.status(500).json({ error: "Scheduled NewSky synchronization failed." });
+    }
+});
+
 
 // ============================================================
 // SYNC ALL ECHO AIR GROUP FLIGHTS
