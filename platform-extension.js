@@ -568,6 +568,12 @@ function registerPlatformRoutes(app, dependencies) {
             const sync = runtime.sync || null;
             if (!process.env.NEWSKY_API_KEY) {
                 newsky = { status: "error", label: "Not configured", detail: "NEWSKY_API_KEY is missing." };
+            } else if (sync && sync.status === "running") {
+                newsky = {
+                    status: "ok",
+                    label: "Syncing",
+                    lastSync: sync.last_completed_at || null
+                };
             } else if (sync && sync.status === "error") {
                 newsky = { status: "error", label: "Sync error", detail: sync.last_error || "The latest sync failed." };
             } else if (sync && sync.last_completed_at) {
