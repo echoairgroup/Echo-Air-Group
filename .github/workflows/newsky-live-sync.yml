@@ -1,6 +1,10 @@
 name: Keep NewSky flight data live
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/newsky-live-sync.yml"
   schedule:
     # Run every five minutes, offset from the top of the hour to reduce queueing.
     - cron: "2-59/5 * * * *"
