@@ -1829,11 +1829,41 @@ async function startDiscordBot() {
                 signal: probeController.signal
             }).then(async response => {
                 const payload = await response.json().catch(() => ({}));
-                const retryAfter = response.headers.get("retry-after");
+                const retryAfterHeader = response.headers.get("retry-after");
+                const retryAfterSeconds = Number(payload.retry_after ?? retryAfterHeader ?? 0);
+                const rateLimitScope = response.headers.get("x-ratelimit-scope") || "unknown";
+                const globalRateLimit =
+                    response.headers.get("x-ratelimit-global") === "true" ||
+                    payload.global === true;
 
                 console.log(
-                    `[Discord] Public gateway reachability: HTTP ${response.status}; gatewayUrlPresent=${Boolean(payload.url)}; retryAfter=${retryAfter || "none"}.`
+                    `[Discord] Public gateway reachability: HTTP ${response.status}; gatewayUrlPresent=${Boolean(payload.url)}; retryAfterSeconds=${retryAfterSeconds || "none"}; scope=${rateLimitScope}; global=${globalRateLimit}.`
                 );
+
+                // An unauthenticated /gateway 429 is IP-scoped. Honour its
+                // Retry-After (Discord specifies seconds) so the login promise
+                // is not destroyed while Discord is still blocking this route.
+                if (
+                    response.status === 429 &&
+                    Number.isFinite(retryAfterSeconds) &&
+                    retryAfterSeconds > 0 &&
+                    readyTimeout
+                ) {
+                    clearTimeout(readyTimeout);
+                    const cooldownWaitMs = Math.min(
+                        2_147_000_000,
+                        Math.max(180_000, retryAfterSeconds * 1000 + 30_000)
+                    );
+                    readyTimeout = setTimeout(onReadyTimeout, cooldownWaitMs);
+
+                    if (typeof readyTimeout.unref === "function") {
+                        readyTimeout.unref();
+                    }
+
+                    console.warn(
+                        `[Discord] Keeping the gateway login alive through the IP rate-limit cooldown (${Math.ceil(cooldownWaitMs / 1000)} seconds).`
+                    );
+                }
             }).catch(error => {
                 console.error("[Discord] Public gateway reachability failed:", error.message);
             }).finally(() => {
