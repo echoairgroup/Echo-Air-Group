@@ -4184,7 +4184,9 @@ async function runAutomaticFlightSync(mode = "recent") {
             flightsReceived: received,
             flightsImported: result.imported,
             flightsUpdated: result.updated,
-            flightsSkipped: result.skipped
+            flightsSkipped: result.skipped,
+            flightsWithoutMatchingPilot: result.unmatched,
+            pilotsWithFlights: result.matchedPilots
         };
     } catch (error) {
         console.error("Background flight sync failed:", error && error.message ? error.message : error);
@@ -4395,8 +4397,6 @@ app.post(
     "/api/sync/me",
     authenticate,
     async (req, res) => {
-        let ownsSyncLock = false;
-
         try {
             const pilotId = String(req.user.newsky_pilot_id || "").trim();
             if (!pilotId) {
@@ -4405,12 +4405,14 @@ app.post(
                 });
             }
 
-            // A global background import already refreshes all pilots.
-            // Return saved stats instead of launching duplicate API requests.
-            if (automaticFlightSyncInProgress) {
+            // Use the same sync runner as the scheduled importer so manual
+            // full-history scans also update flight_sync_state and health status.
+            const result = await runAutomaticFlightSync("full");
+
+            if (result.skipped) {
                 const cachedStats = await getUserStats(req.user.id);
                 return res.json({
-                    message: "A background NewSky sync is already running. Showing your latest saved statistics.",
+                    message: "A NewSky sync is already running. Showing your latest saved statistics.",
                     syncInProgress: true,
                     flightsImported: 0,
                     flightsUpdated: 0,
@@ -4425,30 +4427,18 @@ app.post(
                 });
             }
 
-            automaticFlightSyncInProgress = true;
-            ownsSyncLock = true;
-
-            console.log("Starting full airline flight-history sync requested by " + req.user.username);
-            const allFlights = await getAllNewSkyFlights();
-
-            // Import every flight returned for the Echo Air Group NewSky airline.
-            // importAllFlights matches records to all linked Echo pilot accounts.
-            const result = await importAllFlights(allFlights);
             const stats = await getUserStats(req.user.id);
-            const discordResult = await syncAllDiscordRanks();
-
             return res.json({
-                message: "Full airline history scanned: " + allFlights.length +
-                    " NewSky flight(s) checked, " + result.imported + " imported and " +
-                    result.updated + " updated.",
+                message: "Full airline history sync completed: " + result.flightsReceived +
+                    " NewSky flight(s) checked, " + result.flightsImported + " imported and " +
+                    result.flightsUpdated + " updated.",
                 historyWindow: "full",
-                newskyFlightsReceived: allFlights.length,
-                flightsImported: result.imported,
-                flightsUpdated: result.updated,
-                flightsSkipped: result.skipped,
-                flightsWithoutMatchingPilot: result.unmatched,
-                pilotsWithFlights: result.matchedPilots,
-                discordRankSync: discordResult,
+                newskyFlightsReceived: result.flightsReceived,
+                flightsImported: result.flightsImported,
+                flightsUpdated: result.flightsUpdated,
+                flightsSkipped: result.flightsSkipped,
+                flightsWithoutMatchingPilot: result.flightsWithoutMatchingPilot,
+                pilotsWithFlights: result.pilotsWithFlights,
                 stats: {
                     stars: stats.stars,
                     rank: stats.rank.name,
@@ -4463,8 +4453,6 @@ app.post(
             return res.status(500).json({
                 error: error.message || "Unable to synchronize flights."
             });
-        } finally {
-            if (ownsSyncLock) automaticFlightSyncInProgress = false;
         }
     }
 );
