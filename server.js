@@ -1763,9 +1763,42 @@ async function startDiscordBot() {
             scheduleDiscordReconnect("gateway session invalidated");
         });
 
+        client.on("debug", message => {
+            if (/WebSocket|gateway|READY|IDENTIFY|heartbeat|error|reconnect/i.test(message)) {
+                console.log(`[Discord:debug] ${String(message).slice(0, 300)}`);
+            }
+        });
+
         console.log(
             `[Discord] Starting gateway connection (token configured; server ID configured: ${Boolean(DISCORD_GUILD_ID)}).`
         );
+
+        // Verify the configured bot token against Discord's REST API without logging it.
+        const probeController = new AbortController();
+        const probeTimeout = setTimeout(() => probeController.abort(), 10_000);
+        void fetch("https://discord.com/api/v10/users/@me", {
+            headers: {
+                Authorization: `Bot ${DISCORD_BOT_TOKEN}`
+            },
+            signal: probeController.signal
+        }).then(async response => {
+            const identity = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                console.error(
+                    `[Discord] REST token validation failed (HTTP ${response.status}, code ${identity.code ?? "unknown"}): ${identity.message || "Discord rejected the bot token."}`
+                );
+                return;
+            }
+
+            console.log(
+                `[Discord] REST token validation passed for ${identity.username || identity.id || "bot"}.`
+            );
+        }).catch(error => {
+            console.error("[Discord] REST token preflight failed:", error.message);
+        }).finally(() => {
+            clearTimeout(probeTimeout);
+        });
 
         void client.login(DISCORD_BOT_TOKEN).catch(error => {
             if (readyTimeout) {
