@@ -4290,7 +4290,7 @@ app.get("/api/sync/status", async (req, res) => {
 // in the public repository or exposed to website visitors.
 app.post("/api/sync/scheduled", async (req, res) => {
     const authorization = String(req.headers.authorization || "");
-    const tokenMatch = authorization.match(/^Bearer\\s+(.+)$/i);
+    const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
     const githubToken = tokenMatch ? tokenMatch[1].trim() : "";
 
     if (!githubToken) {
