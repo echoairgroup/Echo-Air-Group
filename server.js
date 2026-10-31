@@ -1697,7 +1697,7 @@ async function startDiscordBot() {
             discordClient = null;
             discordReady = false;
             scheduleDiscordReconnect("gateway ready timeout");
-        }, 30_000);
+        }, 180_000);
 
         if (typeof readyTimeout.unref === "function") {
             readyTimeout.unref();
