@@ -1,0 +1,66 @@
+name: Keep NewSky flight data live
+
+on:
+  schedule:
+    # Run every five minutes, offset from the top of the hour to reduce queueing.
+    - cron: "2-59/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: newsky-live-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Wake the API and synchronize recent NewSky flights
+        shell: bash
+        env:
+          API_BASE: https://echo-air-group-api.onrender.com
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          for attempt in {1..6}; do
+            status="000"
+            if status="$(curl --silent --show-error --location \
+              --connect-timeout 15 \
+              --max-time 65 \
+              --output "$response_file" \
+              --write-out "%{http_code}" \
+              --request POST \
+              --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+              --header "Accept: application/json" \
+              "${API_BASE}/api/sync/scheduled")"; then
+              :
+            else
+              echo "The API did not respond on attempt ${attempt}."
+            fi
+
+            if [[ "$status" == "200" || "$status" == "202" ]]; then
+              cat "$response_file"
+              echo
+              exit 0
+            fi
+
+            if [[ "$status" == "401" || "$status" == "403" ]]; then
+              cat "$response_file"
+              echo "GitHub Actions authentication was rejected." >&2
+              exit 1
+            fi
+
+            echo "NewSky API returned HTTP ${status} on attempt ${attempt}; retrying in 10 seconds." >&2
+            cat "$response_file" || true
+            sleep 10
+          done
+
+          echo "NewSky synchronization could not reach the API after six attempts." >&2
+          exit 1
