@@ -1681,12 +1681,14 @@ async function startDiscordBot() {
 
         discordClient = client;
 
-        let readyTimeout = setTimeout(() => {
+        const onReadyTimeout = () => {
+            readyTimeout = null;
+
             if (discordClient !== client || discordReady) {
                 return;
             }
 
-            console.error("[Discord] Gateway did not become ready within 180 seconds.");
+            console.error("[Discord] Gateway did not become ready before its current connection deadline.");
 
             try {
                 client.destroy();
@@ -1697,7 +1699,9 @@ async function startDiscordBot() {
             discordClient = null;
             discordReady = false;
             scheduleDiscordReconnect("gateway ready timeout");
-        }, 180_000);
+        };
+
+        let readyTimeout = setTimeout(onReadyTimeout, 180_000);
 
         if (typeof readyTimeout.unref === "function") {
             readyTimeout.unref();
@@ -1766,6 +1770,39 @@ async function startDiscordBot() {
         client.on("debug", message => {
             if (/WebSocket|gateway|READY|IDENTIFY|heartbeat|error|reconnect/i.test(message)) {
                 console.log(`[Discord:debug] ${String(message).slice(0, 300)}`);
+            }
+        });
+
+        client.rest.on("rateLimited", rateLimitInfo => {
+            const retryAfterMs = Math.max(
+                0,
+                Number(rateLimitInfo.retryAfter || 0),
+                Number(rateLimitInfo.timeToReset || 0),
+                Number(rateLimitInfo.sublimitTimeout || 0)
+            );
+
+            console.warn(
+                `[Discord] REST rate limit on ${rateLimitInfo.method} ${rateLimitInfo.route}; scope=${rateLimitInfo.scope}; global=${Boolean(rateLimitInfo.global)}; retryAfterMs=${retryAfterMs}.`
+            );
+
+            // discord.js queues 429 responses and retries them automatically.
+            // Keep the gateway attempt alive until after that retry window instead
+            // of destroying the client while its /gateway/bot request is queued.
+            if (readyTimeout && retryAfterMs > 0) {
+                clearTimeout(readyTimeout);
+                const extendedWaitMs = Math.min(
+                    2_147_000_000,
+                    Math.max(180_000, retryAfterMs + 30_000)
+                );
+                readyTimeout = setTimeout(onReadyTimeout, extendedWaitMs);
+
+                if (typeof readyTimeout.unref === "function") {
+                    readyTimeout.unref();
+                }
+
+                console.warn(
+                    `[Discord] Gateway READY deadline extended to allow the REST retry window (${Math.ceil(extendedWaitMs / 1000)}s).`
+                );
             }
         });
 
