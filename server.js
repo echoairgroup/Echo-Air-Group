@@ -5136,7 +5136,7 @@ const SITE_ITEM_CATEGORIES = new Set([
 const SITE_ITEM_PAGES = new Set([
     "all", "index.html", "about.html", "fleet.html", "routes.html",
     "team.html", "join.html", "manual.html", "contact.html", "booking.html",
-    "ranking.html", "pilot.html", "manager.html", "server.html",
+    "ranking.html", "pilot.html", "manager.html",
     "legal.html", "privacy.html", "operations-center.html", "community.html"
 ]);
 const SITE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
