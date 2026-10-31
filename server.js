@@ -4184,7 +4184,9 @@ async function runAutomaticFlightSync(mode = "recent") {
             flightsReceived: received,
             flightsImported: result.imported,
             flightsUpdated: result.updated,
-            flightsSkipped: result.skipped
+            flightsSkipped: result.skipped,
+            flightsWithoutMatchingPilot: result.unmatched,
+            pilotsWithFlights: result.matchedPilots
         };
     } catch (error) {
         console.error("Background flight sync failed:", error && error.message ? error.message : error);
