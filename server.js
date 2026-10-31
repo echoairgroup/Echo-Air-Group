@@ -5781,8 +5781,13 @@ async function initializeBackend() {
             databaseInitError = null;
 
             console.log("Database initialization completed; API routes are ready.");
-            await startDiscordBot();
+
+            // Start NewSky synchronization independently of the Discord gateway.
+            // A slow or stalled Discord login must never block airline flight imports.
             await startAutomaticFlightSync();
+            void startDiscordBot().catch(error => {
+                console.error("Discord bot initialization failed:", error.message);
+            });
             return;
         } catch (error) {
             databaseInitError = String(error && error.message || "Unknown database initialization error");
