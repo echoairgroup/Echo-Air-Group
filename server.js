@@ -1686,7 +1686,7 @@ async function startDiscordBot() {
                 return;
             }
 
-            console.error("[Discord] Gateway did not become ready within 30 seconds.");
+            console.error("[Discord] Gateway did not become ready within 180 seconds.");
 
             try {
                 client.destroy();
@@ -1773,33 +1773,9 @@ async function startDiscordBot() {
             `[Discord] Starting gateway connection (token configured; server ID configured: ${Boolean(DISCORD_GUILD_ID)}).`
         );
 
-        // Verify the configured bot token against Discord's REST API without logging it.
-        const probeController = new AbortController();
-        const probeTimeout = setTimeout(() => probeController.abort(), 10_000);
-        void fetch("https://discord.com/api/v10/users/@me", {
-            headers: {
-                Authorization: `Bot ${DISCORD_BOT_TOKEN}`
-            },
-            signal: probeController.signal
-        }).then(async response => {
-            const identity = await response.json().catch(() => ({}));
-
-            if (!response.ok) {
-                console.error(
-                    `[Discord] REST token validation failed (HTTP ${response.status}, code ${identity.code ?? "unknown"}): ${identity.message || "Discord rejected the bot token."}`
-                );
-                return;
-            }
-
-            console.log(
-                `[Discord] REST token validation passed for ${identity.username || identity.id || "bot"}.`
-            );
-        }).catch(error => {
-            console.error("[Discord] REST token preflight failed:", error.message);
-        }).finally(() => {
-            clearTimeout(probeTimeout);
-        });
-
+        // Let discord.js manage Discord's own API rate limits. An extra
+        // /users/@me probe can consume the same REST budget and does not prove
+        // gateway availability, so keep diagnostics on the gateway connection.
         void client.login(DISCORD_BOT_TOKEN).catch(error => {
             if (readyTimeout) {
                 clearTimeout(readyTimeout);
