@@ -3135,96 +3135,104 @@ async function getNewSkyFlightPage(
         attempt++
     ) {
 
-        response =
-            await fetch(
-                url,
-                {
-                    method:
-                        "POST",
+        try {
+            response =
+                await fetch(
+                    url,
+                    {
+                        method:
+                            "POST",
 
-                    headers: {
+                        headers: {
 
-                        Authorization:
-                            `Bearer ${process.env.NEWSKY_API_KEY}`,
+                            Authorization:
+                                `Bearer ${process.env.NEWSKY_API_KEY}`,
 
-                        "Content-Type":
-                            "application/json",
+                            "Content-Type":
+                                "application/json",
 
-                        Accept:
-                            "application/json"
-                    },
+                            Accept:
+                                "application/json"
+                        },
 
-                    body:
-                        JSON.stringify({
+                        body:
+                            JSON.stringify({
 
-                            skip,
+                                skip,
 
-                            count,
+                                count,
 
-                            start,
+                                start,
 
-                            end,
+                                end,
 
-                            includeDeleted:
-                                false
-                        })
-                }
+                                includeDeleted:
+                                    false
+                            }),
+
+                        // Never let a stalled NewSky request block the entire
+                        // airline history import indefinitely.
+                        signal: AbortSignal.timeout(30000)
+                    }
+                );
+
+            text = await response.text();
+        } catch (error) {
+            console.warn(
+                `NewSky request failed on attempt ${attempt}/${NEWSKY_MAX_RETRIES} for ${start} -> ${end}: ${error.message}`
             );
 
-        text =
-            await response.text();
+            if (attempt >= NEWSKY_MAX_RETRIES) {
+                throw new Error(
+                    `NewSky request failed after ${NEWSKY_MAX_RETRIES} attempts for ${start} -> ${end}: ${error.message}`
+                );
+            }
+
+            const waitTime = Math.min(3000 * attempt, 15000);
+            console.log(`Retrying failed NewSky request in ${Math.ceil(waitTime / 1000)} seconds...`);
+            await sleep(waitTime);
+            continue;
+        }
 
         console.log(
             `NewSky HTTP status: ${response.status}`
         );
 
-        if (
-            response.status !== 429
-        ) {
-
-            break;
-        }
-
-        console.warn(
-            `NewSky rate limit reached. Attempt ${attempt}/${NEWSKY_MAX_RETRIES}.`
-        );
-
-        const retryAfter =
-            response.headers.get(
-                "retry-after"
+        if (response.status === 429 && attempt < NEWSKY_MAX_RETRIES) {
+            console.warn(
+                `NewSky rate limit reached. Attempt ${attempt}/${NEWSKY_MAX_RETRIES}.`
             );
 
-        let waitTime =
-            10000;
+            const retryAfter = response.headers.get("retry-after");
+            let waitTime = 10000;
 
-        if (retryAfter) {
-
-            const retrySeconds =
-                Number(
-                    retryAfter
-                );
-
-            if (
-                Number.isFinite(
-                    retrySeconds
-                )
-            ) {
-
-                waitTime =
-                    Math.max(
-                        retrySeconds * 1000,
-                        10000
-                    );
+            if (retryAfter) {
+                const retrySeconds = Number(retryAfter);
+                if (Number.isFinite(retrySeconds)) {
+                    waitTime = Math.max(retrySeconds * 1000, 10000);
+                }
             }
+
+            console.log(
+                `Waiting ${Math.round(waitTime / 1000)} seconds before retry...`
+            );
+            await sleep(waitTime);
+            continue;
         }
 
-        console.log(
-            `Waiting ${Math.round(
-                waitTime / 1000
-            )} seconds before retry...`
-        );
+        if (
+            (response.status === 408 || response.status >= 500) &&
+            attempt < NEWSKY_MAX_RETRIES
+        ) {
+            const waitTime = Math.min(3000 * attempt, 15000);
+            console.warn(
+                `NewSky returned HTTP ${response.status}. Retrying in ${Math.ceil(waitTime / 1000)} seconds...`
+            );
+            await sleep(waitTime);
+            continue;
+        }
 
-        await sleep(waitTime);
+        break;
     }
 
     let data;
