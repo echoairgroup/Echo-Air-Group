@@ -1810,7 +1810,7 @@ async function startDiscordBot() {
         client.rest.on("restDebug", message => {
             const safeMessage = String(message)
                 .replaceAll(DISCORD_BOT_TOKEN, "[REDACTED]")
-                .replace(/(Authorization\\s*:\\s*(?:Bot|Bearer)\\s+)\\S+/gi, "$1[REDACTED]");
+                .replace(/(Authorization\s*:\s*(?:Bot|Bearer)\s+)\S+/gi, "$1[REDACTED]");
             console.log(`[Discord:REST:debug] ${safeMessage.slice(0, 300)}`);
         });
 
