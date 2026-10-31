@@ -1597,97 +1597,205 @@ function authenticateAdmin(req, res, next) {
 // ============================================================
 
 let discordClient = null;
+let discordReady = false;
+let discordStartPromise = null;
+let discordReconnectTimer = null;
+let discordReconnectAttempt = 0;
 
-let discordReady =
-    false;
+function clearDiscordReconnectTimer() {
+    if (discordReconnectTimer) {
+        clearTimeout(discordReconnectTimer);
+        discordReconnectTimer = null;
+    }
+}
+
+function scheduleDiscordReconnect(reason) {
+    discordReady = false;
+
+    if (!DISCORD_BOT_TOKEN || discordReconnectTimer) {
+        return;
+    }
+
+    const delayMs = Math.min(
+        60_000,
+        5_000 * (2 ** Math.min(discordReconnectAttempt, 4))
+    );
+    discordReconnectAttempt += 1;
+
+    console.warn(
+        `[Discord] Bot is offline. Retrying in ${Math.round(delayMs / 1000)}s. Reason: ${reason}`
+    );
+
+    discordReconnectTimer = setTimeout(() => {
+        discordReconnectTimer = null;
+        void startDiscordBot().catch(error => {
+            console.error("[Discord] Reconnect attempt failed:", error.message);
+            scheduleDiscordReconnect("reconnect attempt failed");
+        });
+    }, delayMs);
+
+    if (typeof discordReconnectTimer.unref === "function") {
+        discordReconnectTimer.unref();
+    }
+}
+
+function markDiscordReady(client, source) {
+    if (discordClient !== client) {
+        return;
+    }
+
+    discordReady = true;
+    discordReconnectAttempt = 0;
+    clearDiscordReconnectTimer();
+
+    console.log(
+        `[Discord] Gateway connected (${source}) as ${client.user?.tag || "bot"}`
+    );
+}
 
 async function startDiscordBot() {
-
     if (!DISCORD_BOT_TOKEN) {
-
-        console.warn(
-            "Discord bot disabled: DISCORD_BOT_TOKEN is missing."
-        );
-
+        discordReady = false;
+        console.warn("[Discord] Bot disabled: DISCORD_BOT_TOKEN is missing.");
         return;
     }
 
     if (!DISCORD_GUILD_ID) {
-
-        console.warn(
-            "Discord bot warning: DISCORD_GUILD_ID is missing."
-        );
+        console.warn("[Discord] DISCORD_GUILD_ID is missing; role synchronization cannot access a server.");
     }
 
-    discordClient =
-        new Client({
+    if (discordReady && discordClient) {
+        return;
+    }
+
+    if (discordStartPromise) {
+        return discordStartPromise;
+    }
+
+    discordStartPromise = Promise.resolve().then(() => {
+        const client = new Client({
             intents: [
                 GatewayIntentBits.Guilds
             ]
         });
 
-    discordClient.once(
-        "ready",
-        async () => {
+        discordClient = client;
 
-            discordReady =
-                true;
-
-            console.log(
-                `Discord bot logged in as ${discordClient.user.tag}`
-            );
-
-            if (DISCORD_GUILD_ID) {
-
-                try {
-
-                    const guild =
-                        await discordClient.guilds.fetch(
-                            DISCORD_GUILD_ID
-                        );
-
-                    console.log(
-                        `Discord server connected: ${guild.name}`
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Could not access Discord server:",
-                        error.message
-                    );
-                }
+        let readyTimeout = setTimeout(() => {
+            if (discordClient !== client || discordReady) {
+                return;
             }
+
+            console.error("[Discord] Gateway did not become ready within 30 seconds.");
+
+            try {
+                client.destroy();
+            } catch (error) {
+                console.warn("[Discord] Error closing timed-out client:", error.message);
+            }
+
+            discordClient = null;
+            discordReady = false;
+            scheduleDiscordReconnect("gateway ready timeout");
+        }, 30_000);
+
+        if (typeof readyTimeout.unref === "function") {
+            readyTimeout.unref();
         }
-    );
 
-    discordClient.on(
-        "error",
-        error => {
+        client.once("ready", async () => {
+            if (readyTimeout) {
+                clearTimeout(readyTimeout);
+                readyTimeout = null;
+            }
 
-            console.error(
-                "Discord client error:",
-                error
+            markDiscordReady(client, "ready event");
+
+            if (!DISCORD_GUILD_ID) {
+                return;
+            }
+
+            try {
+                const guild = await client.guilds.fetch(DISCORD_GUILD_ID);
+                console.log(`[Discord] Connected to server: ${guild.name}`);
+            } catch (error) {
+                console.error("[Discord] Could not access configured server:", error.message);
+            }
+        });
+
+        client.on("shardDisconnect", (closeEvent, shardId) => {
+            discordReady = false;
+            console.warn(
+                `[Discord] Gateway disconnected (shard ${shardId}, code ${closeEvent?.code ?? "unknown"}).`
             );
-        }
-    );
+        });
 
-    try {
+        client.on("shardReconnecting", shardId => {
+            discordReady = false;
+            console.warn(`[Discord] Gateway reconnecting (shard ${shardId}).`);
+        });
 
-        await discordClient.login(
-            DISCORD_BOT_TOKEN
+        client.on("shardResume", shardId => {
+            markDiscordReady(client, `shard ${shardId} resumed`);
+        });
+
+        client.on("shardError", error => {
+            console.error("[Discord] Gateway shard error:", error.message);
+        });
+
+        client.on("error", error => {
+            console.error("[Discord] Client error:", error.message);
+        });
+
+        client.on("invalidated", () => {
+            discordReady = false;
+            console.error("[Discord] Gateway session invalidated; restarting the client.");
+
+            if (discordClient === client) {
+                try {
+                    client.destroy();
+                } catch (error) {
+                    console.warn("[Discord] Error closing invalidated client:", error.message);
+                }
+                discordClient = null;
+            }
+
+            scheduleDiscordReconnect("gateway session invalidated");
+        });
+
+        console.log(
+            `[Discord] Starting gateway connection (token configured; server ID configured: ${Boolean(DISCORD_GUILD_ID)}).`
         );
 
-    } catch (error) {
+        void client.login(DISCORD_BOT_TOKEN).catch(error => {
+            if (readyTimeout) {
+                clearTimeout(readyTimeout);
+                readyTimeout = null;
+            }
 
-        console.error(
-            "Discord bot login failed:",
-            error.message
-        );
+            if (discordClient !== client) {
+                return;
+            }
 
-        discordReady =
-            false;
-    }
+            discordReady = false;
+            console.error(
+                `[Discord] Login failed (code ${error.code ?? "unknown"}): ${error.message}`
+            );
+
+            try {
+                client.destroy();
+            } catch (destroyError) {
+                console.warn("[Discord] Error closing failed client:", destroyError.message);
+            }
+
+            discordClient = null;
+            scheduleDiscordReconnect("login failed");
+        });
+    }).finally(() => {
+        discordStartPromise = null;
+    });
+
+    return discordStartPromise;
 }
 
 // ============================================================
@@ -5875,12 +5983,14 @@ async function initializeBackend() {
 
             console.log("Database initialization completed; API routes are ready.");
 
-            // Start NewSky synchronization independently of the Discord gateway.
-            // A slow or stalled Discord login must never block airline flight imports.
-            await startAutomaticFlightSync();
+            // Start Discord without waiting for its gateway connection. This must not
+            // delay NewSky imports, and a failed Discord login is retried automatically.
             void startDiscordBot().catch(error => {
                 console.error("Discord bot initialization failed:", error.message);
             });
+
+            // Start NewSky scheduling independently; this function only registers timers.
+            await startAutomaticFlightSync();
             return;
         } catch (error) {
             databaseInitError = String(error && error.message || "Unknown database initialization error");
