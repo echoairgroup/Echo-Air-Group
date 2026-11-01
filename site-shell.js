@@ -9,7 +9,7 @@
 
     // Use the current Echo Air Group logo supplied by the site owner.
     // Keep the local SVG as a resilient fallback if the remote image cannot load.
-    const primaryBrandLogo = "https://lh3.google.com/u/0/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913-iv1?auditContext=prefetch";
+    const primaryBrandLogo = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913";
 
     function useLocalBrandMark(image) {
         if (image.dataset.eagBrandFallback === "true") return;
