@@ -1,39 +1,32 @@
-/* Shared navigation behavior matched to the Echo Air Group site shell. */
+/* Shared Echo Air Group navigation and page shell behavior.
+   Header and footer markup are deliberately kept identical to index.html. */
 (() => {
     "use strict";
+
     const siteHeader = document.getElementById("siteHeader");
     const mobileNav = document.getElementById("mobileNav");
     const menuButton = document.getElementById("menuButton");
     const pageName = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
 
-    // Inserted after Routes; reverse order keeps the resulting navigation intuitive.
-    const sharedLinks = [
-        { href: "academy.html", label: "Aviation Academy", active: ["academy.html"] },
-        { href: "community.html", label: "Community", active: ["community.html"] },
-        { href: "operations-center.html", label: "Operations", active: ["operations-center.html"] }
-    ];
+    // Keep the original homepage markup unchanged while highlighting the current page.
+    const activePage = {
+        "manager.html": "join.html",
+        "pilot.html": "ranking.html",
+        "server.html": "ranking.html"
+    }[pageName] || pageName;
 
-    [document.querySelector(".navlinks"), mobileNav && mobileNav.querySelector(".container"), document.querySelector(".foot-links")].forEach((container) => {
-        if (!container) return;
-        sharedLinks.forEach((item) => {
-            let link = container.querySelector('a[href="' + item.href + '"]');
-            if (!link) {
-                link = document.createElement("a");
-                link.href = item.href;
-                link.textContent = item.label;
-                const routesLink = container.querySelector('a[href="routes.html"]');
-                const teamLink = container.querySelector('a[href="team.html"]');
-                if (routesLink && routesLink.parentNode === container) routesLink.after(link);
-                else if (teamLink && teamLink.parentNode === container) container.insertBefore(link, teamLink);
-                else container.appendChild(link);
-            }
-            if (item.active.includes(pageName) && container.classList.contains("navlinks")) link.classList.add("active");
+    document.querySelectorAll("#siteHeader .navlinks a").forEach((link) => {
+        const href = (link.getAttribute("href") || "").split("#")[0];
+        link.classList.toggle("active", href === activePage);
+    });
+
+    // Homepage section links must continue to work when clicked from inner pages.
+    if (pageName !== "index.html") {
+        document.querySelectorAll('a[href="#news"], a[href="#operations"], a[href="#faq"]').forEach((link) => {
+            const section = link.getAttribute("href");
+            link.setAttribute("href", "index.html" + section);
         });
-    });
-
-    document.querySelectorAll('a[href="ranking.html"]').forEach((link) => {
-        link.textContent = "Pilot Dashboard";
-    });
+    }
 
     function closeMenu() {
         if (mobileNav) mobileNav.classList.remove("open");
@@ -52,7 +45,9 @@
         document.body.classList.toggle("menu-open", isOpen);
     };
 
-    if (mobileNav) mobileNav.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+    if (mobileNav) {
+        mobileNav.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+    }
 
     let previousScrollY = window.scrollY;
     function updateHeader() {
