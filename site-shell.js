@@ -7,24 +7,31 @@
     const menuButton = document.getElementById("menuButton");
     const pageName = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
 
-    // Use the current Echo Air Group logo supplied by the site owner.
-    // Keep the local SVG as a resilient fallback if the remote image cannot load.
-    const primaryBrandLogo = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913";
-
-    function useLocalBrandMark(image) {
-        if (image.dataset.eagBrandFallback === "true") return;
-        image.dataset.eagBrandFallback = "true";
-        image.src = "brand-mark.svg";
-        image.alt = "Echo Air Group logo";
-    }
+    // Use the logo file supplied by the site owner. Do not silently replace it
+    // with the old placeholder mark when a remote image host has a transient error.
+    const primaryBrandLogo = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913&v=20261101-5";
+    const alternateBrandLogos = [
+        "https://lh3.google.com/u/0/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913-iv1?auditContext=prefetch",
+        "https://drive.google.com/uc?export=view&id=1pPTawjq1pNmovHej7om3OaZUZgRXScBQ"
+    ];
 
     document.querySelectorAll("#siteHeader .brand-logo, footer .brand-logo").forEach((image) => {
         image.alt = "Echo Air Group logo";
-        image.addEventListener("error", () => useLocalBrandMark(image), { once: true });
+        image.hidden = false;
+        if (image.dataset.eagBrandManaged === "true") return;
+        image.dataset.eagBrandManaged = "true";
 
-        if (image.src !== primaryBrandLogo) {
-            image.src = primaryBrandLogo;
-        }
+        let alternateIndex = 0;
+        image.addEventListener("error", () => {
+            if (alternateIndex < alternateBrandLogos.length) {
+                image.src = alternateBrandLogos[alternateIndex++];
+            } else {
+                // Keep the brand name text visible, but never show the obsolete placeholder logo.
+                image.hidden = true;
+            }
+        });
+
+        image.src = primaryBrandLogo;
     });
 
     const activePage = {
@@ -123,28 +130,16 @@
 })();
 
 
-/* Keep the browser-tab icon in sync with the supplied Echo Air Group logo. */
+/* Keep the browser-tab icon aligned with the supplied Echo Air Group logo. */
 (() => {
-    const faviconUrl = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w192-h192?v=20261101-4";
-    const fallbackUrl = "brand-mark.svg?v=20261101-3";
+    const faviconUrl = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w192-h192&v=20261101-5";
 
-    let fallback = document.querySelector('link[data-eag-favicon-fallback="true"]');
-    if (!fallback) {
-        fallback = [...document.querySelectorAll('link[rel~="icon"]')]
-            .find((link) => link !== document.querySelector('link[data-eag-favicon-primary="true"]'));
-    }
-    if (!fallback) {
-        fallback = document.createElement("link");
-        document.head.appendChild(fallback);
-    }
-    fallback.rel = "alternate icon";
-    fallback.type = "image/svg+xml";
-    fallback.href = fallbackUrl;
-    fallback.dataset.eagFaviconFallback = "true";
+    document.querySelectorAll('link[data-eag-favicon-fallback="true"]').forEach((link) => link.remove());
+    document.querySelectorAll('link[rel~="icon"][type="image/svg+xml"]').forEach((link) => link.remove());
 
     let primary = document.querySelector('link[data-eag-favicon-primary="true"]');
     if (!primary) {
-        primary = document.createElement("link");
+        primary = document.querySelector('link[rel~="icon"]') || document.createElement("link");
         primary.rel = "icon";
         primary.dataset.eagFaviconPrimary = "true";
         document.head.appendChild(primary);
