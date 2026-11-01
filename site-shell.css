@@ -479,8 +479,7 @@ footer .brand-logo {
 #siteHeader .menu {
     min-width: 44px;
     min-height: 44px;
-    display: grid;
-    place-items: center;
+    text-align: center;
     line-height: 1;
 }
 
