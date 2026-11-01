@@ -47,8 +47,16 @@
     }
 
     function appendFooterLinks() {
-        const footerLinks = document.querySelector(".foot-links");
-        if (!footerLinks) return;
+        const footer = document.querySelector("footer");
+        if (!footer) return;
+        let footerLinks = footer.querySelector(".foot-links");
+        if (!footerLinks) {
+            footerLinks = document.createElement("div");
+            footerLinks.className = "foot-links eag-footer-legal-links";
+            const copy = footer.querySelector(".copy");
+            if (copy) copy.parentNode.insertBefore(footerLinks, copy);
+            else footer.appendChild(footerLinks);
+        }
         [
             { href: "privacy.html", label: "Privacy Policy" },
             { href: "cookies.html", label: "Cookie Policy" }
