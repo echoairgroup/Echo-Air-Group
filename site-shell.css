@@ -49,11 +49,14 @@ footer .brand {
 }
 #siteHeader .brand-logo,
 footer .brand-logo {
-    width: 58px;
+    width: auto;
     height: 58px;
+    max-width: min(230px, 34vw);
     display: block;
+    flex: 0 0 auto;
     object-fit: contain;
-    border-radius: 12px;
+    object-position: left center;
+    border-radius: 0;
 }
 #siteHeader .brand-text,
 footer .brand-text {
@@ -234,7 +237,11 @@ footer .copy {
     footer .container { width: min(calc(100% - 32px), 700px); }
     #siteHeader .nav { min-height: 82px; }
     #siteHeader .brand-logo,
-    footer .brand-logo { width: 48px; height: 48px; }
+    footer .brand-logo {
+        width: auto;
+        height: 48px;
+        max-width: min(190px, 38vw);
+    }
     footer .foot-top,
     footer .copy { flex-direction: column; }
 }
