@@ -135,6 +135,7 @@
                 <button class="admin-tab" type="button" data-admin-tab="roles">Admin roles</button>
                 <button class="admin-tab" type="button" data-admin-tab="audit">Audit log</button>
                 <button class="admin-tab" type="button" data-admin-tab="notifications">Notifications</button>
+                <button class="admin-tab" type="button" data-admin-tab="privacy">Privacy &amp; cookies</button>
                 <button class="admin-tab" type="button" data-admin-tab="academy">Aviation Academy</button>
             </nav>
 
@@ -306,6 +307,27 @@
                     <div class="admin-empty">Loading applications…</div>
                 </div>
                 <p class="admin-help application-privacy-note">Applications include personal information. Keep this page restricted to authorized administrators. Earlier FormSubmit emails are not imported automatically; new Forminit submissions are stored here when the API is available.</p>
+            </section>
+
+            <section class="admin-view" data-admin-view="privacy" hidden>
+                <div class="admin-view-header">
+                    <div>
+                        <h2>Privacy &amp; cookie preferences</h2>
+                        <p>Review the latest cookie choices saved by visitors. Account names are shown only when the visitor submitted their choice while signed in. Visitors who were not signed in are shown with a random browser reference.</p>
+                    </div>
+                    <button id="refreshCookieConsentButton" class="admin-button secondary" type="button">Refresh records</button>
+                </div>
+                <div class="admin-stats cookie-consent-stats" aria-label="Cookie consent totals">
+                    <div class="admin-stat"><span>Recorded preferences</span><strong id="cookieConsentTotal">0</strong></div>
+                    <div class="admin-stat"><span>Accepted all</span><strong id="cookieConsentAccepted">0</strong></div>
+                    <div class="admin-stat"><span>Rejected optional</span><strong id="cookieConsentRejected">0</strong></div>
+                    <div class="admin-stat"><span>Custom choices</span><strong id="cookieConsentCustom">0</strong></div>
+                </div>
+                <div id="cookieConsentStatus" class="admin-status" role="status" aria-live="polite"></div>
+                <div id="cookieConsentList" class="cookie-consent-list">
+                    <div class="admin-empty">Open this section to load cookie preferences.</div>
+                </div>
+                <p class="admin-help">The report stores one current preference per browser reference, not an event history. No IP address or device fingerprint is collected for this report. Inactive records are removed after 24 months.</p>
             </section>
 
             <section class="admin-view" data-admin-view="settings" hidden>
