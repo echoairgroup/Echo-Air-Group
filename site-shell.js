@@ -7,30 +7,13 @@
     const menuButton = document.getElementById("menuButton");
     const pageName = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
 
-    // Use the logo file supplied by the site owner. Do not silently replace it
-    // with the old placeholder mark when a remote image host has a transient error.
-    const primaryBrandLogo = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913&v=20261101-5";
-    const alternateBrandLogos = [
-        "https://lh3.google.com/u/0/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913-iv1?auditContext=prefetch",
-        "https://drive.google.com/uc?export=view&id=1pPTawjq1pNmovHej7om3OaZUZgRXScBQ"
-    ];
+    // Serve the brand wordmark locally so the header/footer never depend on an external host.
+    const primaryBrandLogo = "echo-air-group-logo.svg?v=20261101-6";
 
     document.querySelectorAll("#siteHeader .brand-logo, footer .brand-logo").forEach((image) => {
         image.alt = "Echo Air Group logo";
         image.hidden = false;
-        if (image.dataset.eagBrandManaged === "true") return;
-        image.dataset.eagBrandManaged = "true";
-
-        let alternateIndex = 0;
-        image.addEventListener("error", () => {
-            if (alternateIndex < alternateBrandLogos.length) {
-                image.src = alternateBrandLogos[alternateIndex++];
-            } else {
-                // Keep the brand name text visible, but never show the obsolete placeholder logo.
-                image.hidden = true;
-            }
-        });
-
+        image.onerror = null;
         image.src = primaryBrandLogo;
     });
 
@@ -130,19 +113,17 @@
 })();
 
 
-/* Keep the browser-tab icon aligned with the supplied Echo Air Group logo. */
+/* Use the local square brand mark for the browser tab. */
 (() => {
-    const faviconUrl = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w192-h192&v=20261101-5";
-
-    document.querySelectorAll('link[data-eag-favicon-fallback="true"]').forEach((link) => link.remove());
-    document.querySelectorAll('link[rel~="icon"][type="image/svg+xml"]').forEach((link) => link.remove());
-
-    let primary = document.querySelector('link[data-eag-favicon-primary="true"]');
-    if (!primary) {
-        primary = document.querySelector('link[rel~="icon"]') || document.createElement("link");
-        primary.rel = "icon";
-        primary.dataset.eagFaviconPrimary = "true";
-        document.head.appendChild(primary);
+    const faviconUrl = "brand-mark.svg?v=20261101-6";
+    let favicon = document.querySelector('link[rel~="icon"]');
+    if (!favicon) {
+        favicon = document.createElement("link");
+        document.head.appendChild(favicon);
     }
-    primary.href = faviconUrl;
+    favicon.rel = "icon";
+    favicon.type = "image/svg+xml";
+    favicon.href = faviconUrl;
+    favicon.removeAttribute("data-eag-favicon-primary");
+    document.querySelectorAll('link[data-eag-favicon-fallback="true"]').forEach((link) => link.remove());
 })();
