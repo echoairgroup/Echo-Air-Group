@@ -65,3 +65,32 @@
     window.addEventListener("scroll", updateHeader, { passive: true });
     updateHeader();
 })();
+
+/* Shared brand image: use the current public Google-hosted logo. */
+(() => {
+    const logoUrl = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913";
+
+    document.querySelectorAll(".brand-logo").forEach((image) => {
+        if (image.dataset.eagLogoReady === "true") return;
+        image.dataset.eagLogoReady = "true";
+        image.alt = "Echo Air Group logo";
+        image.style.width = "auto";
+        image.style.height = "58px";
+        image.style.maxWidth = "min(230px, 34vw)";
+        image.style.display = "block";
+        image.style.objectFit = "contain";
+        image.style.objectPosition = "left center";
+        image.style.borderRadius = "0";
+
+        image.addEventListener("error", () => {
+            if (image.dataset.eagLogoFallback === "true") return;
+            image.dataset.eagLogoFallback = "true";
+            image.src = "brand-mark.svg";
+            image.style.width = "58px";
+            image.style.height = "58px";
+            image.style.maxWidth = "58px";
+        }, { once: true });
+
+        image.src = logoUrl;
+    });
+})();
