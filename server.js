@@ -18,6 +18,7 @@ dotenv.config();
 const app = express();
 
 let databaseReady = false;
+let cookieConsentRetentionTimer = null;
 let databaseInitError = null;
 
 // Render runs behind a reverse proxy; trust one hop so per-IP application limits use the visitor address.
@@ -6215,6 +6216,16 @@ async function initializeBackend() {
             await initializeOperationsSchema(query);
             databaseReady = true;
             databaseInitError = null;
+
+            if (!cookieConsentRetentionTimer) {
+                const cleanExpiredCookieConsent = () => {
+                    void query(
+                        "DELETE FROM cookie_consent_records WHERE updated_at < CURRENT_TIMESTAMP - INTERVAL '24 months'"
+                    ).catch(error => console.error("Cookie consent retention cleanup failed:", error.message));
+                };
+                cleanExpiredCookieConsent();
+                cookieConsentRetentionTimer = setInterval(cleanExpiredCookieConsent, 24 * 60 * 60 * 1000);
+            }
 
             console.log("Database initialization completed; API routes are ready.");
 
