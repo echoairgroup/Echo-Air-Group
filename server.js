@@ -7,6 +7,11 @@ const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const { initializePlatformSchema, registerPlatformRoutes } = require("./platform-extension");
 const { initializeOperationsSchema, registerOperationsRoutes } = require("./platform-operations");
+const {
+    buildNewSkyDateRanges,
+    getNewSkyEndDateExclusive,
+    getRecentNewSkyDateWindow
+} = require("./newsky-date-ranges");
 
 const {
     Client,
@@ -3247,9 +3252,9 @@ const NEWSKY_AIRLINE_ID =
     process.env.NEWSKY_AIRLINE_ID ||
     "6671c567ed19d758f72965d4";
 
-const NEWSKY_MIN_DATE =
-    process.env.NEWSKY_HISTORY_START ||
-    "2020-01-01";
+// Keep the airline history import aligned with the agreed reporting period.
+// This is intentionally fixed so an old Render env var cannot silently move it.
+const NEWSKY_MIN_DATE = "2024-01-01";
 
 /*
  * NewSky allows pagination.
@@ -3660,10 +3665,11 @@ async function getAllNewSkyFlights() {
             new Date()
         );
 
-    let rangeStart =
-        toDateOnly(
-            NEWSKY_MIN_DATE
-        );
+    const endDateExclusive =
+        getNewSkyEndDateExclusive();
+
+    const rangeStart =
+        NEWSKY_MIN_DATE;
 
     let rangeNumber =
         0;
@@ -3673,14 +3679,21 @@ async function getAllNewSkyFlights() {
     let requestCount = 0;
 
     if (
-        rangeStart >
-        today
+        rangeStart >=
+        endDateExclusive
     ) {
 
         throw new Error(
-            `NEWSKY_HISTORY_START (${rangeStart}) cannot be in the future.`
+            `NEWSKY_HISTORY_START (${rangeStart}) must be before today's end boundary (${endDateExclusive}).`
         );
     }
+
+    const dateRanges =
+        buildNewSkyDateRanges(
+            rangeStart,
+            endDateExclusive,
+            30
+        );
 
     console.log("");
     console.log(
@@ -3699,7 +3712,10 @@ async function getAllNewSkyFlights() {
         `History start: ${rangeStart}`
     );
     console.log(
-        `History end: ${today}`
+        `History through (UTC): ${today}`
+    );
+    console.log(
+        `History query end boundary (exclusive): ${endDateExclusive}`
     );
     console.log(
         `Page size: ${NEWSKY_PAGE_SIZE}`
@@ -3709,21 +3725,12 @@ async function getAllNewSkyFlights() {
     );
     console.log("");
 
-    while (
-        rangeStart <=
-        today
-    ) {
+    for (const dateRange of dateRanges) {
 
         rangeNumber++;
 
-        const rangeEnd =
-            minDate(
-                addDays(
-                    rangeStart,
-                    29
-                ),
-                today
-            );
+        const rangeStart = dateRange.startDate;
+        const rangeEnd = dateRange.endDateExclusive;
 
         console.log("");
         console.log(
@@ -3867,11 +3874,6 @@ async function getAllNewSkyFlights() {
             `Date range complete: ${rangeFlights} flight(s) received.`
         );
 
-        rangeStart =
-            addDays(
-                rangeEnd,
-                1
-            );
     }
 
     /*
@@ -3943,9 +3945,9 @@ async function getAllNewSkyFlights() {
 // ============================================================
 
 async function getRecentNewSkyFlights(days = 7) {
-    const endDate = toDateOnly(new Date());
-    const safeDays = Math.max(1, Math.min(30, Number(days) || 7));
-    const startDate = addDays(endDate, -(safeDays - 1));
+    // NewSky's end date is used as an exclusive boundary. Asking through
+    // tomorrow therefore includes every flight recorded today (UTC).
+    const { startDate, endDateExclusive } = getRecentNewSkyDateWindow(days);
     const allFlights = [];
     let skip = 0;
     let page = 0;
@@ -3954,7 +3956,7 @@ async function getRecentNewSkyFlights(days = 7) {
         if (page > 0) await sleep(NEWSKY_RATE_LIMIT_DELAY);
         page++;
 
-        const data = await getNewSkyFlightPage(startDate, endDate, skip, NEWSKY_PAGE_SIZE);
+        const data = await getNewSkyFlightPage(startDate, endDateExclusive, skip, NEWSKY_PAGE_SIZE);
         const flights = extractFlights(data);
         const total = getTotalResultCount(data);
 
