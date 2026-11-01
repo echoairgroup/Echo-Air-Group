@@ -18,6 +18,7 @@ dotenv.config();
 const app = express();
 
 let databaseReady = false;
+let cookieConsentRetentionTimer = null;
 let databaseInitError = null;
 
 // Render runs behind a reverse proxy; trust one hop so per-IP application limits use the visitor address.
@@ -138,6 +139,27 @@ async function initializeDatabase() {
             created_at TIMESTAMPTZ
                 DEFAULT CURRENT_TIMESTAMP
         );
+    `);
+
+    // Latest cookie-consent preference per browser identifier. No IP address or
+    // raw device fingerprint is stored. A user account is linked only when the
+    // visitor submits the choice while signed in.
+    await query(`
+        CREATE TABLE IF NOT EXISTS cookie_consent_records (
+            visitor_id UUID PRIMARY KEY,
+            choice TEXT NOT NULL CHECK (choice IN ('accepted', 'rejected', 'custom')),
+            analytics_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            marketing_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+            policy_version TEXT NOT NULL,
+            user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
+    await query(`
+        CREATE INDEX IF NOT EXISTS cookie_consent_updated_idx
+        ON cookie_consent_records (updated_at DESC);
     `);
 
     await query(`
@@ -5619,6 +5641,113 @@ app.get("/api/site/items/:id/image", async (req, res) => {
     }
 });
 
+
+// ============================================================
+// COOKIE CONSENT & ADMIN REPORTING
+// ============================================================
+
+const COOKIE_POLICY_VERSION = "2026-11-01";
+
+app.post("/api/cookie-consent", async (req, res) => {
+    try {
+        const visitorId = String(req.body && req.body.visitorId || "").trim().toLowerCase();
+        const choice = String(req.body && req.body.choice || "").trim().toLowerCase();
+        const categories = req.body && req.body.categories && typeof req.body.categories === "object"
+            ? req.body.categories
+            : {};
+
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(visitorId)) {
+            return res.status(400).json({ error: "A valid consent identifier is required." });
+        }
+        if (!["accepted", "rejected", "custom"].includes(choice)) {
+            return res.status(400).json({ error: "A valid consent choice is required." });
+        }
+
+        const analyticsEnabled = choice === "accepted"
+            ? true
+            : choice === "rejected"
+                ? false
+                : categories.analytics === true;
+        const marketingEnabled = choice === "accepted"
+            ? true
+            : choice === "rejected"
+                ? false
+                : categories.marketing === true;
+
+        // Associate a choice with an account only when the browser provides a
+        // valid existing Echo session at the moment the choice is submitted.
+        // Invalid/expired tokens do not prevent an anonymous visitor from saving.
+        let userId = null;
+        const authorization = String(req.headers.authorization || "");
+        if (authorization.startsWith("Bearer ")) {
+            try {
+                const decoded = jwt.verify(authorization.substring(7), JWT_SECRET);
+                const userResult = await query("SELECT id FROM users WHERE id = $1", [decoded.id]);
+                if (userResult.rows[0]) userId = userResult.rows[0].id;
+            } catch (_) {
+                userId = null;
+            }
+        }
+
+        await query(
+            "INSERT INTO cookie_consent_records " +
+            "(visitor_id, choice, analytics_enabled, marketing_enabled, policy_version, user_id, created_at, updated_at) " +
+            "VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) " +
+            "ON CONFLICT (visitor_id) DO UPDATE SET " +
+            "choice = EXCLUDED.choice, analytics_enabled = EXCLUDED.analytics_enabled, " +
+            "marketing_enabled = EXCLUDED.marketing_enabled, policy_version = EXCLUDED.policy_version, " +
+            "user_id = EXCLUDED.user_id, updated_at = CURRENT_TIMESTAMP",
+            [visitorId, choice, analyticsEnabled, marketingEnabled, COOKIE_POLICY_VERSION, userId]
+        );
+
+        // Keep only the current preference. Inactive records expire after 24 months.
+        await query(
+            "DELETE FROM cookie_consent_records WHERE updated_at < CURRENT_TIMESTAMP - INTERVAL '24 months'"
+        );
+
+        res.set("Cache-Control", "no-store");
+        return res.status(201).json({ saved: true, policyVersion: COOKIE_POLICY_VERSION });
+    } catch (error) {
+        console.error("Cookie consent save error:", error.message);
+        return res.status(500).json({ error: "Unable to save your cookie preferences." });
+    }
+});
+
+app.get("/api/admin/cookie-consent", authenticateAdmin, async (req, res) => {
+    try {
+        await query(
+            "DELETE FROM cookie_consent_records WHERE updated_at < CURRENT_TIMESTAMP - INTERVAL '24 months'"
+        );
+
+        const [stats, records, total] = await Promise.all([
+            query(
+                "SELECT COUNT(*)::INTEGER AS total, " +
+                "COUNT(*) FILTER (WHERE choice = 'accepted')::INTEGER AS accepted, " +
+                "COUNT(*) FILTER (WHERE choice = 'rejected')::INTEGER AS rejected, " +
+                "COUNT(*) FILTER (WHERE choice = 'custom')::INTEGER AS custom " +
+                "FROM cookie_consent_records"
+            ),
+            query(
+                "SELECT c.visitor_id, c.choice, c.analytics_enabled, c.marketing_enabled, " +
+                "c.policy_version, c.updated_at, u.username " +
+                "FROM cookie_consent_records c LEFT JOIN users u ON u.id = c.user_id " +
+                "ORDER BY c.updated_at DESC LIMIT 1000"
+            ),
+            query("SELECT COUNT(*)::INTEGER AS count FROM cookie_consent_records")
+        ]);
+
+        res.set("Cache-Control", "no-store");
+        return res.json({
+            stats: stats.rows[0] || { total: 0, accepted: 0, rejected: 0, custom: 0 },
+            totalRecords: Number(total.rows[0] && total.rows[0].count || 0),
+            records: records.rows
+        });
+    } catch (error) {
+        console.error("Admin cookie consent report error:", error.message);
+        return res.status(500).json({ error: "Unable to load cookie consent records." });
+    }
+});
+
 app.get("/api/admin/site/session", authenticateAdmin, (req, res) => {
     res.json({ authorized: true, username: req.user.username });
 });
@@ -6087,6 +6216,16 @@ async function initializeBackend() {
             await initializeOperationsSchema(query);
             databaseReady = true;
             databaseInitError = null;
+
+            if (!cookieConsentRetentionTimer) {
+                const cleanExpiredCookieConsent = () => {
+                    void query(
+                        "DELETE FROM cookie_consent_records WHERE updated_at < CURRENT_TIMESTAMP - INTERVAL '24 months'"
+                    ).catch(error => console.error("Cookie consent retention cleanup failed:", error.message));
+                };
+                cleanExpiredCookieConsent();
+                cookieConsentRetentionTimer = setInterval(cleanExpiredCookieConsent, 24 * 60 * 60 * 1000);
+            }
 
             console.log("Database initialization completed; API routes are ready.");
 

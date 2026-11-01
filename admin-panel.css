@@ -501,3 +501,26 @@
     .admin-application-body { padding: 13px; }
 }
 
+
+
+/* Privacy & cookie consent reporting */
+.cookie-consent-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.cookie-consent-list {
+    min-width: 0;
+    margin-top: 15px;
+}
+.cookie-consent-list .platform-admin-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+}
+.cookie-consent-list .platform-admin-table {
+    min-width: 720px;
+}
+@media (max-width: 900px) {
+    .cookie-consent-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+    .cookie-consent-stats { grid-template-columns: 1fr; }
+}

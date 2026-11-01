@@ -92,6 +92,7 @@
                 roles: "roles.read",
                 audit: "audit.read",
                 notifications: "notifications.read",
+                privacy: "privacy.read",
                 academy: "academy.read"
             };
             Object.entries(platformTabs).forEach(([name, permission]) => {
@@ -119,6 +120,7 @@
         });
         if (name === "add" && editingId === null) $("#itemFormTitle").textContent = "Add a website item";
         if (name === "applications" && token) loadApplications().catch((error) => status("#applicationsStatus", error.message, "error"));
+        if (name === "privacy" && token) loadCookieConsent().catch((error) => status("#cookieConsentStatus", error.message, "error"));
     }
 
     async function loadItems() {
@@ -219,6 +221,66 @@
     async function loadSettings() {
         const settings = await request("/admin/site/settings");
         $("#discordInvite").value = settings.discordInvite || "";
+    }
+
+    async function loadCookieConsent() {
+        const payload = await request("/admin/cookie-consent");
+        const stats = payload.stats || {};
+        $("#cookieConsentTotal").textContent = String(stats.total ?? 0);
+        $("#cookieConsentAccepted").textContent = String(stats.accepted ?? 0);
+        $("#cookieConsentRejected").textContent = String(stats.rejected ?? 0);
+        $("#cookieConsentCustom").textContent = String(stats.custom ?? 0);
+
+        const container = $("#cookieConsentList");
+        container.replaceChildren();
+        const records = Array.isArray(payload.records) ? payload.records : [];
+        if (!records.length) {
+            container.appendChild(createAppNode("div", "admin-empty", "No cookie preferences have been recorded yet."));
+            return;
+        }
+
+        const wrap = createAppNode("div", "platform-admin-table-wrap");
+        const table = createAppNode("table", "platform-admin-table");
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        ["Visitor / account", "Choice", "Analytics", "Marketing", "Last updated"].forEach(label => {
+            headerRow.appendChild(createAppNode("th", "", label));
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        records.forEach(record => {
+            const row = document.createElement("tr");
+            const visitorLabel = record.username
+                ? String(record.username)
+                : "Anonymous visitor · " + String(record.visitor_id || "").slice(0, 8);
+            const choiceLabel = {
+                accepted: "Accepted all",
+                rejected: "Rejected optional",
+                custom: "Custom preferences"
+            }[record.choice] || "Unknown";
+            const date = record.updated_at
+                ? new Date(record.updated_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })
+                : "Not available";
+            [
+                visitorLabel,
+                choiceLabel,
+                record.analytics_enabled ? "Allowed" : "Off",
+                record.marketing_enabled ? "Allowed" : "Off",
+                date
+            ].forEach(value => row.appendChild(createAppNode("td", "", value)));
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+        container.appendChild(wrap);
+
+        const totalRecords = Number(payload.totalRecords ?? records.length);
+        if (totalRecords > records.length) {
+            container.appendChild(createAppNode("p", "admin-help", "Showing the latest " + records.length + " of " + totalRecords + " current browser preferences."));
+        }
+        clearStatus("#cookieConsentStatus");
     }
 
     const APPLICATION_STATUSES = [
@@ -711,6 +773,18 @@
         }
     });
     $("#exportApplicationsButton").addEventListener("click", exportApplicationsCsv);
+    $("#refreshCookieConsentButton").addEventListener("click", async () => {
+        const button = $("#refreshCookieConsentButton");
+        button.disabled = true;
+        try {
+            await loadCookieConsent();
+            status("#cookieConsentStatus", "Cookie preference records refreshed.");
+        } catch (error) {
+            status("#cookieConsentStatus", error.message, "error");
+        } finally {
+            button.disabled = false;
+        }
+    });
 
     $("#adminApplicationList").addEventListener("click", async (event) => {
         const saveButton = event.target.closest("[data-save-application]");
