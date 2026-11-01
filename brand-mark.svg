@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Echo Air Group</title>
+  <rect width="64" height="64" rx="15" fill="#090d08"/>
+  <path d="M14 14h36v7H22v7h24v7H22v8h28v7H14z" fill="#ace336"/>
+  <path d="M37 9h19l-11 5H28z" fill="#ffffff" opacity=".82"/>
+</svg>
