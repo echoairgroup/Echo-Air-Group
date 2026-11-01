@@ -62,7 +62,7 @@
 }
 .eag-cookie-button:hover { transform: translateY(-1px); }
 .eag-cookie-primary { background: #ace336; color: #17200f; }
-.eag-cookie-secondary { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.06); color: #f4f7f1; }
+.eag-cookie-secondary { border-color: #ace336; background: rgba(172, 227, 54, .12); color: #f4f7f1; }
 .eag-cookie-text-button { padding: 8px 9px; border: 0; background: transparent; color: #c4ef62; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
 .eag-cookie-button:focus-visible,
 .eag-cookie-text-button:focus-visible,
@@ -117,3 +117,24 @@ body.eag-cookie-dialog-open { overflow: hidden; }
     .eag-cookie-dialog-actions { display: grid; grid-template-columns: 1fr; }
     .eag-cookie-dialog-actions .eag-cookie-button { width: 100%; }
 }
+
+/* Keep Accept and Reject equally clear and equally easy to select. */
+.eag-cookie-primary,
+.eag-cookie-secondary {
+    min-width: 132px;
+    justify-content: center;
+}
+.eag-footer-legal-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 22px;
+    margin: 18px 0;
+}
+.eag-footer-legal-links a {
+    color: #aeb7aa;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 750;
+}
+.eag-footer-legal-links a:hover { color: #ace336; }
