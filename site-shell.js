@@ -64,4 +64,19 @@
     }
     window.addEventListener("scroll", updateHeader, { passive: true });
     updateHeader();
+
+    // Load the shared privacy controls on every page that uses the site shell.
+    if (!document.querySelector('link[data-eag-cookie-styles]')) {
+        const consentStyles = document.createElement("link");
+        consentStyles.rel = "stylesheet";
+        consentStyles.href = "cookie-consent.css";
+        consentStyles.dataset.eagCookieStyles = "true";
+        document.head.appendChild(consentStyles);
+    }
+    if (!document.querySelector('script[data-eag-cookie-script]')) {
+        const consentScript = document.createElement("script");
+        consentScript.src = "cookie-consent.js";
+        consentScript.dataset.eagCookieScript = "true";
+        document.body.appendChild(consentScript);
+    }
 })();
