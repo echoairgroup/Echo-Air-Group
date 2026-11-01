@@ -173,15 +173,16 @@
 
     function showBanner() {
         ui.banner.classList.add("is-visible");
-        const firstButton = ui.banner.querySelector("button");
-        if (firstButton) firstButton.focus({ preventScroll: true });
     }
 
     function hideBanner() {
         ui.banner.classList.remove("is-visible");
     }
 
+    let lastActiveElement = null;
+
     function openSettings() {
+        lastActiveElement = document.activeElement;
         const current = readConsent();
         analyticsInput.checked = Boolean(current && current.analytics);
         marketingInput.checked = Boolean(current && current.marketing);
@@ -194,6 +195,10 @@
     function closeSettings() {
         ui.backdrop.hidden = true;
         document.body.classList.remove("eag-cookie-dialog-open");
+        if (lastActiveElement && typeof lastActiveElement.focus === "function") {
+            lastActiveElement.focus({ preventScroll: true });
+        }
+        lastActiveElement = null;
     }
 
     function save(choice, analytics, marketing) {
@@ -229,12 +234,32 @@
     });
 
     document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && !ui.backdrop.hidden) closeSettings();
+        if (ui.backdrop.hidden) return;
+        if (event.key === "Escape") {
+            closeSettings();
+            return;
+        }
+        if (event.key === "Tab") {
+            const focusable = Array.from(ui.backdrop.querySelectorAll("button, input, a[href]"))
+                .filter(element => !element.disabled && element.offsetParent !== null);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
     });
 
     const existing = readConsent();
     if (existing) {
-        if (localStorage.getItem(PENDING_KEY) === "1") void syncToServer(existing);
+        let pending = false;
+        try { pending = localStorage.getItem(PENDING_KEY) === "1"; } catch (_) {}
+        if (pending) void syncToServer(existing);
     } else {
         showBanner();
     }
