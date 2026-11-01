@@ -8,7 +8,7 @@ const ROLE_PERMISSIONS = {
         "overview.read", "system.read", "operations.read", "operations.write", "events.manage", "routes.write", "fleet.read",
         "audit.read", "notifications.read", "notifications.write",
         "academy.read", "academy.write", "academy.instructor", "academy.examiner",
-        "applications.read", "applications.write", "content.read", "content.write"
+        "applications.read", "applications.write", "content.read", "content.write", "privacy.read"
     ],
     operations_manager: ["overview.read", "system.read", "operations.read", "operations.write", "events.manage", "routes.write", "fleet.read", "audit.read"],
     academy_manager: ["overview.read", "academy.read", "academy.write", "academy.instructor", "academy.examiner"],
