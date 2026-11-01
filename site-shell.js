@@ -125,7 +125,7 @@
 
 /* Keep the browser-tab icon in sync with the supplied Echo Air Group logo. */
 (() => {
-    const faviconUrl = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w192-h192?v=20261101-3";
+    const faviconUrl = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w192-h192?v=20261101-4";
     const fallbackUrl = "brand-mark.svg?v=20261101-3";
 
     let fallback = document.querySelector('link[data-eag-favicon-fallback="true"]');
