@@ -7,6 +7,33 @@
     const menuButton = document.getElementById("menuButton");
     const pageName = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
 
+    // Some older Discord-hosted logo URLs have expiring signatures.
+    // Use a local brand mark when a signature has expired or the image fails.
+    function useLocalBrandMark(image) {
+        if (image.dataset.eagBrandFallback === "true") return;
+        image.dataset.eagBrandFallback = "true";
+        image.src = "brand-mark.svg";
+        image.alt = "Echo Air Group logo";
+    }
+
+    document.querySelectorAll("#siteHeader .brand-logo, footer .brand-logo").forEach((image) => {
+        let expired = false;
+
+        try {
+            const expiry = new URL(image.src, window.location.href).searchParams.get("ex");
+            const expiryTime = expiry ? Number.parseInt(expiry, 16) * 1000 : NaN;
+            expired = Number.isFinite(expiryTime) && expiryTime <= Date.now();
+        } catch {
+            // The error handler below remains the fallback for unparseable URLs.
+        }
+
+        if (expired) {
+            useLocalBrandMark(image);
+        } else {
+            image.addEventListener("error", () => useLocalBrandMark(image), { once: true });
+        }
+    });
+
     const activePage = {
         "manager.html": "join.html",
         "pilot.html": "ranking.html",
