@@ -37,7 +37,8 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px;bor
 </style>
     <link rel="stylesheet" href="site-shell.css">
 
-    <link rel="icon" href="https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w192-h192&v=20261101-5">
+    
+    <link rel="icon" type="image/svg+xml" href="brand-mark.svg?v=20261101-6">
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -47,7 +48,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px;bor
         <a class="brand" href="index.html" aria-label="Echo Air Group home">
             <img
                 class="brand-logo"
-                src="https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913&v=20261101-5"
+                src="echo-air-group-logo.svg?v=20261101-6"
                 alt="Echo Air Group Logo"
             >
             <div class="brand-text">
@@ -216,7 +217,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px;bor
 
                     <img
                         class="brand-logo"
-                        src="https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w1920-h913&v=20261101-5"
+                        src="echo-air-group-logo.svg?v=20261101-6"
                         alt="Echo Air Group Logo"
                     >
 
@@ -421,7 +422,7 @@ document.getElementById('linkBtn').onclick=async()=>{try{const d=await api('/acc
 document.getElementById('syncBtn').onclick=async()=>{try{document.getElementById('syncBtn').disabled=true;const d=await api('/sync/me',{method:'POST'});msg('dashboardMsg',d.message);await loadMe();await leaderboard();}catch(e){msg('dashboardMsg',e.message,true)}finally{document.getElementById('syncBtn').disabled=false}};
 loadMe(); leaderboard();
 </script>
-    <script src="site-shell.js?v=20261101-5"></script>
+    <script src="site-shell.js?v=20261101-6"></script>
 
     <script src="site-content.js"></script>
 
