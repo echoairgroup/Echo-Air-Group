@@ -116,27 +116,3 @@
         document.body.appendChild(consentScript);
     }
 })();
-
-
-/* Use the supplied original logo image for the browser tab. */
-(() => {
-    const faviconUrl = "https://lh3.googleusercontent.com/d/1pPTawjq1pNmovHej7om3OaZUZgRXScBQ=w192-h192";
-    let favicon = document.querySelector('link[data-eag-favicon-primary="true"]');
-    if (!favicon) {
-        favicon = document.querySelector('link[rel~="icon"]:not([type="image/svg+xml"])') || document.createElement("link");
-        document.head.appendChild(favicon);
-    }
-    favicon.rel = "icon";
-    favicon.href = faviconUrl;
-    favicon.dataset.eagFaviconPrimary = "true";
-
-    let fallback = document.querySelector('link[data-eag-favicon-fallback="true"]');
-    if (!fallback) {
-        fallback = document.createElement("link");
-        document.head.appendChild(fallback);
-    }
-    fallback.rel = "alternate icon";
-    fallback.type = "image/svg+xml";
-    fallback.href = "brand-mark.svg?v=20261101-7";
-    fallback.dataset.eagFaviconFallback = "true";
-})();
