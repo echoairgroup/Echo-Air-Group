@@ -100,6 +100,21 @@
     }, { passive: true });
     updateHeader();
 
+    // Install the shared WebControl tracker on every page that uses this site shell.
+    // The homepage has a static copy as a fallback; this check prevents duplicate loading.
+    const webControlSiteId = "12700946-2cf0-4a24-9d0f-f0fa1e719d7f";
+    const webControlSiteKey = "fTb4Bh6XGwu__sPhSwlJ36WIt1MuQTBe";
+    if (!document.querySelector('script[data-site-id="' + webControlSiteId + '"][src*="webcontrol-api.onrender.com/tracker.js"]')) {
+        const trackerScript = document.createElement("script");
+        trackerScript.src = "https://webcontrol-api.onrender.com/tracker.js";
+        trackerScript.async = false;
+        trackerScript.dataset.siteId = webControlSiteId;
+        trackerScript.dataset.siteKey = webControlSiteKey;
+        trackerScript.dataset.consentManaged = "external";
+        trackerScript.dataset.webcontrolTracker = "true";
+        document.body.appendChild(trackerScript);
+    }
+
     // Load shared privacy controls only when they are not already present on the page.
     if (!document.querySelector('link[data-eag-cookie-styles], link[href$="cookie-consent.css"]')) {
         const consentStyles = document.createElement("link");
