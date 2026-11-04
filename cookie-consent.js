@@ -102,6 +102,15 @@
         }).catch(() => false);
     }
 
+    function syncWebControlConsent(consent) {
+        const apply = () => {
+            if (typeof window.webcontrol !== "function") return;
+            window.webcontrol("consent", consent.analytics === true ? "grant" : "revoke");
+        };
+        if (typeof window.webcontrol === "function") apply();
+        else window.addEventListener("webcontrol:ready", apply, { once: true });
+    }
+
     function storeConsent(choice, analytics, marketing) {
         const consent = {
             version: POLICY_VERSION,
@@ -118,6 +127,7 @@
             // preference cannot persist in that browser session.
         }
         void syncToServer(consent);
+        syncWebControlConsent(consent);
         return consent;
     }
 
@@ -130,7 +140,7 @@
             <div class="eag-cookie-copy">
                 <span class="eag-cookie-eyebrow">Your privacy matters</span>
                 <strong>Cookie preferences</strong>
-                <p>Echo Air Group uses essential browser storage for sign-in and core features. Optional analytics and advertising cookies are currently not active. You can accept or reject optional technologies, or review your choices.</p>
+                <p>Echo Air Group uses essential browser storage for sign-in and core features. Optional WebControl analytics can measure page visits and technical performance only when you enable analytics. You can accept or reject optional technologies, or review your choices.</p>
                 <p class="eag-cookie-links"><a href="privacy.html">Privacy Policy</a><span aria-hidden="true">·</span><a href="cookies.html">Cookie Policy</a></p>
             </div>
             <div class="eag-cookie-actions">
@@ -155,7 +165,7 @@
                     <span class="eag-cookie-always">Always active</span>
                 </div>
                 <label class="eag-cookie-category">
-                    <span><strong>Analytics</strong><p>Would allow anonymous or aggregated measurement to improve the website. No analytics service is currently active.</p></span>
+                    <span><strong>Analytics</strong><p>Allows WebControl to collect page views and limited technical and performance measurements after you consent. Analytics stays off when you reject this category.</p></span>
                     <input id="eagCookieAnalytics" type="checkbox">
                 </label>
                 <label class="eag-cookie-category">
@@ -265,6 +275,7 @@
 
     const existing = readConsent();
     if (existing) {
+        syncWebControlConsent(existing);
         let pending = false;
         try { pending = localStorage.getItem(PENDING_KEY) === "1"; } catch (_) {}
         if (pending) void syncToServer(existing);
