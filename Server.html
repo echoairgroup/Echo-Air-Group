@@ -425,7 +425,7 @@ document.getElementById('linkBtn').onclick=async()=>{try{const d=await api('/acc
 document.getElementById('syncBtn').onclick=async()=>{try{document.getElementById('syncBtn').disabled=true;const d=await api('/sync/me',{method:'POST'});msg('dashboardMsg',d.message);await loadMe();await leaderboard();}catch(e){msg('dashboardMsg',e.message,true)}finally{document.getElementById('syncBtn').disabled=false}};
 loadMe(); leaderboard();
 </script>
-    <script src="site-shell.js?v=20261102-1"></script>
+    <script src="site-shell.js?v=20261104-webcontrol"></script>
 
     <script src="site-content.js"></script>
 
