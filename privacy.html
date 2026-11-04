@@ -188,7 +188,7 @@
     <div class="privacy-header">
         <h1>Privacy Policy</h1>
         <p>How Echo Air Group collects, uses, stores and protects personal data.</p>
-        <p class="last-updated">Last updated: 1 November 2026 · Version 1.0</p>
+        <p class="last-updated">Last updated: 4 November 2026 · Version 1.1</p>
     </div>
 
     <div class="privacy-box">
@@ -225,6 +225,7 @@
                 <tr><td>Contact requests</td><td>Name, email address and the contents of a message you send.</td><td>To respond to your enquiry and maintain a relevant correspondence record.</td></tr>
                 <tr><td>Booking information stored in your browser</td><td>Booking reference, selected flight, seat/cabin and passenger name entered into the booking form.</td><td>To display or retain the booking confirmation in the browser on the device you are using. This information is stored locally by the website code and is not, by that browser-storage action alone, sent to the Echo database.</td></tr>
                 <tr><td>Cookie preference records</td><td>A random browser reference, your choice, optional category settings, policy version and time of the latest choice; your Echo user ID may be associated if you are signed in when saving the choice.</td><td>To remember your preference, apply it on later visits and demonstrate which choice was saved.</td></tr>
+                <tr><td>WebControl analytics data</td><td>Page path without query-string values, referrer origin, pseudonymous visitor/session identifiers, browser/device/operating-system categories, available country signal, performance measurements, JavaScript error details and custom events.</td><td>To understand consenting visits, measure site performance and diagnose technical issues. WebControl analytics runs only after you enable the Analytics category.</td></tr>
                 <tr><td>Technical and security data</td><td>Request timestamps, browser/device information, IP address and request metadata where processed by hosting, database, security or network providers.</td><td>To deliver, protect, troubleshoot and maintain the website and backend. Provider logs are governed by the relevant provider's configuration and retention practices.</td></tr>
             </tbody>
         </table>
@@ -239,7 +240,7 @@
             <li><strong>Responding to applications and enquiries — Article 6(1)(b) and/or Article 6(1)(f):</strong> taking steps at your request, handling correspondence and operating the voluntary virtual-airline community. Where legitimate interests are relied on, the interests are limited to administering the project, preventing misuse and responding to requests, and are balanced against your rights.</li>
             <li><strong>Security and service operation — Article 6(1)(f):</strong> protecting accounts and infrastructure, diagnosing errors, preventing abuse and maintaining service reliability.</li>
             <li><strong>Cookie preference records — Article 6(1)(f), and Article 6(1)(c) where applicable:</strong> remembering and administering your choices, and retaining evidence where needed to demonstrate compliance with applicable consent obligations.</li>
-            <li><strong>Optional cookies or similar technologies — consent where required:</strong> optional analytics or marketing technologies will not be activated unless the relevant consent has been given. No optional analytics or advertising trackers are currently integrated into the website.</li>
+            <li><strong>Optional analytics technologies — consent where required:</strong> WebControl analytics is used only after you enable the Analytics category in Cookie Settings. It remains off when you reject optional analytics. Advertising and marketing trackers are not currently integrated.</li>
             <li><strong>Legal obligations — Article 6(1)(c):</strong> responding to binding legal requirements where these apply.</li>
         </ul>
     </section>
@@ -265,8 +266,8 @@
 
     <section class="privacy-section">
         <h2>8. Cookies and browser storage</h2>
-        <p>The website currently does not intentionally set advertising, behavioural-tracking or analytics cookies. The website does use essential browser storage, including local storage and session storage, for account sign-in, administrator sessions, booking confirmation details and cookie preferences. Browser storage is not always technically a cookie, but it can still store or access information on your device and is described in the <a href="cookies.html">Cookie Policy</a>.</p>
-        <p>Optional analytics and marketing categories are off unless you actively choose otherwise. No optional analytics or advertising trackers are currently integrated. You can review or change your choice at any time using <strong>Cookie Settings</strong> in the website footer.</p>
+        <p>The website uses essential browser storage for account sign-in, administrator sessions, booking confirmation details and cookie preferences. When you enable Analytics, the WebControl tracker also uses local storage and session storage for your consent choice and pseudonymous visitor/session identifiers. It does not create a conventional HTTP analytics cookie. Browser storage can still store or access information on your device and is described in the <a href="cookies.html">Cookie Policy</a>.</p>
+        <p>WebControl analytics is optional and remains off until you enable the Analytics category. When enabled, it sends page paths without query-string values, the referrer origin, random visitor/session identifiers, browser/device/operating-system categories and supported performance or JavaScript error measurements. The application analytics database does not store raw visitor IP addresses. Do not enter names, email addresses, phone numbers or other personal information into custom event properties. You can review or change your choice at any time using <strong>Cookie Settings</strong> in the website footer.</p>
         <p>When you save a cookie preference, the website creates a random browser reference. If you are signed in at that time, the current preference may be associated with your Echo account. The consent record does not include your IP address or a device fingerprint.</p>
     </section>
 
@@ -276,6 +277,7 @@
         <ul>
             <li><strong>Render:</strong> hosting and operation of the Echo Air Group backend.</li>
             <li><strong>Neon:</strong> hosting the PostgreSQL database used for account, flight, application, platform and cookie-preference records.</li>
+            <li><strong>WebControl analytics infrastructure:</strong> the WebControl API is hosted by Render and its analytics database is hosted by Neon. These services process analytics events only after a visitor enables the Analytics category.</li>
             <li><strong>NewSky:</strong> an external source of pilot and flight information for the synchronisation features you use.</li>
             <li><strong>Discord:</strong> account-linking and role-synchronisation features, where enabled.</li>
             <li><strong>Forminit:</strong> delivery of pilot and staff application forms.</li>
@@ -301,6 +303,7 @@
                 <tr><td>Applications and recruitment notes</td><td>Normally up to 12 months after the application is closed, unless a longer period is reasonably necessary to handle a dispute or comply with law. An authorised administrator can delete an application record earlier.</td></tr>
                 <tr><td>Contact enquiries</td><td>Normally up to 12 months after the enquiry is resolved, unless further retention is necessary to handle an ongoing matter or comply with law.</td></tr>
                 <tr><td>Cookie preference record</td><td>The latest preference is retained until replaced, deleted on request where applicable, or removed after 24 months without an update.</td></tr>
+                <tr><td>WebControl analytics events</td><td>The current WebControl database does not yet have an automatic event-deletion interval configured. Events remain while the website is registered in WebControl; removing the site from WebControl deletes its associated events. Review and set a suitable retention period before relying on long-term analytics.</td></tr>
                 <tr><td>Browser storage on your device</td><td>Until you clear the relevant browser/site storage, log out where applicable, overwrite the booking details, or the browser removes the data. See the Cookie Policy for the individual storage keys.</td></tr>
                 <tr><td>Hosting and security logs</td><td>According to the relevant provider's service, security and log-retention settings. Echo Air Group does not set a universal retention period for provider-managed logs.</td></tr>
             </tbody>
