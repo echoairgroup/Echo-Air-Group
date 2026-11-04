@@ -188,12 +188,12 @@
     <div class="privacy-header">
         <h1>Cookie Policy</h1>
         <p>How Echo Air Group uses cookies and similar browser-storage technologies.</p>
-        <p class="last-updated">Last updated: 1 November 2026 · Version 1.0</p>
+        <p class="last-updated">Last updated: 4 November 2026 · Version 1.1</p>
     </div>
 
     <div class="privacy-box">
         <strong>At a glance</strong>
-        <p>Echo Air Group does not currently intentionally set advertising, behavioural-tracking or analytics cookies. The website does use essential browser storage for account access, administrator sessions, booking confirmation details and remembering your cookie preference.</p>
+        <p>Echo Air Group uses essential browser storage for account access, administrator sessions, booking confirmation details and cookie preferences. Optional WebControl analytics runs only after you enable the Analytics category in Cookie Settings. No advertising or marketing trackers are currently active.</p>
         <p>You can change your choice at any time using <strong>Cookie Settings</strong> in the website footer.</p>
     </div>
 
@@ -205,7 +205,7 @@
 
     <section class="privacy-section">
         <h2>2. What does Echo Air Group currently use?</h2>
-        <p>The current website code does not intentionally create conventional HTTP cookies or use an analytics, advertising or cross-site tracking cookie service. It uses the first-party browser storage entries listed below. This inventory reflects the website code at the date shown above and may change when features or integrations are updated.</p>
+        <p>The website does not intentionally create conventional HTTP analytics cookies or use advertising or cross-site tracking cookies. It uses the first-party browser storage entries listed below. WebControl analytics uses local storage and session storage only after you enable the Analytics category. This inventory reflects the website code at the date shown above and may change when features or integrations are updated.</p>
         <table class="data-table">
             <thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Duration / storage period</th></tr></thead>
             <tbody>
@@ -214,6 +214,9 @@
                 <tr><td><code>echoAirLastBooking</code></td><td>Local storage</td><td>Stores the local booking confirmation details, such as its reference, selected flight, seat/cabin and passenger name entered into the booking form.</td><td>Until the information is overwritten by another booking or you clear the website's browser storage. It is stored on your device by the booking page.</td></tr>
                 <tr><td><code>eag_cookie_visitor_id</code></td><td>Local storage</td><td>A random identifier used to recognise the same browser when you update your cookie preference, so the latest choice can replace the previous one.</td><td>Until you clear the website's local storage or remove the entry.</td></tr>
                 <tr><td><code>eag_cookie_consent</code></td><td>Local storage</td><td>Remembers your latest choice, optional category preferences, policy version and the time of the choice, so the banner does not repeatedly appear after you have made a selection.</td><td>Until you clear browser storage or a new policy version requires a fresh choice. The corresponding server-side preference record is removed after 24 months without an update.</td></tr>
+                <tr><td><code>webcontrol-consent:&lt;site-id&gt;</code></td><td>Local storage</td><td>Remembers whether you allowed or rejected WebControl analytics for this website.</td><td>Until you change your choice or clear the website's local storage.</td></tr>
+                <tr><td><code>webcontrol-visitor:&lt;site-id&gt;</code></td><td>Local storage</td><td>Stores a random pseudonymous visitor reference used for analytics only after consent has been granted.</td><td>Until you withdraw consent or clear the website's local storage.</td></tr>
+                <tr><td><code>webcontrol-session:&lt;site-id&gt;</code></td><td>Session storage</td><td>Stores a random session reference and last-activity time so page views can be grouped into a session.</td><td>Until the browser tab session ends or a new session starts after 30 minutes of inactivity.</td></tr>
             </tbody>
         </table>
         <p><strong>Important:</strong> the account token is an authentication credential. Do not share it or the browser profile in which you are signed in. Always sign out on a shared device and clear site data when appropriate.</p>
@@ -224,10 +227,10 @@
         <h3>Essential browser storage</h3>
         <p>Essential storage supports functions you request, such as account sign-in, administrator access, the booking confirmation feature and remembering your cookie choice. The website needs this storage for those functions. It is always enabled and is not presented as an optional category.</p>
         <h3>Analytics</h3>
-        <p>Analytics technologies can measure how a website is used to help improve its performance. Echo Air Group does not currently have an analytics cookie or analytics tracker integrated into the website. This category is off unless you actively choose to allow it.</p>
+        <p>WebControl analytics measures consenting page visits, page paths without query-string values, referrer origin, broad browser/device/operating-system categories, supported performance timings, JavaScript errors and optional custom events. It uses pseudonymous visitor and session references. The tracker does not intentionally send raw IP addresses, query-string values or form contents; the analytics database does not store raw IP addresses. Enable the Analytics category to start collection, or reject it to keep collection off.</p>
         <h3>Advertising and marketing</h3>
         <p>Advertising or marketing technologies can be used to measure campaigns or personalise advertising. Echo Air Group does not currently use advertising or marketing cookies or trackers. This category is off unless you actively choose to allow it.</p>
-        <p>Choosing “Accept all” records permission for the optional categories shown in the preference interface. Choosing “Reject optional” records that those categories are not allowed. “Customise” lets you select the optional categories individually. No optional tracking service is activated by the current website, even if you choose to accept all.</p>
+        <p>Choosing “Accept all” records permission for the optional categories shown in the preference interface. Choosing “Reject optional” keeps WebControl analytics off. “Customise” lets you enable or disable Analytics independently. Advertising and marketing remain inactive because no such tracker is currently installed.</p>
     </section>
 
     <section class="privacy-section">
