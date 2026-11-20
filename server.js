@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
+const { getDatabaseConnectionString } = require("./database-connection");
 const { initializePlatformSchema, registerPlatformRoutes } = require("./platform-extension");
 const { initializeOperationsSchema, registerOperationsRoutes } = require("./platform-operations");
 const {
@@ -88,17 +89,26 @@ if (!process.env.JWT_SECRET) {
 // ============================================================
 
 const pool = new Pool({
-    connectionString: DATABASE_URL,
+    connectionString: getDatabaseConnectionString(
+        DATABASE_URL,
+        String(process.env.NEON_USE_POOLER || "true").toLowerCase() !== "false"
+    ),
+    ssl: { rejectUnauthorized: false },
+    // Keep the application pool small; PgBouncer multiplexes short-lived requests.
+    max: 3,
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 8000,
+    statement_timeout: 30000,
+    query_timeout: 35000,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
+    allowExitOnIdle: true,
+    maxLifetimeSeconds: 300,
+    application_name: "echo-air-group-api"
+});
 
-    ssl: {
-        rejectUnauthorized: false
-    },
-
-    max: 5,
-
-    idleTimeoutMillis: 30000,
-
-    connectionTimeoutMillis: 10000
+pool.on("error", error => {
+    console.error("[Database] Unexpected idle PostgreSQL client error:", error.message);
 });
 
 async function query(text, params = []) {
@@ -4027,328 +4037,169 @@ async function getLinkedPilotMap() {
 // SAVE FLIGHT
 // ============================================================
 
-async function saveFlight(
-    client,
-    data
-) {
+const FLIGHT_IMPORT_BATCH_SIZE = 100;
 
-    const result =
-        await client.query(
-            `
-            INSERT INTO flights
-            (
-                user_id,
-                newsky_id,
-                dep_icao,
-                arr_icao,
-                aircraft,
-                aircraft_registration,
-                aircraft_type,
-                rating,
-                duration,
-                distance,
-                stars,
-                dep_time,
-                synced_at
-            )
-            VALUES
-            (
-                $1,
-                $2,
-                $3,
-                $4,
-                $5,
-                $6,
-                $7,
-                $8,
-                $9,
-                $10,
-                $11,
-                $12,
-                CURRENT_TIMESTAMP
-            )
+async function saveFlightsBatch(client, flights) {
+    if (!flights.length) return { imported: 0, updated: 0 };
 
-            ON CONFLICT
-            (
-                user_id,
-                newsky_id
-            )
-
-            DO UPDATE SET
-
-                dep_icao =
-                    EXCLUDED.dep_icao,
-
-                arr_icao =
-                    EXCLUDED.arr_icao,
-
-                aircraft =
-                    EXCLUDED.aircraft,
-
-                aircraft_registration =
-                    EXCLUDED.aircraft_registration,
-
-                aircraft_type =
-                    EXCLUDED.aircraft_type,
-
-                rating =
-                    EXCLUDED.rating,
-
-                duration =
-                    EXCLUDED.duration,
-
-                distance =
-                    EXCLUDED.distance,
-
-                stars =
-                    EXCLUDED.stars,
-
-                dep_time =
-                    EXCLUDED.dep_time,
-
-                synced_at =
-                    CURRENT_TIMESTAMP
-
-            RETURNING
-                (xmax = 0) AS inserted
-            `,
-
-            [
-                data.userId,
-                data.newskyId,
-                data.depIcao,
-                data.arrIcao,
-                data.aircraft,
-                data.aircraftRegistration || null,
-                data.aircraftType || null,
-                data.rating,
-                data.duration,
-                data.distance,
-                data.stars,
-                data.depTime
-            ]
+    const values = [];
+    const valueRows = flights.map((data, index) => {
+        const offset = index * 12;
+        values.push(
+            data.userId,
+            data.newskyId,
+            data.depIcao,
+            data.arrIcao,
+            data.aircraft,
+            data.aircraftRegistration || null,
+            data.aircraftType || null,
+            data.rating,
+            data.duration,
+            data.distance,
+            data.stars,
+            data.depTime
         );
 
-    return result.rows[0];
+        const placeholders = Array.from(
+            { length: 12 },
+            (_, valueIndex) => "$" + (offset + valueIndex + 1)
+        );
+
+        return "(" + placeholders.join(", ") + ", CURRENT_TIMESTAMP)";
+    });
+
+    const result = await client.query(
+        `
+        INSERT INTO flights
+        (
+            user_id, newsky_id, dep_icao, arr_icao, aircraft,
+            aircraft_registration, aircraft_type, rating, duration,
+            distance, stars, dep_time, synced_at
+        )
+        VALUES ${valueRows.join(", ")}
+        ON CONFLICT (user_id, newsky_id)
+        DO UPDATE SET
+            dep_icao = EXCLUDED.dep_icao,
+            arr_icao = EXCLUDED.arr_icao,
+            aircraft = EXCLUDED.aircraft,
+            aircraft_registration = EXCLUDED.aircraft_registration,
+            aircraft_type = EXCLUDED.aircraft_type,
+            rating = EXCLUDED.rating,
+            duration = EXCLUDED.duration,
+            distance = EXCLUDED.distance,
+            stars = EXCLUDED.stars,
+            dep_time = EXCLUDED.dep_time,
+            synced_at = CURRENT_TIMESTAMP
+        WHERE
+            flights.dep_icao IS DISTINCT FROM EXCLUDED.dep_icao OR
+            flights.arr_icao IS DISTINCT FROM EXCLUDED.arr_icao OR
+            flights.aircraft IS DISTINCT FROM EXCLUDED.aircraft OR
+            flights.aircraft_registration IS DISTINCT FROM EXCLUDED.aircraft_registration OR
+            flights.aircraft_type IS DISTINCT FROM EXCLUDED.aircraft_type OR
+            flights.rating IS DISTINCT FROM EXCLUDED.rating OR
+            flights.duration IS DISTINCT FROM EXCLUDED.duration OR
+            flights.distance IS DISTINCT FROM EXCLUDED.distance OR
+            flights.stars IS DISTINCT FROM EXCLUDED.stars OR
+            flights.dep_time IS DISTINCT FROM EXCLUDED.dep_time
+        RETURNING (xmax = 0) AS inserted
+        `,
+        values
+    );
+
+    let imported = 0;
+    let updated = 0;
+    for (const row of result.rows) {
+        if (row.inserted) imported++;
+        else updated++;
+    }
+
+    return { imported, updated };
 }
 
 // ============================================================
 // IMPORT ALL FLIGHTS
 // ============================================================
 
-async function importAllFlights(
-    allFlights
-) {
-
-    const pilotMap =
-        await getLinkedPilotMap();
-
+async function importAllFlights(allFlights) {
+    const pilotMap = await getLinkedPilotMap();
     let imported = 0;
-
     let updated = 0;
-
     let skipped = 0;
-
     let unmatched = 0;
+    const matchedPilots = new Set();
+    const client = await pool.connect();
+    let pending = [];
 
-    const matchedPilots =
-        new Set();
-
-    const client =
-        await pool.connect();
+    const flushBatch = async () => {
+        if (!pending.length) return;
+        const batch = pending;
+        pending = [];
+        const saved = await saveFlightsBatch(client, batch);
+        imported += saved.imported;
+        updated += saved.updated;
+    };
 
     try {
-
-        await client.query(
-            "BEGIN"
-        );
-
-        for (
-            const flight of allFlights
-        ) {
-
-            const pilotId =
-                getPilotId(flight);
-
+        for (const flight of allFlights) {
+            const pilotId = getPilotId(flight);
             if (!pilotId) {
-
                 skipped++;
-
                 continue;
             }
 
-            const user =
-                pilotMap.get(
-                    String(
-                        pilotId
-                    ).trim()
-                );
-
+            const user = pilotMap.get(String(pilotId).trim());
             if (!user) {
-
                 unmatched++;
-
                 continue;
             }
 
-            matchedPilots.add(
-                user.id
-            );
-
-            const newskyId =
-                getNewSkyFlightId(
-                    flight
-                );
-
+            const newskyId = getNewSkyFlightId(flight);
             if (!newskyId) {
-
                 skipped++;
-
                 continue;
             }
 
-            const departure =
-                getDeparture(
-                    flight
-                );
+            matchedPilots.add(user.id);
 
-            const arrival =
-                getArrival(
-                    flight
-                );
+            const duration = getDurationMinutes(flight);
+            const distance = getDistance(flight);
+            const rating = getRating(flight);
+            const aircraft = getAircraft(flight);
+            const depTime = getFlightDate(flight);
 
-            const aircraft =
-                getAircraft(
-                    flight
-                );
+            pending.push({
+                userId: user.id,
+                newskyId,
+                depIcao: getDeparture(flight) || null,
+                arrIcao: getArrival(flight) || null,
+                aircraft: aircraft ? String(aircraft) : null,
+                aircraftRegistration: getAircraftRegistration(flight),
+                aircraftType: getAircraftType(flight),
+                rating,
+                duration,
+                distance,
+                stars: calculateFlightStars(duration, distance, rating),
+                depTime: depTime ? String(depTime) : null
+            });
 
-            const aircraftRegistration =
-                getAircraftRegistration(flight);
-
-            const aircraftType =
-                getAircraftType(flight);
-
-            const rating =
-                getRating(
-                    flight
-                );
-
-            const duration =
-                getDurationMinutes(
-                    flight
-                );
-
-            const distance =
-                getDistance(
-                    flight
-                );
-
-            const depTime =
-                getFlightDate(
-                    flight
-                );
-
-            const stars =
-                calculateFlightStars(
-                    duration,
-                    distance,
-                    rating
-                );
-
-            const saveResult =
-                await saveFlight(
-                    client,
-                    {
-
-                        userId:
-                            user.id,
-
-                        newskyId,
-
-                        depIcao:
-                            departure ||
-                            null,
-
-                        arrIcao:
-                            arrival ||
-                            null,
-
-                        aircraft:
-                            aircraft
-                                ? String(
-                                    aircraft
-                                )
-                                : null,
-
-                        aircraftRegistration,
-
-                        aircraftType,
-
-                        rating,
-
-                        duration,
-
-                        distance,
-
-                        stars,
-
-                        depTime:
-                            depTime
-                                ? String(
-                                    depTime
-                                )
-                                : null
-                    }
-                );
-
-            if (
-                saveResult.inserted
-            ) {
-
-                imported++;
-
-            } else {
-
-                updated++;
+            if (pending.length >= FLIGHT_IMPORT_BATCH_SIZE) {
+                await flushBatch();
             }
         }
 
-        await client.query(
-            "COMMIT"
-        );
-
-    } catch (error) {
-
-        await client.query(
-            "ROLLBACK"
-        );
-
-        throw error;
-
+        await flushBatch();
     } finally {
-
         client.release();
     }
 
     return {
-
         imported,
-
         updated,
-
         skipped,
-
         unmatched,
-
-        matchedPilots:
-            matchedPilots.size
+        matchedPilots: matchedPilots.size
     };
 }
-
-
-// ============================================================
-// SERVER-SIDE AUTOMATIC FLIGHT SYNC
-// ============================================================
 
 let automaticFlightSyncInProgress = false;
 let automaticFlightSyncTimer = null;
@@ -4456,6 +4307,11 @@ async function runAutomaticFlightSync(mode = "recent") {
 async function startAutomaticFlightSync() {
     if (automaticFlightSyncTimer) return;
 
+    if (String(process.env.ENABLE_IN_PROCESS_NEWSKY_SCHEDULER || "").toLowerCase() !== "true") {
+        console.log("[NewSky] In-process scheduler disabled; GitHub Actions is the single scheduled sync source.");
+        return;
+    }
+
     const syncOnce = async () => {
         if (automaticFlightSyncInProgress) return;
         try {
@@ -4463,8 +4319,6 @@ async function startAutomaticFlightSync() {
                 "SELECT last_full_sync_at, distance_parser_version FROM flight_sync_state WHERE sync_key = 'global'"
             );
             const row = state.rows[0] || {};
-            // Re-import all existing flights once after distance parsing changes,
-            // then return to the normal incremental 7-day sync.
             const currentDataVersion = Boolean(row.last_full_sync_at) &&
                 Number(row.distance_parser_version || 0) >= 2;
             await runAutomaticFlightSync(currentDataVersion ? "recent" : "full");
@@ -4473,10 +4327,7 @@ async function startAutomaticFlightSync() {
         }
     };
 
-    // Leave the health endpoint and normal API requests time to become available first.
     setTimeout(() => { void syncOnce(); }, 15000);
-
-    // Incremental sync every 15 minutes while the Render web process is awake.
     automaticFlightSyncTimer = setInterval(() => { void syncOnce(); }, 15 * 60 * 1000);
     if (automaticFlightSyncTimer && typeof automaticFlightSyncTimer.unref === "function") {
         automaticFlightSyncTimer.unref();
@@ -4494,7 +4345,7 @@ app.get("/api/sync/status", async (req, res) => {
         res.set("Cache-Control", "no-store");
         return res.json({
             automatic: true,
-            intervalMinutes: 5,
+            intervalMinutes: 15,
             scheduler: "GitHub Actions",
             inProgress: automaticFlightSyncInProgress,
             lastSync: state
@@ -4523,7 +4374,7 @@ app.get("/api/sync/status", async (req, res) => {
 // EXTERNAL LIVE NEWSKY SCHEDULER
 // ============================================================
 
-// GitHub Actions calls this endpoint every five minutes. The short-lived
+// GitHub Actions calls this endpoint every fifteen minutes. The short-lived
 // GITHUB_TOKEN is validated against this repository's Actions API before
 // an incremental import is allowed. No permanent scheduler secret is stored
 // in the public repository or exposed to website visitors.
@@ -4575,7 +4426,13 @@ app.post("/api/sync/scheduled", async (req, res) => {
     }
 
     try {
-        const result = await runAutomaticFlightSync("recent");
+        const syncState = await query(
+            "SELECT last_full_sync_at, distance_parser_version FROM flight_sync_state WHERE sync_key = 'global'"
+        );
+        const syncRow = syncState.rows[0] || {};
+        const currentDataVersion = Boolean(syncRow.last_full_sync_at) &&
+            Number(syncRow.distance_parser_version || 0) >= 2;
+        const result = await runAutomaticFlightSync(currentDataVersion ? "recent" : "full");
 
         if (result.skipped) {
             return res.status(202).json({
@@ -4588,7 +4445,7 @@ app.post("/api/sync/scheduled", async (req, res) => {
         return res.json({
             ok: true,
             scheduler: "github-actions",
-            intervalMinutes: 5,
+            intervalMinutes: 15,
             mode: result.mode,
             linkedPilots: result.linkedPilots,
             flightsReceived: result.flightsReceived,
