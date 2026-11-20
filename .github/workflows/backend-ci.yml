@@ -49,6 +49,7 @@ jobs:
           node --check platform-extension.js
           node --check platform-operations.js
           node --check newsky-date-ranges.js
+          node --check database-connection.js
 
       - name: Run automated tests
         run: npm test
