@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
+const { getDatabaseConnectionString } = require("./database-connection");
 const { initializePlatformSchema, registerPlatformRoutes } = require("./platform-extension");
 const { initializeOperationsSchema, registerOperationsRoutes } = require("./platform-operations");
 const {
@@ -87,34 +88,11 @@ if (!process.env.JWT_SECRET) {
 // POSTGRESQL / NEON
 // ============================================================
 
-function getDatabaseConnectionString(connectionString) {
-    if (String(process.env.NEON_USE_POOLER || "true").toLowerCase() === "false") {
-        return connectionString;
-    }
-
-    try {
-        const parsed = new URL(connectionString);
-        const hostname = parsed.hostname;
-
-        // Neon pooled endpoints use the same hostname with "-pooler" appended
-        // to the endpoint name. Leave non-Neon and already-pooled URLs untouched.
-        if (
-            hostname.endsWith(".neon.tech") &&
-            /^ep-[^.]+\./i.test(hostname) &&
-            !/-pooler\./i.test(hostname)
-        ) {
-            parsed.hostname = hostname.replace(/^(ep-[^.]+)\./i, "$1-pooler.");
-        }
-
-        return parsed.toString();
-    } catch (error) {
-        console.warn("[Database] Could not normalize the Neon connection URL; using DATABASE_URL as configured:", error.message);
-        return connectionString;
-    }
-}
-
 const pool = new Pool({
-    connectionString: getDatabaseConnectionString(DATABASE_URL),
+    connectionString: getDatabaseConnectionString(
+        DATABASE_URL,
+        String(process.env.NEON_USE_POOLER || "true").toLowerCase() !== "false"
+    ),
     ssl: { rejectUnauthorized: false },
     // Keep the application pool small; PgBouncer multiplexes short-lived requests.
     max: 3,
@@ -4186,20 +4164,22 @@ async function importAllFlights(allFlights) {
             const duration = getDurationMinutes(flight);
             const distance = getDistance(flight);
             const rating = getRating(flight);
+            const aircraft = getAircraft(flight);
+            const depTime = getFlightDate(flight);
 
             pending.push({
                 userId: user.id,
                 newskyId,
                 depIcao: getDeparture(flight) || null,
                 arrIcao: getArrival(flight) || null,
-                aircraft: getAircraft(flight) ? String(getAircraft(flight)) : null,
+                aircraft: aircraft ? String(aircraft) : null,
                 aircraftRegistration: getAircraftRegistration(flight),
                 aircraftType: getAircraftType(flight),
                 rating,
                 duration,
                 distance,
                 stars: calculateFlightStars(duration, distance, rating),
-                depTime: getFlightDate(flight) ? String(getFlightDate(flight)) : null
+                depTime: depTime ? String(depTime) : null
             });
 
             if (pending.length >= FLIGHT_IMPORT_BATCH_SIZE) {
