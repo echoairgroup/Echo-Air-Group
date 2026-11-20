@@ -1,0 +1,54 @@
+name: Backend validation
+
+on:
+  push:
+    branches: [optimize/free-neon-usage]
+    paths:
+      - "server.js"
+      - "platform-extension.js"
+      - "platform-operations.js"
+      - "newsky-date-ranges.js"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "server.js"
+      - "platform-extension.js"
+      - "platform-operations.js"
+      - "newsky-date-ranges.js"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/backend-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check server.js
+          node --check platform-extension.js
+          node --check platform-operations.js
+          node --check newsky-date-ranges.js
+
+      - name: Run automated tests
+        run: npm test
